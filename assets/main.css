@@ -324,9 +324,9 @@ input[type="search"]::placeholder {
   pointer-events: none;
 }
 
-.session-search {
+input.session-search {
   width: 100%;
-  padding-left: 30px;
+  padding-left: 32px;
   font-size: 12.5px;
 }
 
