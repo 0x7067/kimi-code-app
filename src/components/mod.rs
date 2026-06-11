@@ -5,6 +5,7 @@ pub mod base;
 pub mod icons;
 
 mod app;
+mod automation_pane;
 mod browser_pane;
 mod composer;
 mod diff_pane;
@@ -21,6 +22,7 @@ mod thread;
 mod topbar;
 
 pub use app::App;
+pub(crate) use automation_pane::AutomationPane;
 pub(crate) use composer::{Composer, PendingQueue};
 pub(crate) use diff_pane::DiffPane;
 pub(crate) use browser_pane::BrowserPane;

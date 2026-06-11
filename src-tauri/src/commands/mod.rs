@@ -1,6 +1,7 @@
 //! Tauri commands, grouped by concern. All are registered in `lib.rs`.
 
 mod acp;
+mod automation;
 mod checkpoint;
 mod config;
 mod dialogs;
@@ -69,5 +70,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         memory::pin_memory,
         memory::retrieve_memories,
         memory::build_memory_context,
+        automation::list_automation_runs,
+        automation::run_automation_now,
     ]
 }

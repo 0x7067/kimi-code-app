@@ -1,6 +1,8 @@
 mod acp;
+mod automation;
 mod checkpoint;
 mod commands;
+mod headless;
 mod memory;
 mod paths;
 mod terminal;
@@ -19,6 +21,8 @@ pub fn run() {
             // Live session sync: notify the UI when the CLI touches the
             // shared session index (F-012).
             commands::spawn_session_index_watcher(app.handle().clone());
+            // F-009: start the automation scheduler tick.
+            automation::start_scheduler(app.handle().clone());
             Ok(())
         })
         .on_page_load(|window, _| {

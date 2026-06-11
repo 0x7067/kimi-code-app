@@ -151,6 +151,9 @@ pub fn App() -> Element {
                         if *SHOW_MULTI_AGENT.read() {
                             MultiAgentPane {}
                         }
+                        if *SHOW_AUTOMATIONS.read() {
+                            AutomationPane {}
+                        }
                     }
                 }
                 StatusBar {}

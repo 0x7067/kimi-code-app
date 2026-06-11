@@ -148,6 +148,15 @@ pub fn Topbar() -> Element {
                     "Multi-agent"
                 }
                 button {
+                    class: if *SHOW_AUTOMATIONS.read() { "ghost active" } else { "ghost" },
+                    title: "Automations",
+                    onclick: move |_| {
+                        let open = !*SHOW_AUTOMATIONS.read();
+                        *SHOW_AUTOMATIONS.write() = open;
+                    },
+                    "Automations"
+                }
+                button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();

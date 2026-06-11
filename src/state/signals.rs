@@ -97,6 +97,8 @@ pub static SHOW_BROWSER: GlobalSignal<bool> = Signal::global(|| false);
 
 /// F-004: whether the multi-agent worktree panel is open.
 pub static SHOW_MULTI_AGENT: GlobalSignal<bool> = Signal::global(|| false);
+/// F-009: whether the automations panel is open.
+pub static SHOW_AUTOMATIONS: GlobalSignal<bool> = Signal::global(|| false);
 
 /// Cached thread state per session so switching sessions does not lose scrollback.
 pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);

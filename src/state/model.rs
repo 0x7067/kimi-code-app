@@ -70,6 +70,17 @@ pub struct TaskTemplate {
     pub prompt: String,
 }
 
+/// F-009: a scheduled automation.
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Automation {
+    pub id: String,
+    pub name: String,
+    pub cron: String,
+    pub prompt: String,
+    pub cwd: String,
+    pub enabled: bool,
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum View {
     Chat,
@@ -120,6 +131,8 @@ pub struct AppSettings {
     /// F-003.4 / F-011.7: context-usage fraction (0.0–1.0) at which auto-compact
     /// fires. Default 0.8 (80%).
     pub auto_compact_threshold: f64,
+    /// F-009: scheduled automations.
+    pub automations: Vec<Automation>,
 }
 
 impl Default for AppSettings {
@@ -135,6 +148,7 @@ impl Default for AppSettings {
             task_templates: default_task_templates(),
             auto_compact: true,
             auto_compact_threshold: 0.8,
+            automations: Vec::new(),
         }
     }
 }
