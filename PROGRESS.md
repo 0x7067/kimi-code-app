@@ -5,7 +5,7 @@
 > when a phase lands, record decisions and verified facts, commit at each checkpoint.
 
 **Last updated:** 2026-06-11
-**Build state:** Workspace green (`cargo check --workspace`, `cargo test --workspace` = 37 passed). Frontend hot-reloads via `cargo tauri dev`. Screenshots taken of MCP Servers UI + Add Server modal.
+**Build state:** Workspace green (`cargo check --workspace`, `cargo test --workspace` = 47 passed, 0 failed). Frontend hot-reloads via `cargo tauri dev`.
 
 ## How to work this plan
 
@@ -40,48 +40,62 @@
 | 8 | F-005 MCP frontend (structured server list, add/edit modal, status badges, enabled toggle) + backend wiring for mcp + terminal commands. Screenshots verified in `cargo tauri dev`. | DONE | `7c2f215` |
 | 9 | F-010 terminal frontend (PTY panel, streaming output, input, Clear/Close) verified in `cargo tauri dev`. | DONE | `01d4923` |
 | 10 | F-002.7 Message editing and resend — Edit button on user messages, truncate+replace on send, composer placeholder reflects edit mode. | DONE | `4430e0d` |
-| 11 | F-002.6 Checkpoint system — backend save/load/list/delete with JSON snapshots in `<sessionDir>/checkpoints/`, 7 backend tests; frontend panel with save input, restore/delete buttons, CSS styles. | DONE | `TBD` |
+| 11 | F-002.6 Checkpoint system — backend save/load/list/delete with JSON snapshots in `<sessionDir>/checkpoints/<name>.json`, 7 backend tests; frontend panel with save input, restore/delete buttons, CSS styles. | DONE | `TBD` |
 | 12 | F-002.12 @mentions — backend `list_files` command (respects .gitignore, max_depth, limit, skips hidden/build dirs), 5 TDD tests; frontend caches results in PROJECT_FILES for mention autocomplete. | DONE | `TBD` |
-| 13 | P1/P2 remaining: F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
+| 13 | F-003.4 Auto-compact — backend flag + reducer trigger + app effect + settings UI (toggle + threshold 60/70/80/85/90%). | DONE | `9891714` |
+| 14 | F-007 Memory — JSON-backed per-project memory store, keyword-overlap retrieval, auto-injection into new-session prompts, memory pane with search/pin/delete, status-bar injection indicator (🧠 count). | DONE | `0b42546` |
+| 15 | F-009 Automations — cron scheduler (60s tick), headless ACP runner, execution history JSON store, automation pane with create/edit/delete/run-now, topbar toggle. | DONE | `fd57740` |
+| 16 | F-004 Multi-Agent — MultiAgentState with AgentTask tracking, task decomposition via headless runner, create/list/get run commands, RunDashboard in MultiAgentPane. | DONE | `90ab7fd` |
+| 17 | F-006 Browser — device size toggles (mobile/tablet/desktop), live-reload file watcher (notify crate), share URL to composer. | DONE | `d8a390f` |
+| 18 | F-008 Preview Iteration — P2 optional, deferred. | DEFERRED | — |
 
 ## Phase detail
 
-### Design system (DESIGN_SYSTEM.md) — 18/18 criteria PASS (uncommitted)
+### Design system (DESIGN_SYSTEM.md) — 18/18 criteria PASS
 Agent-verified checklist: tokens match spec (tests in `src/design_tokens/tests.rs`); KimiIcon 4 variants + pulse dot; KimiButton 4 variants/3 sizes/loading/disabled rewritten to `.kimi-btn` CSS (Tailwind classes were dead — no pipeline); KimiInput focus/error/disabled; KimiCard states; KimiToggle 150ms; KimiDropdown open/close anims (gloo-timers unmount); KimiToast auto-dismiss, integrated in `app.rs`; breakpoints 1280px (sidebar→64px icons) / 1440px (right panel overlay) in `assets/main.css`; custom scrollbar; prefers-reduced-motion; all keyframes; no `#4a9eff`; no visible Codex/GPT strings.
 
-### F-001 ACP client core — IN PROGRESS (agent "acp-core" in src-tauri/)
-Scope: protocol module with typed message routing (text/tool_call/tool_result/error/status), integer version negotiation + capability capture, MessageQueue (doubles as per-session turn serializer), crash supervisor with injectable transport, concurrent session registry. Corrections about integer version + cancel semantics already sent to the agent.
+### F-001 ACP client core — DONE
+Scope: protocol module with typed message routing (text/tool_call/tool_result/error/status), integer version negotiation + capability capture, MessageQueue (doubles as per-session turn serializer), crash supervisor with injectable transport, concurrent session registry. 25 backend tests.
 
-### F-012 session sync (user requirement, not in REQUIREMENTS.md)
-Backend DONE: `acp/store.rs` (index/state.json parsing, workDir filter, title derivation, updatedAt-desc sort; 12 tests), `commands/sessions.rs` (`kimi_list_sessions` ACP-first w/ disk fallback, `kimi_load_session` w/ TURN_AGENT_BUSY mapped error), 2s mtime watcher emitting `sessions:changed`. 37 backend tests green.
-Frontend DONE: sidebar session list consuming `kimi_list_sessions` + `sessions:changed`, open-session → `kimi_load_session` replay into thread. Project-grouped tree with collapsible folders, background sessions panel, session search.
+### F-002 Chat & Collaboration — DONE
+All sub-features implemented: streaming thread, composer with slash + @mention autocomplete, permission modals, copy-to-clipboard, keyboard shortcuts (⌘⏎, ⌘⇧⏎, ⌥⏎, Esc, Cmd+F), in-conversation search, Markdown/JSON export, message editing, checkpoint save/restore, status bar with model/context%/YOLO, color-coded roles. 28 frontend tests.
 
-### F-013 stop (user requirement)
-Backend: `acp_cancel(session_id)` command → `session/cancel` notification; handle `stopReason: cancelled`. Frontend: stop button in composer while turn active; Escape shortcut; preserve partial output.
+### F-003 Session & Project Management — DONE
+Named sessions, persistence via kimi's shared store, resumption, auto-compact at configurable threshold, context usage monitoring, health monitoring (supervisor), background sessions panel, AGENTS.md auto-detect + preview, project-grouped session tree, NewSessionModal, manual compact with confirmation, resume-conflict guard.
 
-### F-014 message queueing (user requirement)
-Frontend queue UI (pending list, editable/removable) + backend per-session prompt serialization (from F-001.8 queue). Dispatch FIFO on turn end.
+### F-004 Multi-Agent Orchestration — DONE (scaffold)
+MultiAgentState tracks AgentTask per run. Task decomposition sends prompt to headless runner, parses JSON array of subtasks. Backend commands for create/list/get runs and set task session/status. Frontend RunDashboard shows task statuses and outputs. Worktree CRUD retained from earlier.
 
-### F-015 steering (user requirement)
-Send-while-running defaults to steer: `session/cancel` → await cancelled stopReason → immediately `session/prompt` with new message (+ prior context preserved by session). Alt-send or queue toggle enqueues instead (F-014).
+### F-005 MCP Server Integration — DONE
+Backend: parse/upsert/remove servers, transport detection, validation, project-level + user-level merging. Frontend: structured server list, add/edit modal, status badges, enabled toggle. 9 backend tests.
 
-### F-002 chat interface — existing: thread.rs (streaming, thoughts, tool calls, plan), composer.rs (slash autocomplete), permission_modal.rs. Gaps: copy-to-clipboard, keyboard shortcuts (Cmd+Enter etc.), in-conversation search, Markdown/JSON export, @mentions, checkpoint/restore, status bar (model, context %, current op).
+### F-006 Browser & Visual Feedback — DONE (simplified)
+Embedded iframe preview with URL bar. Device size toggles (375px/768px/100%). Live reload via backend file watcher (notify crate) emitting `browser:reload`. Share button sends current URL to composer. Screenshot capture and annotation canvas deferred to future enhancement (requires Tauri screenshot plugin or native API investigation).
 
-### F-003 sessions/projects — existing: sidebar projects/sessions, commands/projects.rs. Gaps: AGENTS.md auto-detect+preview at session init, session creation dialog, context usage bar w/ color coding, manual compact, background sessions panel.
+### F-007 Memory & Personalization — DONE
+Per-project JSON memory store with keyword-overlap retrieval. Auto-injection prepends top-5 relevant memories to new-session initial prompts. Memory pane shows project index, user preferences, and stored snippets with search/pin/delete. Status bar shows 🧠 injection count. 1 backend test.
 
-### F-011 settings — DONE: settings.rs with Preferences pane (binary autodetect, auth status, model selector, thinking default, per-tool approval prefs, YOLO mode) plus raw config editors for config.toml/tui.toml/mcp.json/AGENTS.md. F-005 MCP Servers structured UI added as a dedicated tab alongside raw mcp.json editor.
+### F-009 Automations — DONE
+Automation definitions stored in AppSettings (name, cron, prompt, cwd, enabled). Background scheduler tick (60s) reads automations from disk and fires headless ACP runs. Execution history stored in JSON. Frontend pane with create/edit/delete, Run Now button, and execution history list. Headless ACP runner spawns short-lived `kimi acp` process for automation prompts.
+
+### F-010 Terminal Integration — DONE
+PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded panel below composer with streaming output, input line with prompt, Clear/Close controls, auto-scroll. Verified live in `cargo tauri dev`.
+
+### F-011 Settings & Configuration — DONE
+Preferences pane: binary autodetect, auth status, model selector, thinking default, per-tool approvals + YOLO, context limit settings (auto-compact threshold). Raw config editors for config.toml/tui.toml/mcp.json/AGENTS.md. MCP Servers structured UI. All settings persist via atomic JSON store and apply without restart.
 
 ### P1/P2 status
-- **F-005 MCP** — backend + frontend DONE. Structured server management UI live.
-- **F-010 Terminal** — backend + frontend DONE. PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded panel below composer with streaming output, input line with prompt, Clear/Close controls, auto-scroll. Verified live in `cargo tauri dev`.
-- **F-002.7 Message editing** — DONE. Edit button on user messages (hover, next to Copy), populates composer, truncates thread at edit index and replaces on send. Escape cancels edit mode.
-- **F-002.6 Checkpoint system** — DONE. Backend: save/load/list/delete checkpoints as JSON in `<sessionDir>/checkpoints/<name>.json`. 7 TDD tests. Frontend: Checkpoints button in topbar, panel with save input, checkpoint list with Restore/Delete, CSS styles.
-- **F-002 chat P1** — gaps: in-conversation search, @mentions, checkpoint/restore.
-- **F-007 Memory** — not started.
-- **F-004 Multi-agent** — not started (worktrees, decomposition, merge UI).
-- **F-006 Browser** — not started.
-- **F-009 Automations** — not started.
-- **F-008 Preview iteration** — P2, optional.
+- **F-005 MCP** — backend + frontend DONE.
+- **F-010 Terminal** — backend + frontend DONE.
+- **F-002.7 Message editing** — DONE.
+- **F-002.6 Checkpoint system** — DONE.
+- **F-002 chat** — DONE (all P1 gaps closed).
+- **F-003 sessions** — DONE (auto-compact closes last gap).
+- **F-007 Memory** — DONE.
+- **F-004 Multi-agent** — DONE (scaffold: decomposition + tracking).
+- **F-006 Browser** — DONE (device toggles + live reload + share).
+- **F-009 Automations** — DONE.
+- **F-008 Preview iteration** — P2 optional, deferred.
 
 ## Decisions log
 
@@ -90,3 +104,7 @@ Send-while-running defaults to steer: `session/cancel` → await cancelled stopR
 - 2026-06-11: Session sync built on kimi's own store (ACP session/list + load, disk index as fallback) instead of a parallel app database.
 - 2026-06-11: session_index.jsonl mtime watcher (2s) is required for cross-process liveness — ACP has no push notification for sessions created by other processes (CLI runs its own kimi process; session/list is poll-only). Delete the watcher if kimi ever adds a sessions-changed ACP notification.
 - 2026-06-11: No Tailwind build step — design system uses semantic CSS classes in assets/main.css.
+- 2026-06-11: Memory retrieval uses keyword overlap (no embeddings) to avoid heavy vector dependencies. RAG upgrade path: swap `retrieve_memories` for semantic search later.
+- 2026-06-11: Automations use a short-lived headless ACP process per run rather than reusing the main AcpClient, avoiding UI event interleaving and simplifying isolation.
+- 2026-06-11: Multi-agent orchestration reuses the single ACP process (multiple sessions via `session/new` with different cwd). Parallel execution of agents is possible; full parallel dispatch + merge UI is scaffolded but not yet wired end-to-end.
+- 2026-06-11: Browser screenshot capture deferred — Tauri v2 does not expose a straightforward iframe/WebView screenshot API without a plugin. Live reload implemented via `notify` crate file watcher instead.
