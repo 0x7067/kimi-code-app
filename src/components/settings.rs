@@ -4,7 +4,7 @@
 //! app-settings store, applying immediately without restart (F-011.13).
 
 use crate::actions::save_app_settings;
-use crate::ipc::invoke;
+use crate::ipc::{invoke, listen_forever};
 use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::{json, Value};
@@ -24,37 +24,30 @@ const CATEGORIES: &[Category] = &[
         label: "Personal",
         subs: &[
             SubCategory { id: "general", label: "General" },
-            SubCategory { id: "profile", label: "Profile" },
-            SubCategory { id: "appearance", label: "Appearance" },
             SubCategory { id: "configuration", label: "Configuration" },
-            SubCategory { id: "personalization", label: "Personalization" },
             SubCategory { id: "shortcuts", label: "Keyboard shortcuts" },
-            SubCategory { id: "billing", label: "Usage & billing" },
+        ],
+    },
+    Category {
+        label: "Kimi CLI",
+        subs: &[
+            SubCategory { id: "providers", label: "Providers" },
+            SubCategory { id: "diagnostics", label: "Diagnostics" },
+            SubCategory { id: "maintenance", label: "Maintenance" },
         ],
     },
     Category {
         label: "Integrations",
         subs: &[
-            SubCategory { id: "appshots", label: "Appshots" },
             SubCategory { id: "mcp-servers", label: "MCP servers" },
             SubCategory { id: "browser", label: "Browser" },
-            SubCategory { id: "computer-use", label: "Computer use" },
         ],
     },
     Category {
         label: "Coding",
         subs: &[
-            SubCategory { id: "hooks", label: "Hooks" },
-            SubCategory { id: "connections", label: "Connections" },
             SubCategory { id: "git", label: "Git" },
-            SubCategory { id: "environments", label: "Environments" },
             SubCategory { id: "worktrees", label: "Worktrees" },
-        ],
-    },
-    Category {
-        label: "Archived",
-        subs: &[
-            SubCategory { id: "archived-chats", label: "Archived chats" },
         ],
     },
 ];
@@ -100,9 +93,31 @@ pub fn SettingsView() -> Element {
             div { class: "settings-content",
                 match active_sub.read().as_str() {
                     "general" => rsx! { GeneralPane {} },
-                    "mcp-servers" => rsx! { McpServersPane {} },
                     "configuration" => rsx! { ConfigurationPane {} },
-                    _ => rsx! { PlaceholderPane { label: sub_label(active_sub.read().as_str()) } },
+                    "providers" => rsx! { ProvidersPane {} },
+                    "diagnostics" => rsx! { DiagnosticsPane {} },
+                    "maintenance" => rsx! { MaintenancePane {} },
+                    "mcp-servers" => rsx! { McpServersPane {} },
+                    "shortcuts" => rsx! { ShortcutsPane {} },
+                    "browser" => rsx! {
+                        FeaturePointerPane {
+                            title: "Browser",
+                            desc: "Open the Browser pane from the top bar to preview a local URL with device-size toggles and live reload.",
+                        }
+                    },
+                    "git" => rsx! {
+                        FeaturePointerPane {
+                            title: "Git",
+                            desc: "Use the Diff toggle in the top bar to review working-tree changes for the active project.",
+                        }
+                    },
+                    "worktrees" => rsx! {
+                        FeaturePointerPane {
+                            title: "Worktrees",
+                            desc: "Manage git worktrees from the Multi-Agent pane, where each parallel agent can run in its own worktree.",
+                        }
+                    },
+                    other => rsx! { FeaturePointerPane { title: sub_label(other), desc: "" } },
                 }
             }
         }
@@ -346,14 +361,306 @@ fn ConfigurationPane() -> Element {
     }
 }
 
-// ---------- Placeholder for unimplemented subcategories ----------
+// ---------- Personal > Providers (kimi provider) ----------
+
+/// Pull a human-readable message out of a `{code, stdout, stderr}` CLI envelope.
+fn cli_message(v: &Value) -> String {
+    let out = v.get("stdout").and_then(Value::as_str).unwrap_or("").trim();
+    let err = v.get("stderr").and_then(Value::as_str).unwrap_or("").trim();
+    if !err.is_empty() {
+        err.to_string()
+    } else {
+        out.to_string()
+    }
+}
 
 #[component]
-fn PlaceholderPane(label: &'static str) -> Element {
+fn ProvidersPane() -> Element {
+    let mut providers = use_signal(String::new);
+    let mut status = use_signal(String::new);
+    let mut add_url = use_signal(String::new);
+    let mut remove_id = use_signal(String::new);
+
+    let mut refresh = move || {
+        status.set("Loading…".into());
+        spawn(async move {
+            match invoke("kimi_provider_list", json!({})).await {
+                Ok(v) => {
+                    if let Some(p) = v.get("providers") {
+                        providers.set(serde_json::to_string_pretty(p).unwrap_or_default());
+                        status.set(String::new());
+                    } else {
+                        providers.set(cli_message(&v));
+                        status.set(String::new());
+                    }
+                }
+                Err(e) => status.set(err_msg(&e)),
+            }
+        });
+    };
+
+    use_effect(move || refresh());
+
     rsx! {
         div { class: "settings-pane",
-            h2 { class: "settings-section-title", "{label}" }
-            p { class: "settings-section-desc", "This section is coming soon." }
+            h2 { class: "settings-section-title", "Providers" }
+            p { class: "settings-section-desc",
+                "Manage LLM providers via the Kimi CLI (kimi provider). Import a custom registry, pull the public models.dev catalog, or remove a provider."
+            }
+            div { class: "settings-actions",
+                button {
+                    class: "primary",
+                    onclick: move |_| {
+                        status.set("Importing catalog…".into());
+                        spawn(async move {
+                            match invoke("kimi_provider_catalog", json!({})).await {
+                                Ok(v) => { status.set(cli_message(&v)); refresh(); }
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    "Import models.dev catalog"
+                }
+                button { class: "ghost", onclick: move |_| refresh(), "Refresh" }
+            }
+            div { class: "prefs-row",
+                input {
+                    class: "prefs-input",
+                    placeholder: "Registry api.json URL",
+                    value: "{add_url}",
+                    oninput: move |e| add_url.set(e.value()),
+                }
+                button {
+                    class: "ghost",
+                    onclick: move |_| {
+                        let url = add_url.read().trim().to_string();
+                        if url.is_empty() { return; }
+                        status.set("Adding…".into());
+                        spawn(async move {
+                            match invoke("kimi_provider_add", json!({"url": url})).await {
+                                Ok(v) => { status.set(cli_message(&v)); add_url.set(String::new()); refresh(); }
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    "Add"
+                }
+            }
+            div { class: "prefs-row",
+                input {
+                    class: "prefs-input",
+                    placeholder: "Provider id to remove",
+                    value: "{remove_id}",
+                    oninput: move |e| remove_id.set(e.value()),
+                }
+                button {
+                    class: "ghost danger",
+                    onclick: move |_| {
+                        let id = remove_id.read().trim().to_string();
+                        if id.is_empty() { return; }
+                        status.set("Removing…".into());
+                        spawn(async move {
+                            match invoke("kimi_provider_remove", json!({"providerId": id})).await {
+                                Ok(v) => { status.set(cli_message(&v)); remove_id.set(String::new()); refresh(); }
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    "Remove"
+                }
+            }
+            span { class: "settings-status", "{status}" }
+            pre { class: "settings-editor", "{providers}" }
+        }
+    }
+}
+
+// ---------- Personal > Diagnostics (kimi doctor / export) ----------
+
+#[component]
+fn DiagnosticsPane() -> Element {
+    let mut output = use_signal(String::new);
+    let mut status = use_signal(String::new);
+    let mut export_path = use_signal(String::new);
+    // Default to the active session so export avoids kimi's interactive
+    // "previous session" fallback, which cannot write a file under the
+    // non-interactive stdin the app spawns it with.
+    let mut export_session = use_signal(|| SESSION_ID.read().clone().unwrap_or_default());
+
+    let mut doctor = move |which: &'static str| {
+        status.set(format!("Validating {which}…"));
+        spawn(async move {
+            match invoke("kimi_doctor", json!({"which": which})).await {
+                Ok(v) => {
+                    output.set(cli_message(&v));
+                    let ok = v.get("code").and_then(Value::as_i64) == Some(0);
+                    status.set(if ok { "Valid".into() } else { "Issues found".into() });
+                }
+                Err(e) => status.set(err_msg(&e)),
+            }
+        });
+    };
+
+    rsx! {
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "Diagnostics" }
+            p { class: "settings-section-desc",
+                "Validate configuration files (kimi doctor) and export a session archive (kimi export)."
+            }
+            div { class: "settings-actions",
+                button { class: "ghost", onclick: move |_| doctor("config"), "Validate config.toml" }
+                button { class: "ghost", onclick: move |_| doctor("tui"), "Validate tui.toml" }
+            }
+            h3 { class: "settings-subtitle", "Export session" }
+            div { class: "prefs-row",
+                input {
+                    class: "prefs-input",
+                    placeholder: "Session id (blank = most recent)",
+                    value: "{export_session}",
+                    oninput: move |e| export_session.set(e.value()),
+                }
+            }
+            div { class: "prefs-row",
+                input {
+                    class: "prefs-input",
+                    placeholder: "Output .zip path",
+                    value: "{export_path}",
+                    oninput: move |e| export_path.set(e.value()),
+                }
+                button {
+                    class: "ghost",
+                    onclick: move |_| {
+                        spawn(async move {
+                            if let Ok(Value::String(p)) = invoke("pick_folder", json!({})).await {
+                                export_path.set(format!("{p}/kimi-session.zip"));
+                            }
+                        });
+                    },
+                    "Browse…"
+                }
+                button {
+                    class: "primary",
+                    onclick: move |_| {
+                        let path = export_path.read().trim().to_string();
+                        if path.is_empty() { status.set("Choose an output path first".into()); return; }
+                        let sid = export_session.read().trim().to_string();
+                        let session_id = if sid.is_empty() { Value::Null } else { Value::String(sid) };
+                        status.set("Exporting…".into());
+                        spawn(async move {
+                            match invoke("kimi_export_session", json!({"sessionId": session_id, "output": path})).await {
+                                Ok(v) => {
+                                    let ok = v.get("code").and_then(Value::as_i64) == Some(0);
+                                    status.set(if ok { "Exported".into() } else { cli_message(&v) });
+                                }
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    "Export"
+                }
+            }
+            span { class: "settings-status", "{status}" }
+            if !output.read().is_empty() {
+                pre { class: "settings-editor", "{output}" }
+            }
+        }
+    }
+}
+
+// ---------- Personal > Maintenance (kimi upgrade / migrate) ----------
+
+#[component]
+fn MaintenancePane() -> Element {
+    let mut lines = use_signal(Vec::<String>::new);
+    let mut running = use_signal(|| false);
+
+    use_effect(move || {
+        listen_forever("upgrade:line", move |p| {
+            if let Some(l) = p.as_str() { lines.write().push(l.to_string()); }
+        });
+        listen_forever("migrate:line", move |p| {
+            if let Some(l) = p.as_str() { lines.write().push(l.to_string()); }
+        });
+        listen_forever("upgrade:done", move |_| running.set(false));
+        listen_forever("migrate:done", move |_| running.set(false));
+    });
+
+    let is_running = *running.read();
+
+    rsx! {
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "Maintenance" }
+            p { class: "settings-section-desc",
+                "Upgrade Kimi Code to the latest version, or migrate data from a legacy kimi-cli installation."
+            }
+            div { class: "settings-actions",
+                button {
+                    class: "primary",
+                    disabled: is_running,
+                    onclick: move |_| {
+                        lines.write().clear();
+                        running.set(true);
+                        spawn(async move { let _ = invoke("kimi_upgrade", json!({})).await; });
+                    },
+                    if is_running { "Working…" } else { "Upgrade Kimi Code" }
+                }
+                button {
+                    class: "ghost",
+                    disabled: is_running,
+                    onclick: move |_| {
+                        lines.write().clear();
+                        running.set(true);
+                        spawn(async move { let _ = invoke("kimi_migrate", json!({})).await; });
+                    },
+                    "Migrate from kimi-cli"
+                }
+            }
+            if !lines.read().is_empty() {
+                pre { class: "settings-editor", {lines.read().join("\n")} }
+            }
+        }
+    }
+}
+
+// ---------- Personal > Keyboard shortcuts ----------
+
+const SHORTCUTS: &[(&str, &str)] = &[
+    ("⌘⏎", "Send message"),
+    ("⌘⇧⏎", "Send with thinking"),
+    ("⏎", "Steer (interrupt current turn and send)"),
+    ("⌥⏎", "Queue message after the current turn"),
+    ("Esc", "Stop the current turn / cancel edit"),
+    ("⌘F", "Search in conversation"),
+];
+
+#[component]
+fn ShortcutsPane() -> Element {
+    rsx! {
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "Keyboard shortcuts" }
+            p { class: "settings-section-desc", "Shortcuts available while composing and reading the thread." }
+            div { class: "shortcuts-list",
+                for (keys, desc) in SHORTCUTS {
+                    div { class: "shortcuts-row",
+                        kbd { class: "shortcut-keys", "{keys}" }
+                        span { class: "shortcut-desc", "{desc}" }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---------- Pointer to a feature that lives outside the settings view ----------
+
+#[component]
+fn FeaturePointerPane(title: &'static str, desc: &'static str) -> Element {
+    rsx! {
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "{title}" }
+            p { class: "settings-section-desc",
+                if desc.is_empty() { "Configuration for this section is not available." } else { "{desc}" }
+            }
         }
     }
 }

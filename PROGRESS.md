@@ -5,7 +5,9 @@
 > when a phase lands, record decisions and verified facts, commit at each checkpoint.
 
 **Last updated:** 2026-06-11
-**Build state:** Workspace green (`cargo check --workspace`, `cargo check --target wasm32-unknown-unknown`, `cargo test --workspace` = 47 passed, 0 failed). Frontend hot-reloads via `cargo tauri dev`.
+**Build state:** Workspace green (`cargo check --workspace`, `cargo check --target wasm32-unknown-unknown`, `cargo test --workspace` = 133 passed, 0 failed). Frontend hot-reloads via `cargo tauri dev`.
+
+**CLI parity pass (2026-06-11):** Audited app for unwired features against the full `kimi` 0.14.0 CLI surface. Wired the 5 previously-missing CLI subcommands as settings panes (`export`, `provider` add/remove/list/catalog, `doctor` config/tui, `upgrade`, `migrate`) via new commands in `commands/kimi.rs`. Pruned 10 unbacked "coming soon" settings placeholders (Profile, Appearance, Personalization, Billing, Appshots, Computer use, Hooks, Connections, Environments, Archived chats) that neither `kimi` nor `kimi acp` can power. Kept Git/Worktrees/Browser/Shortcuts as informational panes pointing to their real surfaces (top-bar Diff, Multi-Agent pane, Browser pane). New settings categories: Personal (General/Configuration/Shortcuts), Kimi CLI (Providers/Diagnostics/Maintenance), Integrations (MCP/Browser), Coding (Git/Worktrees).
 
 ## How to work this plan
 

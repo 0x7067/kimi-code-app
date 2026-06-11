@@ -443,3 +443,48 @@
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
+
+/* CLI-feature panes: shortcuts list, subtitles, ghost-danger button */
+.settings-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 18px 0 8px;
+}
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+}
+.shortcut-keys {
+  min-width: 64px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+.shortcut-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+button.ghost.danger {
+  color: var(--red);
+}
+button.ghost.danger:not(:disabled):hover {
+  background: var(--red);
+  color: #fff;
+}
