@@ -5,7 +5,7 @@
 > when a phase lands, record decisions and verified facts, commit at each checkpoint.
 
 **Last updated:** 2026-06-11
-**Build state:** UI crate (`kimi-code-app-ui`) green on native + wasm32, 0 warnings, 7/7 tests. `src-tauri` under active modification (F-001 TDD work in flight).
+**Build state:** Workspace green (`cargo check --workspace`, `cargo test --workspace` = 37 passed). Frontend hot-reloads via `cargo tauri dev`. Screenshots taken of MCP Servers UI + Add Server modal.
 
 ## How to work this plan
 
@@ -36,7 +36,9 @@
 | 5 | F-003: AGENTS.md detect+preview (`read_agents_md`), NewSessionModal (name/cwd/initial prompt/AGENTS.md preview), project-grouped session tree, manual /compact w/ confirm, background-sessions panel, resume-conflict guard (`kimi_session_activity`, 30s threshold). 74 tests. Live-verify: /compact handling, wire.jsonl layout. | DONE | `c01aa4a` |
 | 6 | F-011: binary autodetect (`detect_kimi_binary` + override applied to all spawns), auth status (file-presence check; CLI has no logout), model selector (config.toml parse + set_default_model), thinking default (always/never/ask), per-tool approval prefs + YOLO (auto-approve short-circuit), app_settings.json atomic store loaded at startup. 90 tests. | DONE | `69a33ab` |
 | 6b | Smoke test round 1: caught + fixed startup wasm abort (ipc.rs threw synchronously when Tauri bridge absent/throwing → poisoned wasm-bindgen futures executor → "RefCell already borrowed"; now resolved via js_sys::Reflect, all errors flow through Err paths). Headless UI renders clean. Still TODO live (needs unlocked Mac + real backend): steer timing, session/list shape, /compact, wire.jsonl layout, settings flows, real-window screenshots. | PARTIAL | `1dc1c10` |
-| 8 | P1/P2: F-004 multi-agent, F-005 MCP, F-006 browser, F-007 memory, F-009 automations, F-010 terminal | TODO | — |
+| 7 | F-005 MCP backend (mcp.rs: parse/upsert/remove servers, transport detection, validation, filtering) + F-010 Terminal backend (portable-pty PTY spawning, Registry, event streaming). | DONE | `32645ef` |
+| 8 | F-005 MCP frontend (structured server list, add/edit modal, status badges, enabled toggle) + backend wiring for mcp + terminal commands. Screenshots verified in `cargo tauri dev`. | DONE | `7c2f215` |
+| 9 | P1/P2 remaining: F-010 terminal frontend, F-002 P1 leftovers (search, @mentions, checkpoint), F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
 
 ## Phase detail
 
@@ -47,8 +49,8 @@ Agent-verified checklist: tokens match spec (tests in `src/design_tokens/tests.r
 Scope: protocol module with typed message routing (text/tool_call/tool_result/error/status), integer version negotiation + capability capture, MessageQueue (doubles as per-session turn serializer), crash supervisor with injectable transport, concurrent session registry. Corrections about integer version + cancel semantics already sent to the agent.
 
 ### F-012 session sync (user requirement, not in REQUIREMENTS.md)
-Backend DONE (uncommitted): `acp/store.rs` (index/state.json parsing, workDir filter, title derivation, updatedAt-desc sort; 12 tests), `commands/sessions.rs` (`kimi_list_sessions` ACP-first w/ disk fallback, `kimi_load_session` w/ TURN_AGENT_BUSY mapped error), 2s mtime watcher emitting `sessions:changed`. 37 backend tests green.
-Frontend TODO: sidebar session list consuming `kimi_list_sessions` + `sessions:changed`, open-session → `kimi_load_session` replay into thread. NOTE: `session/list` request param shape unverified live — verify during `cargo tauri dev` smoke test; fallback covers failures.
+Backend DONE: `acp/store.rs` (index/state.json parsing, workDir filter, title derivation, updatedAt-desc sort; 12 tests), `commands/sessions.rs` (`kimi_list_sessions` ACP-first w/ disk fallback, `kimi_load_session` w/ TURN_AGENT_BUSY mapped error), 2s mtime watcher emitting `sessions:changed`. 37 backend tests green.
+Frontend DONE: sidebar session list consuming `kimi_list_sessions` + `sessions:changed`, open-session → `kimi_load_session` replay into thread. Project-grouped tree with collapsible folders, background sessions panel, session search.
 
 ### F-013 stop (user requirement)
 Backend: `acp_cancel(session_id)` command → `session/cancel` notification; handle `stopReason: cancelled`. Frontend: stop button in composer while turn active; Escape shortcut; preserve partial output.
@@ -63,9 +65,17 @@ Send-while-running defaults to steer: `session/cancel` → await cancelled stopR
 
 ### F-003 sessions/projects — existing: sidebar projects/sessions, commands/projects.rs. Gaps: AGENTS.md auto-detect+preview at session init, session creation dialog, context usage bar w/ color coding, manual compact, background sessions panel.
 
-### F-011 settings — existing: settings.rs edits config.toml/tui.toml/mcp.json/AGENTS.md; login_modal.rs. Gaps: binary autodetect, model selector w/ feature indicators, thinking default, per-tool approval prefs, YOLO mode, apply-without-restart audit.
+### F-011 settings — DONE: settings.rs with Preferences pane (binary autodetect, auth status, model selector, thinking default, per-tool approval prefs, YOLO mode) plus raw config editors for config.toml/tui.toml/mcp.json/AGENTS.md. F-005 MCP Servers structured UI added as a dedicated tab alongside raw mcp.json editor.
 
-### P1/P2 (F-004..F-010) — not started. Implement after the above, priority order: F-005 MCP config UI (mcp.json editing exists), F-010 terminal, F-002 P1 leftovers, F-007 memory, F-004 multi-agent (worktrees), F-006 browser preview, F-009 automations. F-008 (P2 preview iteration) last / optional.
+### P1/P2 status
+- **F-005 MCP** — backend + frontend DONE. Structured server management UI live.
+- **F-010 Terminal** — backend DONE (PTY spawning, Registry, event streaming). Frontend TODO: embedded terminal panel with xterm-like rendering.
+- **F-002 chat P1** — gaps: in-conversation search, @mentions, checkpoint/restore.
+- **F-007 Memory** — not started.
+- **F-004 Multi-agent** — not started (worktrees, decomposition, merge UI).
+- **F-006 Browser** — not started.
+- **F-009 Automations** — not started.
+- **F-008 Preview iteration** — P2, optional.
 
 ## Decisions log
 
