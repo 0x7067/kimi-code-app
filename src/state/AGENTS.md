@@ -4,16 +4,16 @@
 # state
 
 ## Purpose
-Global application state for the Dioxus frontend. Contains domain types (`model.rs`), the ACP `session/update` notification reducer (`reducer.rs`), and the global `GlobalSignal` declarations (`signals.rs`). Every UI component reads from these signals; the reducer is the only place that writes to them in response to backend events.
+Global application state for the Dioxus frontend. Contains domain types (`model.rs`), the global `GlobalSignal` declarations (`signals.rs`), and the ACP `session/update` reducer (`reducer.rs`). UI components read from these signals; the reducer and user actions mutate them in response to backend events.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
 | `mod.rs` | Barrel export — re-exports `model::*`, `reducer::*`, `signals::*` |
-| `model.rs` | Domain types — `Item`, `ToolCall`, `PlanEntry`, `SessionMeta`, `PermissionRequest`, `ConfigOption`, `SlashCommand`, `Attachment`, `View` |
-| `signals.rs` | Global `GlobalSignal` declarations — connection, session, thread, plan, config, permissions, attachments, view, diff, error |
-| `reducer.rs` | `apply_update` — parses ACP `session/update` payloads and mutates signals (append chunks, set tool status, update plan, etc.) |
+| `model.rs` | Domain types — `Item`, `ToolCall`, `PlanEntry`, `SessionMeta`, `PermissionRequest`, `SlashCommand`, `Attachment`, `View`, `TaskTemplate`, `Automation`, `ApprovalPrefs`, `AppSettings` |
+| `signals.rs` | Global `GlobalSignal` declarations — connection, login, project/session lists, thread items, plan, commands, running state, permissions, attachments, settings, diff/terminal/browser/memory panels, scrollback cache |
+| `reducer.rs` | `apply_update` — parses ACP `session/update` payloads and mutates signals (message chunks, tool calls, plan updates, context usage, etc.) |
 
 ## Subdirectories
 
@@ -30,7 +30,7 @@ Global application state for the Dioxus frontend. Contains domain types (`model.
 - No automated tests. Validate by running `cargo tauri dev` and exercising ACP flows.
 
 ### Common Patterns
-- `reset_thread()` in `signals.rs` clears items, plan, commands, config options, permissions, and running state — used when switching sessions.
+- `reset_thread()` in `signals.rs` clears items, plan, commands, permission, running state, context usage, and injected-memory count — used when switching sessions.
 - `content_text()` in `reducer.rs` recursively flattens ACP content blocks (string, array, or object with `text`/`content`) into plain text.
 - `push_chunk()` appends streaming text to the last message of the same kind, avoiding a new element per token.
 
@@ -38,7 +38,8 @@ Global application state for the Dioxus frontend. Contains domain types (`model.
 
 ### Internal
 - `src/components/` — reads from these signals to render UI
-- `src/actions.rs` — may reset or mutate signals directly for user-initiated actions
+- `src/actions.rs` — mutates signals directly for user-initiated actions
+- `src/conversation.rs` — used by the reducer to parse context-usage payloads
 
 ### External
 - `dioxus` — `GlobalSignal`, `Signal::global`, `ReadableExt`

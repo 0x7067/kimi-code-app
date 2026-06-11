@@ -10,7 +10,7 @@ Development automation scripts. Currently holds the pre-commit / CI quality gate
 
 | File | Description |
 |------|-------------|
-| `check.sh` | Quality gate — runs `cargo fmt --check` and `cargo clippy` with `-D warnings` |
+| `check.sh` | Quality gate — runs `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` |
 
 ## Subdirectories
 
@@ -32,9 +32,9 @@ Development automation scripts. Currently holds the pre-commit / CI quality gate
 ## Dependencies
 
 ### Internal
-*None.*
+- Invoked against the workspace root, so it implicitly exercises the root `Cargo.toml` and all workspace members (`src-tauri/`).
 
 ### External
-*None.*
+- `cargo` (Rust toolchain) — `cargo fmt` and `cargo clippy`.
 
 <!-- MANUAL: -->

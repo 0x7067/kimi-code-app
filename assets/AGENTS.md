@@ -4,13 +4,13 @@
 # assets
 
 ## Purpose
-Static assets bundled into the Dioxus webview frontend. Stylesheets live in `assets/css/` and are loaded individually from `src/main.rs` via `asset!("/assets/css/…")`.
+Static assets bundled into the Dioxus webview frontend. Stylesheets are split into numbered, feature-based modules under `assets/css/` and loaded individually from `src/main.rs` via `asset!("/assets/css/…")`. Image/logo assets are also shipped to the webview.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `main.css` | Stub file documenting the modular CSS structure |
+| `main.css` | Stub documenting the modular CSS structure and module order |
 | `css/01-tokens.css` | Design tokens (colors, typography, spacing, motion) |
 | `css/02-base.css` | Reset, base styles, scrollbar, utilities |
 | `css/03-layout.css` | Shell, buttons, inputs, main, topbar, workspace |
@@ -28,8 +28,8 @@ Static assets bundled into the Dioxus webview frontend. Stylesheets live in `ass
 
 ## Subdirectories
 
-| Directory | Description |
-|-----------|-------------|
+| Directory | Purpose |
+|-----------|---------|
 | `css/` | Modular stylesheets — one file per feature domain |
 
 ## For AI Agents
@@ -50,9 +50,9 @@ Static assets bundled into the Dioxus webview frontend. Stylesheets live in `ass
 
 ### Internal
 - `src/main.rs` — loads all `css/*.css` files at startup
-- `src/app.rs` — all component class names referenced here
+- `src/components/` — component class names referenced here (e.g., `app.rs`, `thread.rs`, `composer.rs`)
 
 ### External
-*None.*
+- *None.*
 
 <!-- MANUAL: -->
