@@ -1,105 +1,9 @@
-//! App-wide state and the ACP event reducer.
+//! Reducer applying ACP `session/update` notifications to the global signals.
 
-use dioxus::prelude::*;
+use super::model::*;
+use super::signals::*;
+use dioxus::prelude::ReadableExt;
 use serde_json::Value;
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct ToolCall {
-    pub id: String,
-    pub title: String,
-    pub kind: String,
-    pub status: String,
-    pub output: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub enum Item {
-    User(String),
-    Agent(String),
-    Thought(String),
-    Tool(ToolCall),
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct PlanEntry {
-    pub content: String,
-    pub priority: String,
-    pub status: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct SelectOption {
-    pub value: String,
-    pub name: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct ConfigOption {
-    pub id: String,
-    pub name: String,
-    pub current: String,
-    pub options: Vec<SelectOption>,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct SessionMeta {
-    pub id: String,
-    pub cwd: String,
-    pub title: String,
-    pub updated_at: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct PermissionRequest {
-    pub request_id: u64,
-    pub title: String,
-    pub detail: String,
-    pub options: Vec<(String, String, String)>, // (optionId, name, kind)
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct SlashCommand {
-    pub name: String,
-    pub description: String,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum View {
-    Chat,
-    Settings,
-}
-
-pub static CONNECTED: GlobalSignal<bool> = Signal::global(|| false);
-pub static AGENT_INFO: GlobalSignal<String> = Signal::global(String::new);
-pub static NEEDS_LOGIN: GlobalSignal<bool> = Signal::global(|| false);
-pub static LOGIN_LINES: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
-pub static LOGIN_RUNNING: GlobalSignal<bool> = Signal::global(|| false);
-
-pub static PROJECT: GlobalSignal<Option<String>> = Signal::global(|| None);
-pub static RECENT_PROJECTS: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
-pub static SESSIONS: GlobalSignal<Vec<SessionMeta>> = Signal::global(Vec::new);
-
-pub static SESSION_ID: GlobalSignal<Option<String>> = Signal::global(|| None);
-pub static ITEMS: GlobalSignal<Vec<Item>> = Signal::global(Vec::new);
-pub static PLAN: GlobalSignal<Vec<PlanEntry>> = Signal::global(Vec::new);
-pub static CONFIG_OPTIONS: GlobalSignal<Vec<ConfigOption>> = Signal::global(Vec::new);
-pub static COMMANDS: GlobalSignal<Vec<SlashCommand>> = Signal::global(Vec::new);
-pub static RUNNING: GlobalSignal<bool> = Signal::global(|| false);
-pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct Attachment {
-    pub name: String,
-    pub mime: String,
-    pub data: String,
-}
-
-pub static ATTACHMENTS: GlobalSignal<Vec<Attachment>> = Signal::global(Vec::new);
-pub static SESSION_SEARCH: GlobalSignal<String> = Signal::global(String::new);
-pub static VIEW: GlobalSignal<View> = Signal::global(|| View::Chat);
-pub static SHOW_DIFF: GlobalSignal<bool> = Signal::global(|| false);
-pub static DIFF: GlobalSignal<String> = Signal::global(String::new);
-pub static ERROR: GlobalSignal<Option<String>> = Signal::global(|| None);
 
 fn s(v: &Value, key: &str) -> String {
     v.get(key).and_then(|x| x.as_str()).unwrap_or_default().to_string()
@@ -122,6 +26,17 @@ fn content_text(content: &Value) -> String {
     }
 }
 
+fn push_chunk(update: &Value, make: fn(String) -> Item, append: fn(&mut Item, &str) -> bool) {
+    let text = content_text(update.get("content").unwrap_or(&Value::Null));
+    let mut items = ITEMS.write();
+    if let Some(last) = items.last_mut() {
+        if append(last, &text) {
+            return;
+        }
+    }
+    items.push(make(text));
+}
+
 /// Apply one `session/update` notification to the thread state.
 pub fn apply_update(params: &Value) {
     let sid = s(params, "sessionId");
@@ -134,33 +49,30 @@ pub fn apply_update(params: &Value) {
     let kind = s(update, "sessionUpdate");
 
     match kind.as_str() {
-        "user_message_chunk" => {
-            let text = content_text(update.get("content").unwrap_or(&Value::Null));
-            let mut items = ITEMS.write();
-            if let Some(Item::User(last)) = items.last_mut() {
-                last.push_str(&text);
+        "user_message_chunk" => push_chunk(update, Item::User, |item, text| {
+            if let Item::User(last) = item {
+                last.push_str(text);
+                true
             } else {
-                items.push(Item::User(text));
+                false
             }
-        }
-        "agent_message_chunk" => {
-            let text = content_text(update.get("content").unwrap_or(&Value::Null));
-            let mut items = ITEMS.write();
-            if let Some(Item::Agent(last)) = items.last_mut() {
-                last.push_str(&text);
+        }),
+        "agent_message_chunk" => push_chunk(update, Item::Agent, |item, text| {
+            if let Item::Agent(last) = item {
+                last.push_str(text);
+                true
             } else {
-                items.push(Item::Agent(text));
+                false
             }
-        }
-        "agent_thought_chunk" => {
-            let text = content_text(update.get("content").unwrap_or(&Value::Null));
-            let mut items = ITEMS.write();
-            if let Some(Item::Thought(last)) = items.last_mut() {
-                last.push_str(&text);
+        }),
+        "agent_thought_chunk" => push_chunk(update, Item::Thought, |item, text| {
+            if let Item::Thought(last) = item {
+                last.push_str(text);
+                true
             } else {
-                items.push(Item::Thought(text));
+                false
             }
-        }
+        }),
         "tool_call" => {
             let tc = ToolCall {
                 id: s(update, "toolCallId"),
@@ -274,15 +186,6 @@ pub fn set_config_options(v: &Value) {
         })
         .unwrap_or_default();
     *CONFIG_OPTIONS.write() = parsed;
-}
-
-pub fn reset_thread() {
-    ITEMS.write().clear();
-    PLAN.write().clear();
-    COMMANDS.write().clear();
-    CONFIG_OPTIONS.write().clear();
-    *PERMISSION.write() = None;
-    *RUNNING.write() = false;
 }
 
 pub fn err_msg(e: &Value) -> String {

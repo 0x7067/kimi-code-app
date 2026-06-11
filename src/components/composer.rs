@@ -1,0 +1,116 @@
+use crate::actions::{cancel_turn, send_prompt, set_config};
+use crate::ipc::invoke;
+use crate::state::*;
+use dioxus::prelude::*;
+use serde_json::{json, Value};
+
+#[component]
+pub fn Composer() -> Element {
+    let mut draft = use_signal(String::new);
+    let running = *RUNNING.read();
+    let has_session = SESSION_ID.read().is_some();
+    let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
+    let filter = draft.read().trim_start_matches('/').to_string();
+
+    let mut submit = move || {
+        let text = draft.read().trim().to_string();
+        if text.is_empty() || *RUNNING.read() || SESSION_ID.read().is_none() {
+            return;
+        }
+        draft.set(String::new());
+        spawn(send_prompt(text));
+    };
+
+    rsx! {
+        div { class: "composer",
+            if show_slash && !COMMANDS.read().is_empty() {
+                div { class: "slash-menu",
+                    for cmd in COMMANDS.read().iter().filter(|c| c.name.starts_with(&filter)).take(8) {
+                        {
+                            let name = cmd.name.clone();
+                            rsx! {
+                                div {
+                                    key: "{cmd.name}",
+                                    class: "slash-item",
+                                    onclick: |_| draft.set(format!("/{name} ")),
+                                    span { class: "slash-name", "/{cmd.name}" }
+                                    span { class: "slash-desc", "{cmd.description}" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            div { class: "composer-box",
+                if !ATTACHMENTS.read().is_empty() {
+                    div { class: "attachments",
+                        for (i, a) in ATTACHMENTS.read().iter().enumerate() {
+                            span { key: "{i}", class: "attachment-chip",
+                                "{a.name}"
+                                button {
+                                    class: "chip-x",
+                                    onclick: |_| { ATTACHMENTS.write().remove(i); },
+                                    "Remove"
+                                }
+                            }
+                        }
+                    }
+                }
+                textarea {
+                    placeholder: if has_session { "Message Kimi…  ( / for commands, Enter to send)" } else { "Start a session first" },
+                    value: "{draft}",
+                    disabled: !has_session,
+                    oninput: |e| draft.set(e.value()),
+                    onkeydown: |e| {
+                        if e.key() == Key::Enter && !e.modifiers().shift() {
+                            e.prevent_default();
+                            submit();
+                        }
+                    },
+                }
+                div { class: "composer-controls",
+                    button {
+                        class: "ghost",
+                        title: "Attach image",
+                        disabled: !has_session,
+                        onclick: |_| {
+                            spawn(async {
+                                if let Ok(Value::Object(img)) = invoke("pick_image", json!({})).await {
+                                    ATTACHMENTS.write().push(Attachment {
+                                        name: img.get("name").and_then(|v| v.as_str()).unwrap_or("image").into(),
+                                        mime: img.get("mimeType").and_then(|v| v.as_str()).unwrap_or("image/png").into(),
+                                        data: img.get("data").and_then(|v| v.as_str()).unwrap_or("").into(),
+                                    });
+                                }
+                            });
+                        },
+                        "Attach"
+                    }
+                    for opt in CONFIG_OPTIONS.read().iter() {
+                        {
+                            let id = opt.id.clone();
+                            rsx! {
+                                select {
+                                    key: "{opt.id}",
+                                    class: "cfg-select",
+                                    title: "{opt.name}",
+                                    value: "{opt.current}",
+                                    onchange: |e| { spawn(set_config(id.clone(), e.value())); },
+                                    for so in opt.options.iter() {
+                                        option { value: "{so.value}", selected: so.value == opt.current, "{so.name}" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    div { class: "spacer" }
+                    if running {
+                        button { class: "danger", onclick: |_| { spawn(cancel_turn()); }, "Stop" }
+                    } else {
+                        button { class: "primary", disabled: !has_session, onclick: |_| submit(), "Send" }
+                    }
+                }
+            }
+        }
+    }
+}

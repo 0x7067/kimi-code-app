@@ -1,16 +1,18 @@
-mod app;
+mod actions;
+mod components;
+mod ipc;
+mod markdown;
 mod state;
-mod tauri;
 
 use dioxus::prelude::*;
 
 static CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
-    dioxus::launch(|| {
+    launch(|| {
         rsx! {
-            document::Stylesheet { href: CSS }
-            app::App {}
+            Stylesheet { href: CSS }
+            components::App {}
         }
     });
 }

@@ -1,5 +1,6 @@
 mod acp;
 mod commands;
+mod paths;
 
 use commands::AppState;
 
@@ -15,22 +16,7 @@ pub fn run() {
                  window.addEventListener('unhandledrejection', e => window.__TAURI__.core.invoke('js_log', {msg: 'rejection: '+String(e.reason)}));",
             );
         })
-        .invoke_handler(tauri::generate_handler![
-            commands::acp_connect,
-            commands::acp_request,
-            commands::acp_notify,
-            commands::acp_respond_permission,
-            commands::kimi_login,
-            commands::js_log,
-            commands::kimi_version,
-            commands::read_kimi_config,
-            commands::write_kimi_config,
-            commands::recent_projects,
-            commands::pick_folder,
-            commands::pick_image,
-            commands::mcp_servers,
-            commands::git_diff,
-        ])
+        .invoke_handler(commands::handlers())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
