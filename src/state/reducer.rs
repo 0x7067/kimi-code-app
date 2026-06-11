@@ -47,6 +47,15 @@ pub fn apply_update(params: &Value) {
     }
     if let Some(frac) = crate::conversation::parse_context_usage(params) {
         *CONTEXT_USAGE.write() = frac;
+        let settings = APP_SETTINGS.read();
+        if settings.auto_compact {
+            if frac >= settings.auto_compact_threshold && !*AUTO_COMPACT_FIRED.read() {
+                *AUTO_COMPACT_FIRED.write() = true;
+            }
+            if frac < settings.auto_compact_threshold && *AUTO_COMPACT_FIRED.read() {
+                *AUTO_COMPACT_FIRED.write() = false;
+            }
+        }
     }
     let update = params.get("update").unwrap_or(params);
     let kind = s(update, "sessionUpdate");

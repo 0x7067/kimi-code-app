@@ -36,6 +36,9 @@ pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(
 pub static SHOW_NEW_SESSION: GlobalSignal<bool> = Signal::global(|| false);
 /// F-003.13: whether the manual-compact confirmation dialog is open.
 pub static SHOW_COMPACT_CONFIRM: GlobalSignal<bool> = Signal::global(|| false);
+/// F-003.4: set by the reducer when context usage crosses the auto-compact
+/// threshold; cleared by the app effect once compact is dispatched.
+pub static AUTO_COMPACT_FIRED: GlobalSignal<bool> = Signal::global(|| false);
 /// F-003.10: project roots collapsed in the sidebar tree.
 pub static COLLAPSED_PROJECTS: GlobalSignal<std::collections::HashSet<String>> =
     Signal::global(Default::default);

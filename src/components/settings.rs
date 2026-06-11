@@ -91,6 +91,7 @@ fn PreferencesPane() -> Element {
             AuthSection {}
             ModelSection {}
             ThinkingSection {}
+            ContextSection {}
             ApprovalsSection {}
             MemorySection {}
         }
@@ -393,6 +394,46 @@ fn ApprovalsSection() -> Element {
                 }
                 p { class: "prefs-warning",
                     "Danger: the agent will run shell commands, edit files, and call tools without asking. Use only in throwaway environments."
+                }
+            }
+        }
+    }
+}
+
+// ---------- F-011.7: context limit & auto-compact ----------
+
+#[component]
+fn ContextSection() -> Element {
+    let settings = APP_SETTINGS.read().clone();
+    rsx! {
+        section { class: "prefs-section",
+            h3 { "Context limit" }
+            div { class: "prefs-row prefs-approval",
+                label { class: "prefs-label",
+                    input {
+                        r#type: "checkbox",
+                        checked: settings.auto_compact,
+                        onchange: move |e| update_settings(|s| s.auto_compact = e.checked()),
+                    }
+                    "Auto-compact when usage exceeds threshold"
+                }
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Compact threshold" }
+                select {
+                    class: "cfg-select",
+                    disabled: !settings.auto_compact,
+                    value: "{(settings.auto_compact_threshold * 100.0).round() as u32}",
+                    onchange: move |e| {
+                        if let Ok(pct) = e.value().parse::<f64>() {
+                            update_settings(|s| s.auto_compact_threshold = pct / 100.0);
+                        }
+                    },
+                    option { value: "60", "60%" }
+                    option { value: "70", "70%" }
+                    option { value: "80", "80%" }
+                    option { value: "85", "85%" }
+                    option { value: "90", "90%" }
                 }
             }
         }

@@ -114,6 +114,12 @@ pub struct AppSettings {
     pub naming_conventions: String,
     /// F-009.2: reusable task templates.
     pub task_templates: Vec<TaskTemplate>,
+    /// F-003.4 / F-011.7: automatically trigger /compact when context usage
+    /// exceeds the threshold.
+    pub auto_compact: bool,
+    /// F-003.4 / F-011.7: context-usage fraction (0.0–1.0) at which auto-compact
+    /// fires. Default 0.8 (80%).
+    pub auto_compact_threshold: f64,
 }
 
 impl Default for AppSettings {
@@ -127,6 +133,8 @@ impl Default for AppSettings {
             coding_style: String::new(),
             naming_conventions: String::new(),
             task_templates: default_task_templates(),
+            auto_compact: true,
+            auto_compact_threshold: 0.8,
         }
     }
 }
