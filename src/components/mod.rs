@@ -13,6 +13,7 @@ mod session_modals;
 mod settings;
 mod sidebar;
 mod status_bar;
+mod terminal_pane;
 mod thread;
 mod topbar;
 
@@ -25,5 +26,6 @@ pub(crate) use session_modals::{CompactConfirmModal, NewSessionModal, ResumeConf
 pub(crate) use settings::SettingsView;
 pub(crate) use sidebar::Sidebar;
 pub(crate) use status_bar::StatusBar;
+pub(crate) use terminal_pane::TerminalPane;
 pub(crate) use thread::ThreadView;
 pub(crate) use topbar::Topbar;

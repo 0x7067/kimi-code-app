@@ -125,6 +125,9 @@ pub fn App() -> Element {
                             ThreadView {}
                             PendingQueue {}
                             Composer {}
+                            if *TERMINAL_OPEN.read() {
+                                TerminalPane {}
+                            }
                         }
                         if *SHOW_DIFF.read() {
                             DiffPane {}

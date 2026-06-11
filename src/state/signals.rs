@@ -60,6 +60,13 @@ pub static SHOW_DIFF: GlobalSignal<bool> = Signal::global(|| false);
 pub static DIFF: GlobalSignal<String> = Signal::global(String::new);
 pub static ERROR: GlobalSignal<Option<String>> = Signal::global(|| None);
 
+/// F-010: whether the embedded terminal panel is open.
+pub static TERMINAL_OPEN: GlobalSignal<bool> = Signal::global(|| false);
+/// F-010: accumulated terminal output text.
+pub static TERMINAL_OUTPUT: GlobalSignal<String> = Signal::global(String::new);
+/// F-010: current terminal ID from the backend (None = no active terminal).
+pub static TERMINAL_ID: GlobalSignal<Option<u64>> = Signal::global(|| None);
+
 /// Cached thread state per session so switching sessions does not lose scrollback.
 pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);
 /// Locally-overridden semantic titles for sessions (key = sessionId).

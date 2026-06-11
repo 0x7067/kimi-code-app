@@ -38,7 +38,8 @@
 | 6b | Smoke test round 1: caught + fixed startup wasm abort (ipc.rs threw synchronously when Tauri bridge absent/throwing → poisoned wasm-bindgen futures executor → "RefCell already borrowed"; now resolved via js_sys::Reflect, all errors flow through Err paths). Headless UI renders clean. Still TODO live (needs unlocked Mac + real backend): steer timing, session/list shape, /compact, wire.jsonl layout, settings flows, real-window screenshots. | PARTIAL | `1dc1c10` |
 | 7 | F-005 MCP backend (mcp.rs: parse/upsert/remove servers, transport detection, validation, filtering) + F-010 Terminal backend (portable-pty PTY spawning, Registry, event streaming). | DONE | `32645ef` |
 | 8 | F-005 MCP frontend (structured server list, add/edit modal, status badges, enabled toggle) + backend wiring for mcp + terminal commands. Screenshots verified in `cargo tauri dev`. | DONE | `7c2f215` |
-| 9 | P1/P2 remaining: F-010 terminal frontend, F-002 P1 leftovers (search, @mentions, checkpoint), F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
+| 9 | F-010 terminal frontend (PTY panel, streaming output, input, Clear/Close) verified in `cargo tauri dev`. | DONE | `TBD` |
+| 10 | P1/P2 remaining: F-002 P1 leftovers (search, @mentions, checkpoint), F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
 
 ## Phase detail
 
@@ -69,7 +70,7 @@ Send-while-running defaults to steer: `session/cancel` → await cancelled stopR
 
 ### P1/P2 status
 - **F-005 MCP** — backend + frontend DONE. Structured server management UI live.
-- **F-010 Terminal** — backend DONE (PTY spawning, Registry, event streaming). Frontend TODO: embedded terminal panel with xterm-like rendering.
+- **F-010 Terminal** — backend + frontend DONE. PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded panel below composer with streaming output, input line with prompt, Clear/Close controls, auto-scroll. Verified live in `cargo tauri dev`. No full xterm emulation — simple text renderer sufficient for command execution and output review.
 - **F-002 chat P1** — gaps: in-conversation search, @mentions, checkpoint/restore.
 - **F-007 Memory** — not started.
 - **F-004 Multi-agent** — not started (worktrees, decomposition, merge UI).

@@ -102,6 +102,15 @@ pub fn Topbar() -> Element {
                     "Diff"
                 }
                 button {
+                    class: if *TERMINAL_OPEN.read() { "ghost active" } else { "ghost" },
+                    title: "Toggle terminal",
+                    onclick: move |_| {
+                        let open = !*TERMINAL_OPEN.read();
+                        *TERMINAL_OPEN.write() = open;
+                    },
+                    "Terminal"
+                }
+                button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();
