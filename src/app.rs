@@ -160,12 +160,8 @@ async fn set_config(config_id: String, value: String) {
         Ok(r) => {
             if let Some(opts) = r.get("configOptions") {
                 set_config_options(opts);
-            } else {
-                for opt in CONFIG_OPTIONS.write().iter_mut() {
-                    if opt.id == config_id {
-                        opt.current = value.clone();
-                    }
-                }
+            } else if let Some(opt) = CONFIG_OPTIONS.write().iter_mut().find(|o| o.id == config_id) {
+                opt.current = value.clone();
             }
         }
         Err(e) => *ERROR.write() = Some(err_msg(&e)),
@@ -413,24 +409,22 @@ fn Sidebar() -> Element {
 
 #[component]
 fn ThreadView() -> Element {
-    let items = ITEMS.read().clone();
-    let plan = PLAN.read().clone();
     use_effect(move || {
         let _ = (ITEMS.read().len(), RUNNING.read());
         document::eval("requestAnimationFrame(() => { const t = document.getElementById('thread'); if (t) t.scrollTop = t.scrollHeight; });");
     });
     rsx! {
         div { class: "thread", id: "thread",
-            if items.is_empty() && SESSION_ID.read().is_none() {
+            if ITEMS.read().is_empty() && SESSION_ID.read().is_none() {
                 div { class: "empty",
                     h2 { "Welcome to Kimi Code" }
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
                 }
             }
-            if !plan.is_empty() {
+            if !PLAN.read().is_empty() {
                 div { class: "plan-panel",
                     div { class: "plan-head", "Plan" }
-                    for (i, entry) in plan.iter().enumerate() {
+                    for (i, entry) in PLAN.read().iter().enumerate() {
                         div { key: "{i}", class: "plan-entry {entry.status}",
                             span { class: "plan-status",
                                 {match entry.status.as_str() {
@@ -444,7 +438,7 @@ fn ThreadView() -> Element {
                     }
                 }
             }
-            for (i, item) in items.iter().enumerate() {
+            for (i, item) in ITEMS.read().iter().enumerate() {
                 {render_item(i, item)}
             }
             if *RUNNING.read() {
@@ -499,8 +493,6 @@ fn Composer() -> Element {
     let mut draft = use_signal(String::new);
     let running = *RUNNING.read();
     let has_session = SESSION_ID.read().is_some();
-    let config_opts = CONFIG_OPTIONS.read().clone();
-    let commands = COMMANDS.read().clone();
     let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
     let filter = draft.read().trim_start_matches('/').to_string();
 
@@ -515,9 +507,9 @@ fn Composer() -> Element {
 
     rsx! {
         div { class: "composer",
-            if show_slash && !commands.is_empty() {
+            if show_slash && !COMMANDS.read().is_empty() {
                 div { class: "slash-menu",
-                    for cmd in commands.iter().filter(|c| c.name.starts_with(&filter)).take(8) {
+                    for cmd in COMMANDS.read().iter().filter(|c| c.name.starts_with(&filter)).take(8) {
                         {
                             let name = cmd.name.clone();
                             rsx! {
@@ -578,7 +570,7 @@ fn Composer() -> Element {
                         },
                         "🖼"
                     }
-                    for opt in config_opts {
+                    for opt in CONFIG_OPTIONS.read().iter() {
                         {
                             let id = opt.id.clone();
                             rsx! {

@@ -163,11 +163,12 @@ pub async fn kimi_version() -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
+const ALLOWED_CONFIGS: &[&str] = &["config.toml", "tui.toml", "mcp.json", "AGENTS.md"];
+
 /// Read a kimi config file (config.toml, tui.toml, mcp.json, AGENTS.md) from ~/.kimi-code.
 #[tauri::command]
 pub async fn read_kimi_config(name: String) -> Result<String, String> {
-    let allowed = ["config.toml", "tui.toml", "mcp.json", "AGENTS.md"];
-    if !allowed.contains(&name.as_str()) {
+    if !ALLOWED_CONFIGS.contains(&name.as_str()) {
         return Err("not an allowed config file".into());
     }
     let path = kimi_home().join(&name);
@@ -180,8 +181,7 @@ pub async fn read_kimi_config(name: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn write_kimi_config(name: String, content: String) -> Result<(), String> {
-    let allowed = ["config.toml", "tui.toml", "mcp.json", "AGENTS.md"];
-    if !allowed.contains(&name.as_str()) {
+    if !ALLOWED_CONFIGS.contains(&name.as_str()) {
         return Err("not an allowed config file".into());
     }
     let home = kimi_home();
