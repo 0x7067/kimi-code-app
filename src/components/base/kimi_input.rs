@@ -1,12 +1,11 @@
 //! KimiInput — Text input with Kimi styling, focus ring, and optional icons.
 
-use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
 #[component]
 pub fn KimiInput(
-    #[props(default = "")] value: String,
-    #[props(default = "")] placeholder: String,
+    #[props(default)] value: String,
+    #[props(default)] placeholder: String,
     #[props(default = false)] disabled: bool,
     #[props(default = false)] error: bool,
     #[props(default = false)] multiline: bool,

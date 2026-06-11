@@ -9,7 +9,7 @@
 use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Props)]
 pub struct IconProps {
     #[props(default = 16)]
     pub size: u32,

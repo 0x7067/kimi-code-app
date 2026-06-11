@@ -1,6 +1,9 @@
 //! UI components, one file per view region.
 #![allow(unused_qualifications)]
 
+pub mod base;
+pub mod icons;
+
 mod app;
 mod composer;
 mod diff_pane;

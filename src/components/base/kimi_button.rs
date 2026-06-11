@@ -1,6 +1,5 @@
 //! KimiButton — Primary, secondary, ghost, and danger buttons.
 
-use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
 #[component]

@@ -10,8 +10,8 @@ pub mod spacing;
 pub mod animation;
 pub mod elevation;
 
+#[cfg(test)]
+mod tests;
+
 pub use colors::Colors;
 pub use typography::Typography;
-pub use spacing::Spacing;
-pub use animation::Animation;
-pub use elevation::Elevation;

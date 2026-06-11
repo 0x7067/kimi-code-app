@@ -25,8 +25,8 @@ pub fn KimiDropdown(
                         position: absolute;
                         top: calc(100% + 6px);
                         right: 0;
-                        background: {bg_surface};
-                        border: 1px solid {border};
+                        background: {BG_SURFACE};
+                        border: 1px solid {BORDER};
                         border-radius: 12px;
                         box-shadow: 0 8px 24px rgba(0,0,0,0.4);
                         padding: 8px 0;
@@ -34,7 +34,7 @@ pub fn KimiDropdown(
                         z-index: 40;
                         overflow: hidden;
                     ",
-                    onclick: move |e| {
+                    onclick: move |_e| {
                         // Close when clicking inside (typical dropdown behavior)
                         // If child items want to keep it open they can call e.stop_propagation()
                         is_open.set(false);
@@ -68,7 +68,7 @@ pub fn KimiDropdownItem(
                 background: {bg};
                 border-left: {left_border};
                 font-size: 14px;
-                color: {text};
+                color: {TEXT};
                 transition: background 150ms ease-out;
                 white-space: nowrap;
             ",
@@ -89,13 +89,16 @@ pub fn KimiDropdownDivider() -> Element {
         div {
             style: "
                 height: 1px;
-                background: {border};
+                background: {BORDER};
                 margin: 8px 0;
             ",
         }
     }
 }
 
-const bg_surface: &str = Colors::BG_SURFACE;
-const border: &str = Colors::BORDER_SUBTLE;
-const text: &str = Colors::TEXT_PRIMARY;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BG_SURFACE: &str = Colors::BG_SURFACE;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BORDER: &str = Colors::BORDER_SUBTLE;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const TEXT: &str = Colors::TEXT_PRIMARY;

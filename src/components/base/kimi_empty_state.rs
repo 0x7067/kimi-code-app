@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 pub fn KimiEmptyState(
     icon: Element,
     title: String,
-    #[props(default = "")] description: String,
+    #[props(default)] description: String,
     action: Option<Element>,
 ) -> Element {
     rsx! {
@@ -20,13 +20,13 @@ pub fn KimiEmptyState(
                 gap: 16px;
                 text-align: center;
                 padding: 40px 20px;
-                color: {text_secondary};
+                color: {TEXT_SECONDARY};
             ",
             div {
                 style: "
                     width: 48px;
                     height: 48px;
-                    color: {blue};
+                    color: {BLUE};
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -38,7 +38,7 @@ pub fn KimiEmptyState(
                     margin: 0;
                     font-size: 20px;
                     font-weight: 600;
-                    color: {text_primary};
+                    color: {TEXT_PRIMARY};
                     letter-spacing: -0.01em;
                     line-height: 1.3;
                 ",
@@ -50,7 +50,7 @@ pub fn KimiEmptyState(
                         margin: 0;
                         font-size: 14px;
                         line-height: 1.5;
-                        color: {text_secondary};
+                        color: {TEXT_SECONDARY};
                         max-width: 360px;
                     ",
                     "{description}"
@@ -63,6 +63,9 @@ pub fn KimiEmptyState(
     }
 }
 
-const blue: &str = Colors::KIMI_BLUE;
-const text_primary: &str = Colors::TEXT_PRIMARY;
-const text_secondary: &str = Colors::TEXT_SECONDARY;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BLUE: &str = Colors::KIMI_BLUE;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const TEXT_PRIMARY: &str = Colors::TEXT_PRIMARY;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const TEXT_SECONDARY: &str = Colors::TEXT_SECONDARY;

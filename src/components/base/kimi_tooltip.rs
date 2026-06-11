@@ -31,8 +31,8 @@ pub fn KimiTooltip(
                         {arrow_offset}
                         left: 50%;
                         transform: translateX(-50%) {transform};
-                        background: {bg};
-                        color: {text};
+                        background: {BG};
+                        color: {TEXT};
                         padding: 4px 8px;
                         border-radius: 8px;
                         font-size: 12px;
@@ -51,5 +51,7 @@ pub fn KimiTooltip(
 }
 
 // Helper constants for the style string above
-const bg: &str = Colors::BG_HOVER;
-const text: &str = Colors::TEXT_PRIMARY;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BG: &str = Colors::BG_HOVER;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const TEXT: &str = Colors::TEXT_PRIMARY;

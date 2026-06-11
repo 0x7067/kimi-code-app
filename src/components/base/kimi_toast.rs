@@ -40,8 +40,8 @@ pub fn KimiToast(
                 position: fixed;
                 top: 16px;
                 right: 16px;
-                background: {bg};
-                color: {text};
+                background: {BG};
+                color: {TEXT};
                 border-left: 3px solid {border_color};
                 border-radius: 12px;
                 padding: 12px 16px;
@@ -78,5 +78,7 @@ pub fn KimiToast(
     }
 }
 
-const bg: &str = Colors::BG_SURFACE;
-const text: &str = Colors::TEXT_PRIMARY;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BG: &str = Colors::BG_SURFACE;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const TEXT: &str = Colors::TEXT_PRIMARY;

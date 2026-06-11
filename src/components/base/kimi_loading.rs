@@ -39,7 +39,9 @@ pub fn KimiLoading(
                 }
             }
         },
-        LoadingVariant::Dots => rsx! {
+        LoadingVariant::Dots => {
+            let dot = dot_size(size);
+            rsx! {
             div {
                 style: "
                     display: flex;
@@ -51,24 +53,24 @@ pub fn KimiLoading(
                     div {
                         key: "{i}",
                         style: "
-                            width: {dot_size}px;
-                            height: {dot_size}px;
+                            width: {dot}px;
+                            height: {dot}px;
                             border-radius: 50%;
-                            background: {blue};
+                            background: {BLUE};
                             animation: kimi-dot-pulse 1.4s ease-in-out infinite;
-                            animation-delay: {delay_ms}ms;
+                            animation-delay: {delay_ms(i)}ms;
                         ",
                     }
                 }
             }
-        },
+        }},
         LoadingVariant::Skeleton { width, height } => rsx! {
             div {
                 style: "
                     width: {width};
                     height: {height};
                     border-radius: 6px;
-                    background: linear-gradient(90deg, {bg1} 25%, {bg2} 50%, {bg1} 75%);
+                    background: linear-gradient(90deg, {BG1} 25%, {BG2} 50%, {BG1} 75%);
                     background-size: 200% 100%;
                     animation: kimi-skeleton 1.5s linear infinite;
                 ",
@@ -77,14 +79,19 @@ pub fn KimiLoading(
     }
 }
 
-const blue: &str = Colors::KIMI_BLUE;
-const bg1: &str = Colors::BG_HOVER;
-const bg2: &str = "#333333";
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BLUE: &str = Colors::KIMI_BLUE;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BG1: &str = Colors::BG_HOVER;
+#[allow(dead_code)] // used via rsx attribute interpolation
+const BG2: &str = "#333333";
 
+#[allow(dead_code)] // used via rsx attribute interpolation
 fn dot_size(size: u32) -> u32 {
     (size as f32 * 0.5) as u32
 }
 
+#[allow(dead_code)] // used via rsx attribute interpolation
 fn delay_ms(i: usize) -> u32 {
     (i as u32) * 160
 }
