@@ -96,19 +96,28 @@ fn semantic_title(text: &str) -> String {
     }
 }
 
-pub async fn new_session() {
-    let Some(cwd) = PROJECT.read().clone() else { return };
+/// F-003.1/F-003.11: create a session in `cwd`, optionally naming it and
+/// sending an initial prompt. AGENTS.md is NOT injected here — the kimi CLI
+/// picks it up itself from `cwd` (the dialog only previews it, F-003.9).
+pub async fn create_session(cwd: String, name: Option<String>, initial_prompt: Option<String>) {
     cache_current_scrollback();
     PENDING_QUEUE.write().clear(); // F-014: the queue is per-session
     reset_thread();
     *SESSION_ID.write() = None;
+    *PROJECT.write() = Some(cwd.clone());
     let mcp = project_mcp_servers(&cwd).await;
     match invoke("acp_request", json!({"method": "session/new", "params": {"cwd": cwd, "mcpServers": mcp}}))
         .await
     {
         Ok(res) => {
             handle_session_result(&res);
+            if let (Some(name), Some(sid)) = (name.filter(|n| !n.trim().is_empty()), SESSION_ID.read().clone()) {
+                SESSION_TITLES.write().insert(sid, name.trim().to_string());
+            }
             refresh_sessions().await;
+            if let Some(prompt) = initial_prompt.filter(|p| !p.trim().is_empty()) {
+                send_prompt(prompt, false).await;
+            }
         }
         Err(e) => {
             let msg = err_msg(&e);
@@ -118,6 +127,22 @@ pub async fn new_session() {
                 *ERROR.write() = Some(msg);
             }
         }
+    }
+}
+
+/// Sidebar click path: soft cross-process conflict guard. If the session's
+/// wire log was touched in the last ~30s by something other than this app's
+/// current session (e.g. the kimi CLI), ask before resuming; otherwise load.
+pub async fn request_load_session(meta: SessionMeta) {
+    let is_own = SESSION_ID.read().as_deref() == Some(meta.id.as_str());
+    let age = invoke("kimi_session_activity", json!({"sessionId": meta.id}))
+        .await
+        .ok()
+        .and_then(|v| v.as_u64());
+    if crate::conversation::should_warn_resume(age, is_own) {
+        *RESUME_CONFLICT.write() = Some(meta);
+    } else {
+        load_session(meta).await;
     }
 }
 
@@ -173,24 +198,37 @@ pub async fn send_prompt(text: String, thinking: bool) {
         // to the agent's thinking toggle when forwarding the request.
         params["_meta"] = json!({"thinking": true});
     }
-    let epoch = begin_turn();
+    let epoch = begin_turn(&sid);
     let res = invoke("acp_request", json!({"method": "session/prompt", "params": params})).await;
-    finish_turn(epoch, res);
+    finish_turn(&sid, epoch, res);
     refresh_sessions().await;
 }
 
-/// Claim a new turn epoch (F-013/F-015) and mark the turn as running.
-fn begin_turn() -> u64 {
-    let mut epoch = TURN_EPOCH.write();
-    *epoch += 1;
+/// Claim a new turn epoch (F-013/F-015), mark the turn as running, and track
+/// the session in RUNNING_SESSIONS (F-003.14).
+fn begin_turn(session_id: &str) -> u64 {
+    let epoch = {
+        let mut epoch = TURN_EPOCH.write();
+        *epoch += 1;
+        *epoch
+    };
     *RUNNING.write() = true;
-    *epoch
+    crate::conversation::turn_started(
+        &mut RUNNING_SESSIONS.write(),
+        session_id,
+        epoch,
+        crate::conversation::now_epoch(),
+    );
+    epoch
 }
 
 /// Handle a resolved `session/prompt`: mark cancellations (F-013), and — if
 /// this turn was not superseded by a steer — clear the running flag and
 /// dispatch the next queued message (F-014).
-fn finish_turn(epoch: u64, res: Result<Value, Value>) {
+fn finish_turn(session_id: &str, epoch: u64, res: Result<Value, Value>) {
+    // F-003.14: clear the running marker unless a newer turn (steer) on this
+    // session has since claimed it.
+    crate::conversation::turn_finished(&mut RUNNING_SESSIONS.write(), session_id, epoch);
     match res {
         Ok(v) => {
             // A steer pushes its own marker before the replacement message,
@@ -212,14 +250,14 @@ fn finish_turn(epoch: u64, res: Result<Value, Value>) {
 /// F-015: cancel the running turn and immediately send `text` in its place.
 pub async fn steer_prompt(text: String) {
     let Some(sid) = SESSION_ID.read().clone() else { return };
-    let epoch = begin_turn();
+    let epoch = begin_turn(&sid);
     {
         let mut items = ITEMS.write();
         items.push(Item::Cancelled);
         items.push(Item::User(text.clone()));
     }
     let res = invoke("acp_steer", json!({"sessionId": sid, "text": text})).await;
-    finish_turn(epoch, res);
+    finish_turn(&sid, epoch, res);
     refresh_sessions().await;
 }
 
@@ -239,6 +277,12 @@ fn dispatch_pending() {
             fut.await;
         });
     }
+}
+
+/// F-003.13: manual context compaction. `/compact` is a kimi slash command
+/// handled CLI-side, so it travels as an ordinary prompt for this session.
+pub async fn compact_session() {
+    send_prompt("/compact".to_string(), false).await;
 }
 
 pub async fn cancel_turn() {

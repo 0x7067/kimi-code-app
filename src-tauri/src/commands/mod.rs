@@ -23,6 +23,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         acp::acp_respond_permission,
         sessions::kimi_list_sessions,
         sessions::kimi_load_session,
+        sessions::kimi_session_activity,
         kimi::kimi_login,
         kimi::js_log,
         kimi::kimi_version,
@@ -32,6 +33,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         dialogs::pick_folder,
         dialogs::pick_image,
         projects::mcp_servers,
+        projects::read_agents_md,
         git::git_diff,
     ]
 }

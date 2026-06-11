@@ -30,6 +30,36 @@ pub async fn recent_projects() -> Result<Vec<Value>, String> {
     Ok(projects)
 }
 
+/// Resolve the project-instructions file for a project root (F-003.9).
+///
+/// Checks `AGENTS.md` first, then `CLAUDE.md` (commonly a symlink to
+/// AGENTS.md). Symlinks are followed and the resolved target path is
+/// returned, so a `CLAUDE.md -> AGENTS.md` link reports the real AGENTS.md.
+pub(crate) fn resolve_agents_md(root: &std::path::Path) -> Option<std::path::PathBuf> {
+    for name in ["AGENTS.md", "CLAUDE.md"] {
+        let candidate = root.join(name);
+        // `is_file` follows symlinks, so a CLAUDE.md link to AGENTS.md counts.
+        if candidate.is_file() {
+            return Some(std::fs::canonicalize(&candidate).unwrap_or(candidate));
+        }
+    }
+    None
+}
+
+/// F-003.9 — AGENTS.md auto-detection for the session-creation dialog.
+///
+/// NOTE: the kimi CLI auto-injects AGENTS.md into the session context itself
+/// (server-side) when a session starts in `work_dir`, so the app's job here
+/// is DETECTION + PREVIEW only — we never inject the content into prompts.
+#[tauri::command]
+pub async fn read_agents_md(work_dir: String) -> Result<Option<Value>, String> {
+    let Some(path) = resolve_agents_md(std::path::Path::new(&work_dir)) else {
+        return Ok(None);
+    };
+    let content = tokio::fs::read_to_string(&path).await.map_err(|e| e.to_string())?;
+    Ok(Some(json!({ "path": path.to_string_lossy(), "content": content })))
+}
+
 /// Merge user-level and project-level mcp.json into the ACP `mcpServers` array format.
 #[tauri::command]
 pub async fn mcp_servers(cwd: String) -> Result<Vec<Value>, String> {
@@ -77,4 +107,59 @@ pub async fn mcp_servers(cwd: String) -> Result<Vec<Value>, String> {
             }
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_agents_md;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn temp_root(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("kimi-agents-md-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn resolve_agents_md_returns_none_when_absent() {
+        let root = temp_root("none");
+        assert_eq!(resolve_agents_md(&root), None);
+    }
+
+    #[test]
+    fn resolve_agents_md_prefers_agents_md() {
+        let root = temp_root("prefers");
+        fs::write(root.join("AGENTS.md"), "# agents").unwrap();
+        fs::write(root.join("CLAUDE.md"), "# claude").unwrap();
+        let found = resolve_agents_md(&root).unwrap();
+        assert!(found.ends_with("AGENTS.md"), "got {found:?}");
+    }
+
+    #[test]
+    fn resolve_agents_md_falls_back_to_claude_md() {
+        let root = temp_root("fallback");
+        fs::write(root.join("CLAUDE.md"), "# claude").unwrap();
+        let found = resolve_agents_md(&root).unwrap();
+        assert!(found.ends_with("CLAUDE.md"), "got {found:?}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolve_agents_md_follows_claude_md_symlink_to_target() {
+        let root = temp_root("symlink");
+        fs::write(root.join("instructions.md"), "# real").unwrap();
+        std::os::unix::fs::symlink(root.join("instructions.md"), root.join("CLAUDE.md")).unwrap();
+        let found = resolve_agents_md(&root).unwrap();
+        assert!(found.ends_with("instructions.md"), "got {found:?}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolve_agents_md_ignores_dangling_symlink() {
+        let root = temp_root("dangling");
+        std::os::unix::fs::symlink(root.join("missing.md"), root.join("AGENTS.md")).unwrap();
+        assert_eq!(resolve_agents_md(&root), None);
+    }
 }

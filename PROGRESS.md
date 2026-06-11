@@ -32,7 +32,7 @@
 | 1 | Design system wired into build (tokens, 11 base components, icons, token tests) | DONE | `fd67389` |
 | 2 | Design system 18/18 acceptance criteria + F-001 ACP core TDD (25 backend tests: protocol routing, integer-v1 negotiation + capability capture, MessageQueue + per-session TurnQueue, crash Supervisor w/ backoff+replay, SessionRegistry, acp_cancel command) | DONE | `db5d161` |
 | 3 | F-002 chat UI (shortcuts, status bar w/ context colors, copy, role colors, search, MD/JSON export, @mention scaffold; 19 UI tests) + F-012 backend (store parsing, list/load commands, sessions:changed watcher; 37 backend tests) | DONE | `2bdfde0` |
-| 4 | F-013 stop + F-014 queueing + F-015 steering + F-012 frontend (sidebar session list, load replay) | TODO | — |
+| 4 | F-013 stop (Stop button, Esc, cancelled marker) + F-014 queue (chips, ⌥⏎, FIFO dispatch) + F-015 steer (acp_steer cancel→reprompt w/ 5s timeout; default on send-while-running) + F-012 frontend (synced sidebar list, sessions:changed listener, load replay, relative times). 62 tests. NOTE: steer timing needs live smoke test in `cargo tauri dev`. | DONE | `41b4509` |
 | 6 | F-003 session/project management gaps | TODO | — |
 | 7 | F-011 settings & configuration | TODO | — |
 | 8 | P1/P2: F-004 multi-agent, F-005 MCP, F-006 browser, F-007 memory, F-009 automations, F-010 terminal | TODO | — |
@@ -71,4 +71,5 @@ Send-while-running defaults to steer: `session/cancel` → await cancelled stopR
 - 2026-06-11: ACP version negotiation uses integer 1; REQUIREMENTS.md F-001.7 date string treated as spec erratum.
 - 2026-06-11: Steering implemented as cancel+reprompt (kimi exposes no steer over ACP stdio).
 - 2026-06-11: Session sync built on kimi's own store (ACP session/list + load, disk index as fallback) instead of a parallel app database.
+- 2026-06-11: session_index.jsonl mtime watcher (2s) is required for cross-process liveness — ACP has no push notification for sessions created by other processes (CLI runs its own kimi process; session/list is poll-only). Delete the watcher if kimi ever adds a sessions-changed ACP notification.
 - 2026-06-11: No Tailwind build step — design system uses semantic CSS classes in assets/main.css.

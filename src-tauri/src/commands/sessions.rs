@@ -79,6 +79,25 @@ pub async fn kimi_load_session(
         })
 }
 
+/// Soft cross-process conflict guard (F-003): seconds since the session's
+/// wire log (`<sessionDir>/agents/main/wire.jsonl`) was last written, or
+/// `None` when the session/log is unknown. A small age means some process
+/// (e.g. the `kimi` CLI in a terminal) is likely driving this session right
+/// now; the frontend warns before resuming it here.
+#[tauri::command]
+pub async fn kimi_session_activity(session_id: String) -> Result<Option<u64>, String> {
+    let home = kimi_home();
+    tokio::task::spawn_blocking(move || {
+        let content = std::fs::read_to_string(home.join("session_index.jsonl")).ok()?;
+        let dir = store::session_dir_for(&content, &session_id)?;
+        let wire = std::path::Path::new(&dir).join("agents/main/wire.jsonl");
+        let modified = std::fs::metadata(wire).ok()?.modified().ok()?;
+        modified.elapsed().ok().map(|d| d.as_secs())
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
 /// Poll `session_index.jsonl` for changes (mtime+size, every 2s) and emit
 /// `sessions:changed` so the UI re-lists. Spawned once from app setup; the
 /// CLI appends to the index whenever a session is created or touched.

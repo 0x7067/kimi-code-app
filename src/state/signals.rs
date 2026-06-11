@@ -29,6 +29,20 @@ pub static PENDING_QUEUE: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
 pub static COMPOSER_PREFILL: GlobalSignal<Option<String>> = Signal::global(|| None);
 pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
 
+/// F-003.11: whether the session-creation dialog is open.
+pub static SHOW_NEW_SESSION: GlobalSignal<bool> = Signal::global(|| false);
+/// F-003.13: whether the manual-compact confirmation dialog is open.
+pub static SHOW_COMPACT_CONFIRM: GlobalSignal<bool> = Signal::global(|| false);
+/// F-003.10: project roots collapsed in the sidebar tree.
+pub static COLLAPSED_PROJECTS: GlobalSignal<std::collections::HashSet<String>> =
+    Signal::global(Default::default);
+/// F-003.14: sessions with an in-flight turn — sessionId → (turn epoch,
+/// last-activity Unix seconds). Maintained by turn start/end in actions.rs.
+pub static RUNNING_SESSIONS: GlobalSignal<HashMap<String, (u64, i64)>> = Signal::global(HashMap::new);
+/// Soft cross-process conflict guard: a session that looked active in another
+/// process when the user clicked it, awaiting "Resume anyway?" confirmation.
+pub static RESUME_CONFLICT: GlobalSignal<Option<SessionMeta>> = Signal::global(|| None);
+
 pub static ATTACHMENTS: GlobalSignal<Vec<Attachment>> = Signal::global(Vec::new);
 pub static SESSION_SEARCH: GlobalSignal<String> = Signal::global(String::new);
 /// In-conversation search (F-002.9): whether the search bar is open and its query.

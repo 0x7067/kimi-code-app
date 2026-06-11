@@ -114,6 +114,15 @@ pub fn App() -> Element {
             if PERMISSION.read().is_some() {
                 PermissionModal {}
             }
+            if *SHOW_NEW_SESSION.read() {
+                NewSessionModal {}
+            }
+            if *SHOW_COMPACT_CONFIRM.read() {
+                CompactConfirmModal {}
+            }
+            if RESUME_CONFLICT.read().is_some() {
+                ResumeConflictModal {}
+            }
             if *NEEDS_LOGIN.read() {
                 LoginModal {}
             }

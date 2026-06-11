@@ -137,6 +137,15 @@ pub fn sessions_from_list_result(result: &Value) -> Option<Vec<Value>> {
     }
 }
 
+/// Find the on-disk session dir for `session_id` in index content (latest
+/// index record wins, matching `parse_index` dedup semantics).
+pub fn session_dir_for(content: &str, session_id: &str) -> Option<String> {
+    parse_index(content)
+        .into_iter()
+        .find(|e| e.session_id == session_id)
+        .map(|e| e.session_dir)
+}
+
 /// Read the store under `home` and list sessions for `work_dir`, enriched
 /// from each session dir's `state.json`, sorted by `updatedAt` desc.
 pub fn list_sessions(home: &Path, work_dir: &str) -> Vec<SessionSummary> {
@@ -197,6 +206,15 @@ garbage\n\
         assert_eq!(entries.len(), 2);
         assert_eq!(entries[0], entry("a", "/d/a2", "/w1"));
         assert_eq!(entries[1], entry("b", "/d/b", "/w2"));
+    }
+
+    #[test]
+    fn session_dir_for_finds_latest_record_or_none() {
+        let content = "\
+{\"sessionId\":\"a\",\"sessionDir\":\"/d/a\",\"workDir\":\"/w1\"}\n\
+{\"sessionId\":\"a\",\"sessionDir\":\"/d/a2\",\"workDir\":\"/w1\"}\n";
+        assert_eq!(session_dir_for(content, "a"), Some("/d/a2".to_string()));
+        assert_eq!(session_dir_for(content, "missing"), None);
     }
 
     #[test]

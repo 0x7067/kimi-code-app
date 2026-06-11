@@ -4,8 +4,24 @@
 //! Everything here is side-effect free so it can be unit-tested natively.
 
 use crate::design_tokens::Colors;
-use crate::state::Item;
+use crate::state::{Item, SessionMeta};
 use serde_json::{json, Value};
+use std::collections::HashMap;
+
+/// Current Unix time in seconds (webview clock in wasm; system clock natively).
+pub fn now_epoch() -> i64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        (js_sys::Date::now() / 1000.0) as i64
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0)
+    }
+}
 
 // ---------- Message text / roles ----------
 
@@ -293,6 +309,86 @@ pub fn parse_context_usage(params: &Value) -> Option<f64> {
     None
 }
 
+// ---------- Project tree grouping (F-003.10) ----------
+
+/// Group sessions under their project root for the sidebar tree.
+///
+/// Returns one `(project, sessions)` entry per known project, in project
+/// order, plus the sessions whose `cwd` matches no known project (these stay
+/// in the flat "recent" list).
+pub fn group_sessions_by_project(
+    projects: &[String],
+    sessions: &[SessionMeta],
+) -> (Vec<(String, Vec<SessionMeta>)>, Vec<SessionMeta>) {
+    let groups: Vec<(String, Vec<SessionMeta>)> = projects
+        .iter()
+        .map(|p| {
+            let owned: Vec<SessionMeta> =
+                sessions.iter().filter(|s| &s.cwd == p).cloned().collect();
+            (p.clone(), owned)
+        })
+        .collect();
+    let ungrouped = sessions
+        .iter()
+        .filter(|s| !projects.contains(&s.cwd))
+        .cloned()
+        .collect();
+    (groups, ungrouped)
+}
+
+// ---------- Manual compact gating (F-003.13) ----------
+
+/// Whether the manual "/compact" trigger is currently allowed: requires a
+/// connected agent, an active session, and no in-flight turn (compaction is a
+/// prompt itself, so it must not race a running turn).
+pub fn can_compact(connected: bool, has_session: bool, running: bool) -> bool {
+    connected && has_session && !running
+}
+
+// ---------- Background running sessions (F-003.14) ----------
+
+/// Record that `session_id` started a turn at `epoch` (global turn counter)
+/// and time `now`.
+pub fn turn_started(map: &mut HashMap<String, (u64, i64)>, session_id: &str, epoch: u64, now: i64) {
+    map.insert(session_id.to_string(), (epoch, now));
+}
+
+/// Record that the turn claimed at `epoch` finished. Removal is skipped when
+/// the session has since started a newer turn (e.g. a steer superseded it).
+pub fn turn_finished(map: &mut HashMap<String, (u64, i64)>, session_id: &str, epoch: u64) {
+    if map.get(session_id).is_some_and(|(e, _)| *e == epoch) {
+        map.remove(session_id);
+    }
+}
+
+/// Sessions with a running turn other than `current`, most recent activity
+/// first. Each entry is `(session_id, last_activity_epoch_secs)`.
+pub fn background_sessions(
+    current: Option<&str>,
+    map: &HashMap<String, (u64, i64)>,
+) -> Vec<(String, i64)> {
+    let mut out: Vec<(String, i64)> = map
+        .iter()
+        .filter(|(sid, _)| Some(sid.as_str()) != current)
+        .map(|(sid, (_, at))| (sid.clone(), *at))
+        .collect();
+    out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    out
+}
+
+// ---------- Cross-process resume conflict guard (F-003) ----------
+
+/// Seconds of wire-log quiet under which a session counts as "active in
+/// another process".
+pub const RESUME_CONFLICT_THRESHOLD_SECS: u64 = 30;
+
+/// Whether resuming a session should first warn about a likely conflict:
+/// its wire log was written within the threshold AND it is not the session
+/// this app instance is already driving (our own writes are not a conflict).
+pub fn should_warn_resume(age_secs: Option<u64>, is_own_session: bool) -> bool {
+    !is_own_session && age_secs.is_some_and(|a| a < RESUME_CONFLICT_THRESHOLD_SECS)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -468,5 +564,84 @@ mod tests {
         assert_eq!(parse_context_usage(&v), None);
         // absent
         assert_eq!(parse_context_usage(&json!({"update": {"sessionUpdate": "plan"}})), None);
+    }
+
+    fn meta(id: &str, cwd: &str) -> SessionMeta {
+        SessionMeta { id: id.into(), cwd: cwd.into(), title: id.into(), updated_at: String::new() }
+    }
+
+    #[test]
+    fn group_sessions_nests_by_project_and_keeps_remainder_flat() {
+        let projects = vec!["/a".to_string(), "/b".to_string()];
+        let sessions = vec![meta("s1", "/a"), meta("s2", "/c"), meta("s3", "/a"), meta("s4", "/b")];
+        let (groups, rest) = group_sessions_by_project(&projects, &sessions);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].0, "/a");
+        assert_eq!(
+            groups[0].1.iter().map(|s| s.id.as_str()).collect::<Vec<_>>(),
+            vec!["s1", "s3"]
+        );
+        assert_eq!(groups[1].0, "/b");
+        assert_eq!(groups[1].1.len(), 1);
+        assert_eq!(rest.len(), 1);
+        assert_eq!(rest[0].id, "s2");
+    }
+
+    #[test]
+    fn group_sessions_with_no_projects_leaves_all_flat() {
+        let sessions = vec![meta("s1", "/a"), meta("s2", "/b")];
+        let (groups, rest) = group_sessions_by_project(&[], &sessions);
+        assert!(groups.is_empty());
+        assert_eq!(rest.len(), 2);
+    }
+
+    #[test]
+    fn can_compact_gating() {
+        assert!(can_compact(true, true, false));
+        assert!(!can_compact(true, true, true)); // disabled while a turn runs
+        assert!(!can_compact(true, false, false)); // needs a session
+        assert!(!can_compact(false, true, false)); // needs a connection
+    }
+
+    #[test]
+    fn running_sessions_track_start_finish_and_supersession() {
+        let mut map = HashMap::new();
+        turn_started(&mut map, "s1", 1, 100);
+        turn_started(&mut map, "s2", 2, 200);
+        // A steer on s1 claims a newer epoch before the old turn resolves…
+        turn_started(&mut map, "s1", 3, 300);
+        // …so the old turn's completion must not clear the running marker.
+        turn_finished(&mut map, "s1", 1);
+        assert!(map.contains_key("s1"));
+        // The current turn's completion does clear it.
+        turn_finished(&mut map, "s1", 3);
+        assert!(!map.contains_key("s1"));
+        turn_finished(&mut map, "s2", 2);
+        assert!(map.is_empty());
+    }
+
+    #[test]
+    fn background_sessions_exclude_current_and_sort_by_recency() {
+        let mut map = HashMap::new();
+        turn_started(&mut map, "cur", 1, 999);
+        turn_started(&mut map, "old", 2, 100);
+        turn_started(&mut map, "new", 3, 500);
+        let bg = background_sessions(Some("cur"), &map);
+        assert_eq!(
+            bg,
+            vec![("new".to_string(), 500), ("old".to_string(), 100)]
+        );
+        // With no current session, everything running is "background".
+        assert_eq!(background_sessions(None, &map).len(), 3);
+    }
+
+    #[test]
+    fn should_warn_resume_thresholds_and_own_session_exemption() {
+        assert!(should_warn_resume(Some(0), false));
+        assert!(should_warn_resume(Some(29), false));
+        assert!(!should_warn_resume(Some(30), false)); // at/over threshold: quiet
+        assert!(!should_warn_resume(Some(3600), false));
+        assert!(!should_warn_resume(None, false)); // unknown activity: no warning
+        assert!(!should_warn_resume(Some(0), true)); // our own session never warns
     }
 }

@@ -1792,3 +1792,146 @@ details.search-hit {
   align-items: center;
   gap: 6px;
 }
+
+/* ---------- F-003: session & project management ---------- */
+
+/* Session-creation dialog (F-003.11) */
+.modal.session-modal {
+  width: 520px;
+  max-width: 90vw;
+}
+.modal-label {
+  display: block;
+  margin: 12px 0 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.modal-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.modal-row .kimi-input {
+  flex: 1;
+}
+.agents-preview {
+  margin-top: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.agents-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.agents-preview-path {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agents-preview-body {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Chevrons (project tree + AGENTS.md preview) */
+.chevron {
+  display: inline-block;
+  transition: transform var(--transition-fast);
+  color: var(--text-tertiary);
+}
+.chevron.open {
+  transform: rotate(90deg);
+}
+.chevron-btn {
+  padding: 2px 6px;
+  background: none;
+  border: none;
+}
+
+/* Project tree (F-003.10) */
+.project-group {
+  margin-bottom: 2px;
+}
+.project-group-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.project-group-head:hover {
+  background: var(--bg-hover);
+}
+.project-group-head.selected .project-group-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.project-group-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-group-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.project-group-sessions {
+  margin-left: 16px;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 6px;
+}
+
+/* Background sessions panel (F-003.14) */
+.bg-sessions {
+  padding: 4px 10px 0;
+}
+.sidebar-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin: 6px 0 4px;
+}
+.session-running-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--success, #22C55E);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Manual compact trigger (F-003.13) */
+.status-compact-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  margin-right: 8px;
+}
+.status-compact-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

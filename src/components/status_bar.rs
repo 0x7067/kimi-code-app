@@ -2,7 +2,7 @@
 //! connection indicator, model name, current operation, and color-coded
 //! context-usage bar (F-003.12).
 
-use crate::conversation::usage_color;
+use crate::conversation::{can_compact, usage_color};
 use crate::state::*;
 use dioxus::prelude::*;
 
@@ -49,6 +49,14 @@ pub fn StatusBar() -> Element {
             span { class: "status-model", "{model}" }
             span { class: "status-op", "{op}" }
             div { class: "status-spacer" }
+            // F-003.13: manual compact trigger, gated off while a turn runs.
+            button {
+                class: "ghost status-compact-btn",
+                title: "Summarize this session's context (/compact)",
+                disabled: !can_compact(connected, SESSION_ID.read().is_some(), *RUNNING.read()),
+                onclick: move |_| { *SHOW_COMPACT_CONFIRM.write() = true; },
+                "Compact"
+            }
             span { class: "status-ctx-label", "Context {pct}%" }
             div { class: "status-ctx-bar",
                 div {
