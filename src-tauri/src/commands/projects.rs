@@ -202,6 +202,358 @@ pub async fn list_files(cwd: String) -> Result<Vec<String>, String> {
     Ok(list_project_files(&cwd, None, None))
 }
 
+// ---------- F-007.2: project memory index ----------
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct FileTreeNode {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub children: Option<Vec<FileTreeNode>>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct ProjectIndex {
+    pub root: String,
+    pub key_files: Vec<String>,
+    pub dependencies: Vec<String>,
+    pub languages: std::collections::HashMap<String, usize>,
+    pub total_files: usize,
+    pub total_dirs: usize,
+    pub file_tree: Vec<FileTreeNode>,
+}
+
+#[derive(Default)]
+struct TreeBuilder {
+    children: std::collections::BTreeMap<String, TreeBuilder>,
+    is_file: bool,
+}
+
+fn tree_insert(builder: &mut TreeBuilder, path: &str) {
+    let mut current = builder;
+    let parts: Vec<&str> = path.split('/').collect();
+    for (i, part) in parts.iter().enumerate() {
+        current = current.children.entry(part.to_string()).or_default();
+        if i == parts.len() - 1 {
+            current.is_file = true;
+        }
+    }
+}
+
+fn tree_to_nodes(builder: TreeBuilder) -> Vec<FileTreeNode> {
+    let mut nodes: Vec<FileTreeNode> = builder
+        .children
+        .into_iter()
+        .map(|(name, child)| {
+            let kind = if child.is_file && child.children.is_empty() {
+                "file"
+            } else {
+                "dir"
+            };
+            FileTreeNode {
+                name,
+                kind: kind.to_string(),
+                children: if child.children.is_empty() {
+                    None
+                } else {
+                    Some(tree_to_nodes(child))
+                },
+            }
+        })
+        .collect();
+    nodes.sort_by(|a, b| match (a.kind.as_str(), b.kind.as_str()) {
+        ("dir", "file") => std::cmp::Ordering::Less,
+        ("file", "dir") => std::cmp::Ordering::Greater,
+        _ => a.name.cmp(&b.name),
+    });
+    nodes
+}
+
+fn detect_key_files(files: &[String]) -> Vec<String> {
+    let names: std::collections::HashSet<&str> = [
+        "Cargo.toml",
+        "package.json",
+        "pyproject.toml",
+        "requirements.txt",
+        "go.mod",
+        "Gemfile",
+        "build.gradle",
+        "pom.xml",
+        "Makefile",
+        "CMakeLists.txt",
+        "README.md",
+        "README",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "LICENSE",
+        "Dockerfile",
+        "docker-compose.yml",
+        ".gitignore",
+    ]
+    .iter()
+    .cloned()
+    .collect();
+    files
+        .iter()
+        .filter(|f| {
+            std::path::Path::new(f)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| names.contains(n))
+                .unwrap_or(false)
+        })
+        .cloned()
+        .collect()
+}
+
+fn count_languages(files: &[String]) -> std::collections::HashMap<String, usize> {
+    let mut map = std::collections::HashMap::new();
+    for f in files {
+        if let Some(ext) = std::path::Path::new(f).extension().and_then(|e| e.to_str()) {
+            *map.entry(ext.to_lowercase()).or_insert(0) += 1;
+        }
+    }
+    map
+}
+
+fn parse_cargo_deps(content: &str) -> Vec<String> {
+    let mut deps = Vec::new();
+    let mut in_deps = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[dependencies]"
+            || trimmed == "[dev-dependencies]"
+            || trimmed == "[workspace.dependencies]"
+            || trimmed.starts_with("[dependencies.")
+        {
+            in_deps = true;
+            continue;
+        }
+        if trimmed.starts_with('[') && !trimmed.starts_with("[dependencies") {
+            in_deps = false;
+            continue;
+        }
+        if in_deps {
+            if let Some(name) = trimmed.split('=').next().map(|s| s.trim()) {
+                if !name.is_empty() && !name.starts_with('#') {
+                    deps.push(name.to_string());
+                }
+            }
+        }
+    }
+    deps
+}
+
+fn parse_package_json_deps(content: &str) -> Vec<String> {
+    let mut deps = Vec::new();
+    if let Ok(v) = serde_json::from_str::<Value>(content) {
+        for key in ["dependencies", "devDependencies", "peerDependencies"] {
+            if let Some(obj) = v.get(key).and_then(|d| d.as_object()) {
+                for name in obj.keys() {
+                    deps.push(name.clone());
+                }
+            }
+        }
+    }
+    deps
+}
+
+fn parse_pyproject_deps(content: &str) -> Vec<String> {
+    let mut deps = Vec::new();
+    let mut in_project = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[project]" || trimmed == "[project.dependencies]" {
+            in_project = true;
+            continue;
+        }
+        if trimmed.starts_with('[') {
+            in_project = false;
+            continue;
+        }
+        if in_project && trimmed.starts_with("dependencies") {
+            if let Some(arr_start) = trimmed.find('[') {
+                let arr_part = &trimmed[arr_start..];
+                for item in arr_part.split(',') {
+                    let item = item.trim().trim_matches(|c| c == '[' || c == ']' || c == '"');
+                    if !item.is_empty() {
+                        deps.push(item.to_string());
+                    }
+                }
+            }
+        }
+    }
+    deps
+}
+
+fn count_dirs(files: &[String]) -> usize {
+    let mut dirs = std::collections::HashSet::new();
+    for f in files {
+        let p = std::path::Path::new(f);
+        if let Some(parent) = p.parent() {
+            let mut current = parent;
+            while let Some(_name) = current.file_name() {
+                dirs.insert(current.to_string_lossy().into_owned());
+                current = current.parent().unwrap_or(std::path::Path::new(""));
+            }
+        }
+    }
+    dirs.len()
+}
+
+pub fn index_project_memory(cwd: &str) -> Result<ProjectIndex, String> {
+    let files = list_project_files(cwd, Some(6), Some(2000));
+    let key_files = detect_key_files(&files);
+    let languages = count_languages(&files);
+    let total_dirs = count_dirs(&files);
+
+    let mut dependencies = Vec::new();
+    let root = std::path::Path::new(cwd);
+
+    if let Some(cargo) = key_files.iter().find(|f| f.ends_with("Cargo.toml")) {
+        let path = root.join(cargo);
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            dependencies.extend(parse_cargo_deps(&content));
+        }
+    }
+    if let Some(pkg) = key_files.iter().find(|f| f.ends_with("package.json")) {
+        let path = root.join(pkg);
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            dependencies.extend(parse_package_json_deps(&content));
+        }
+    }
+    if let Some(py) = key_files.iter().find(|f| f.ends_with("pyproject.toml")) {
+        let path = root.join(py);
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            dependencies.extend(parse_pyproject_deps(&content));
+        }
+    }
+    dependencies.sort();
+    dependencies.dedup();
+
+    let mut builder = TreeBuilder::default();
+    for f in &files {
+        tree_insert(&mut builder, f);
+    }
+    let file_tree = tree_to_nodes(builder);
+
+    Ok(ProjectIndex {
+        root: cwd.to_string(),
+        key_files,
+        dependencies,
+        languages,
+        total_files: files.len(),
+        total_dirs,
+        file_tree,
+    })
+}
+
+#[tauri::command]
+pub async fn index_project(cwd: String) -> Result<Value, String> {
+    let idx = index_project_memory(&cwd)?;
+    serde_json::to_value(idx).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod project_memory_tests {
+    use super::index_project_memory;
+    use std::fs;
+
+    fn temp_root(name: &str) -> (tempfile::TempDir, String) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(name);
+        fs::create_dir_all(&path).unwrap();
+        (dir, path.to_string_lossy().into_owned())
+    }
+
+    #[test]
+    fn index_detects_cargo_project() {
+        let (_tmp, root) = temp_root("cargo");
+        fs::write(
+            format!("{root}/Cargo.toml"),
+            "[package]\nname = \"app\"\n\n[dependencies]\ntokio = \"1\"\nserde = { version = \"1\" }\n",
+        )
+        .unwrap();
+        fs::create_dir_all(format!("{root}/src")).unwrap();
+        fs::write(format!("{root}/src/main.rs"), "fn main() {}").unwrap();
+        fs::write(format!("{root}/README.md"), "# App").unwrap();
+
+        let idx = index_project_memory(&root).unwrap();
+        assert!(idx.key_files.contains(&"Cargo.toml".into()));
+        assert!(idx.key_files.contains(&"README.md".into()));
+        assert!(idx.dependencies.contains(&"tokio".into()));
+        assert!(idx.dependencies.contains(&"serde".into()));
+        assert_eq!(idx.languages.get("rs").copied().unwrap_or(0), 1);
+        assert_eq!(idx.total_files, 3);
+        assert!(idx.total_dirs >= 1);
+    }
+
+    #[test]
+    fn index_detects_npm_project() {
+        let (_tmp, root) = temp_root("npm");
+        fs::write(
+            format!("{root}/package.json"),
+            r#"{"dependencies":{"react":"^18","lodash":"^4"},"devDependencies":{"jest":"^29"}}"#,
+        )
+        .unwrap();
+        fs::create_dir_all(format!("{root}/src")).unwrap();
+        fs::write(format!("{root}/src/index.js"), "console.log(1)").unwrap();
+
+        let idx = index_project_memory(&root).unwrap();
+        assert!(idx.key_files.contains(&"package.json".into()));
+        assert!(idx.dependencies.contains(&"react".into()));
+        assert!(idx.dependencies.contains(&"lodash".into()));
+        assert!(idx.dependencies.contains(&"jest".into()));
+        assert_eq!(idx.languages.get("js").copied().unwrap_or(0), 1);
+    }
+
+    #[test]
+    fn index_builds_file_tree() {
+        let (_tmp, root) = temp_root("tree");
+        fs::create_dir_all(format!("{root}/src/components")).unwrap();
+        fs::write(format!("{root}/src/main.rs"), "").unwrap();
+        fs::write(format!("{root}/src/components/mod.rs"), "").unwrap();
+
+        let idx = index_project_memory(&root).unwrap();
+        let src = idx
+            .file_tree
+            .iter()
+            .find(|n| n.name == "src" && n.kind == "dir")
+            .expect("src dir in tree");
+        let children = src.children.as_ref().unwrap();
+        assert!(children.iter().any(|n| n.name == "main.rs" && n.kind == "file"));
+        assert!(children.iter().any(|n| n.name == "components" && n.kind == "dir"));
+    }
+
+    #[test]
+    fn index_respects_gitignore() {
+        let (_tmp, root) = temp_root("gitignore");
+        fs::write(format!("{root}/.gitignore"), "*.log\nbuild/\n").unwrap();
+        fs::write(format!("{root}/keep.txt"), "").unwrap();
+        fs::write(format!("{root}/noise.log"), "").unwrap();
+        fs::create_dir_all(format!("{root}/build")).unwrap();
+        fs::write(format!("{root}/build/out.js"), "").unwrap();
+
+        let idx = index_project_memory(&root).unwrap();
+        assert!(idx.file_tree.iter().any(|n| n.name == "keep.txt"));
+        assert!(!idx.file_tree.iter().any(|n| n.name == "noise.log"));
+        assert!(!idx.file_tree.iter().any(|n| n.name == "build"));
+    }
+
+    #[test]
+    fn index_counts_languages() {
+        let (_tmp, root) = temp_root("langs");
+        fs::write(format!("{root}/a.rs"), "").unwrap();
+        fs::write(format!("{root}/b.rs"), "").unwrap();
+        fs::write(format!("{root}/c.js"), "").unwrap();
+
+        let idx = index_project_memory(&root).unwrap();
+        assert_eq!(idx.languages.get("rs").copied().unwrap_or(0), 2);
+        assert_eq!(idx.languages.get("js").copied().unwrap_or(0), 1);
+    }
+}
+
 #[cfg(test)]
 mod file_list_tests {
     use super::list_project_files;

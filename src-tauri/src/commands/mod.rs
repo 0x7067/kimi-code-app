@@ -46,6 +46,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         dialogs::pick_image,
         projects::mcp_servers,
         projects::read_agents_md,
+        projects::index_project,
         git::git_diff,
         mcp::list_mcp_servers,
         mcp::save_mcp_server,
