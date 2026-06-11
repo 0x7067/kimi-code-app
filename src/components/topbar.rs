@@ -139,6 +139,15 @@ pub fn Topbar() -> Element {
                     "Browser"
                 }
                 button {
+                    class: if *SHOW_MULTI_AGENT.read() { "ghost active" } else { "ghost" },
+                    title: "Multi-agent worktrees",
+                    onclick: move |_| {
+                        let open = !*SHOW_MULTI_AGENT.read();
+                        *SHOW_MULTI_AGENT.write() = open;
+                    },
+                    "Multi-agent"
+                }
+                button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();

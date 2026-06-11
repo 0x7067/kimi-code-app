@@ -138,6 +138,9 @@ pub fn App() -> Element {
                         if *SHOW_BROWSER.read() {
                             BrowserPane {}
                         }
+                        if *SHOW_MULTI_AGENT.read() {
+                            MultiAgentPane {}
+                        }
                     }
                 }
                 StatusBar {}
