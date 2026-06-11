@@ -60,6 +60,50 @@ pub async fn read_agents_md(work_dir: String) -> Result<Option<Value>, String> {
     Ok(Some(json!({ "path": path.to_string_lossy(), "content": content })))
 }
 
+/// Convert merged mcp.json entries into the ACP `mcpServers` array format.
+///
+/// F-005: disabled servers and unsupported transports are dropped here —
+/// kimi's mcpCapabilities advertise stdio + HTTP only (no SSE, no ACP
+/// transport), so anything else must never reach `session/new`.
+pub(crate) fn to_acp_servers(merged: std::collections::BTreeMap<String, Value>) -> Vec<Value> {
+    let to_pairs = |v: Option<&Value>| -> Vec<Value> {
+        v.and_then(|x| x.as_object())
+            .map(|o| {
+                o.iter()
+                    .map(|(k, val)| json!({"name": k, "value": val.as_str().unwrap_or_default()}))
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    merged
+        .into_iter()
+        .filter_map(|(name, cfg)| {
+            if !super::mcp::is_enabled(&cfg) {
+                return None;
+            }
+            match super::mcp::transport_of(&cfg).as_str() {
+                "http" => cfg.get("url").and_then(|u| u.as_str()).map(|url| {
+                    json!({
+                        "type": "http",
+                        "name": name,
+                        "url": url,
+                        "headers": to_pairs(cfg.get("headers")),
+                    })
+                }),
+                "stdio" => cfg.get("command").and_then(|c| c.as_str()).map(|command| {
+                    json!({
+                        "name": name,
+                        "command": command,
+                        "args": cfg.get("args").cloned().unwrap_or(json!([])),
+                        "env": to_pairs(cfg.get("env")),
+                    })
+                }),
+                _ => None, // sse / acp transports: not supported by kimi
+            }
+        })
+        .collect()
+}
+
 /// Merge user-level and project-level mcp.json into the ACP `mcpServers` array format.
 #[tauri::command]
 pub async fn mcp_servers(cwd: String) -> Result<Vec<Value>, String> {
@@ -76,37 +120,51 @@ pub async fn mcp_servers(cwd: String) -> Result<Vec<Value>, String> {
             }
         }
     }
-    let to_pairs = |v: Option<&Value>| -> Vec<Value> {
-        v.and_then(|x| x.as_object())
-            .map(|o| {
-                o.iter()
-                    .map(|(k, val)| json!({"name": k, "value": val.as_str().unwrap_or_default()}))
-                    .collect()
-            })
-            .unwrap_or_default()
-    };
-    Ok(merged
-        .into_iter()
-        .filter_map(|(name, cfg)| {
-            if let Some(url) = cfg.get("url").and_then(|u| u.as_str()) {
-                Some(json!({
-                    "type": "http",
-                    "name": name,
-                    "url": url,
-                    "headers": to_pairs(cfg.get("headers")),
-                }))
-            } else {
-                cfg.get("command").and_then(|c| c.as_str()).map(|command| {
-                    json!({
-                        "name": name,
-                        "command": command,
-                        "args": cfg.get("args").cloned().unwrap_or(json!([])),
-                        "env": to_pairs(cfg.get("env")),
-                    })
-                })
-            }
-        })
-        .collect())
+    Ok(to_acp_servers(merged))
+}
+
+#[cfg(test)]
+mod acp_servers_tests {
+    use super::to_acp_servers;
+    use serde_json::{json, Value};
+    use std::collections::BTreeMap;
+
+    fn merged(entries: &[(&str, Value)]) -> BTreeMap<String, Value> {
+        entries.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
+    }
+
+    #[test]
+    fn stdio_and_http_servers_pass_through() {
+        let out = to_acp_servers(merged(&[
+            ("files", json!({"command": "mcp-files", "args": ["-r"], "env": {"K": "v"}})),
+            ("web", json!({"url": "https://mcp.example.com"})),
+        ]));
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0]["command"], "mcp-files");
+        assert_eq!(out[1]["type"], "http");
+        assert_eq!(out[1]["url"], "https://mcp.example.com");
+    }
+
+    #[test]
+    fn disabled_servers_are_dropped() {
+        let out = to_acp_servers(merged(&[
+            ("off", json!({"command": "x", "enabled": false})),
+            ("on", json!({"command": "y", "enabled": true})),
+        ]));
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0]["name"], "on");
+    }
+
+    #[test]
+    fn sse_and_acp_transports_are_dropped() {
+        let out = to_acp_servers(merged(&[
+            ("sse", json!({"type": "sse", "url": "https://old.example.com"})),
+            ("acp", json!({"type": "acp", "command": "agent"})),
+            ("ok", json!({"type": "http", "url": "https://x.dev"})),
+        ]));
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0]["name"], "ok");
+    }
 }
 
 #[cfg(test)]
