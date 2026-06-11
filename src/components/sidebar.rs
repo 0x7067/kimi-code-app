@@ -1,13 +1,34 @@
-use crate::actions::{load_session, new_session};
+use crate::actions::{load_session, new_session, refresh_sessions};
 use crate::components::base::KimiIcon;
 use crate::components::icons::IconSearch;
+use crate::conversation::format_updated_at;
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::{json, Value};
 
+/// Current Unix time in seconds (webview clock in wasm; system clock in tests).
+fn now_epoch() -> i64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        (js_sys::Date::now() / 1000.0) as i64
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0)
+    }
+}
+
 #[component]
 pub fn Sidebar() -> Element {
+    // F-012: re-list kimi sessions whenever the selected project changes.
+    use_effect(move || {
+        let _ = PROJECT.read().clone(); // subscribe
+        spawn(refresh_sessions());
+    });
     let project = PROJECT.read().clone();
     let sessions = SESSIONS.read().clone();
     let query = SESSION_SEARCH.read().to_lowercase();
@@ -91,7 +112,7 @@ pub fn Sidebar() -> Element {
                                 div { class: "session-meta",
                                     {sess.cwd.rsplit('/').next().unwrap_or("").to_string()}
                                     " - "
-                                    {sess.updated_at.get(..10).unwrap_or("").to_string()}
+                                    {format_updated_at(&sess.updated_at, now_epoch())}
                                 }
                             }
                         }

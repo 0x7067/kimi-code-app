@@ -173,6 +173,15 @@ pub fn stop_reason(prompt_result: &Value) -> Option<&str> {
     prompt_result.get("stopReason").and_then(|s| s.as_str())
 }
 
+/// Build `session/prompt` params for a plain-text message (used by steering,
+/// F-015, where the frontend hands us raw text rather than content blocks).
+pub fn prompt_params(session_id: &str, text: &str) -> Value {
+    serde_json::json!({
+        "sessionId": session_id,
+        "prompt": [{ "type": "text", "text": text }],
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,5 +348,14 @@ mod tests {
         );
         assert_eq!(stop_reason(&json!({"stopReason": "end_turn"})), Some("end_turn"));
         assert_eq!(stop_reason(&json!({})), None);
+    }
+
+    #[test]
+    fn builds_text_prompt_params() {
+        let p = prompt_params("s1", "do the thing");
+        assert_eq!(p["sessionId"], "s1");
+        assert_eq!(p["prompt"][0]["type"], "text");
+        assert_eq!(p["prompt"][0]["text"], "do the thing");
+        assert_eq!(p["prompt"].as_array().map(Vec::len), Some(1));
     }
 }

@@ -16,7 +16,7 @@ mod thread;
 mod topbar;
 
 pub use app::App;
-pub(crate) use composer::Composer;
+pub(crate) use composer::{Composer, PendingQueue};
 pub(crate) use diff_pane::DiffPane;
 pub(crate) use login_modal::LoginModal;
 pub(crate) use permission_modal::PermissionModal;

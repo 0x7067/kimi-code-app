@@ -15,6 +15,8 @@ pub enum Item {
     Agent(String),
     Thought(String),
     Tool(ToolCall),
+    /// Subtle marker showing where a turn was cancelled (F-013).
+    Cancelled,
 }
 
 #[derive(Clone, PartialEq, Debug)]

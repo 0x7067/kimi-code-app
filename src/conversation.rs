@@ -14,6 +14,7 @@ pub fn item_plain_text(item: &Item) -> String {
     match item {
         Item::User(t) | Item::Agent(t) | Item::Thought(t) => t.clone(),
         Item::Tool(tc) => format!("{} {} {}\n{}", tc.kind, tc.title, tc.status, tc.output),
+        Item::Cancelled => "cancelled".to_string(),
     }
 }
 
@@ -39,6 +40,7 @@ pub fn export_markdown(title: &str, items: &[Item]) -> String {
                     out.push_str(&format!("\n```\n{}\n```\n", tc.output));
                 }
             }
+            Item::Cancelled => out.push_str("\n*— turn cancelled —*\n"),
         }
     }
     out
@@ -60,6 +62,7 @@ pub fn export_json(session_id: &str, items: &[Item]) -> String {
                 "status": tc.status,
                 "output": tc.output,
             }),
+            Item::Cancelled => json!({"role": "marker", "content": "cancelled"}),
         })
         .collect();
     serde_json::to_string_pretty(&json!({"sessionId": session_id, "items": msgs}))
@@ -130,6 +133,112 @@ pub fn mention_candidates_from_diff(diff: &str) -> Vec<String> {
         .filter(|l| !l.starts_with("No uncommitted") && !l.contains(' '))
         .map(String::from)
         .collect()
+}
+
+// ---------- Pending message queue (F-014) ----------
+
+/// Append a message to the pending queue. Empty/whitespace text is rejected.
+/// Returns whether the message was queued.
+pub fn queue_push(queue: &mut Vec<String>, text: &str) -> bool {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    queue.push(trimmed.to_string());
+    true
+}
+
+/// Remove and return the message at `index` (used both for the chip's ✕ and
+/// for click-to-edit, which moves the text into the composer). `None` when
+/// the index is out of bounds.
+pub fn queue_remove(queue: &mut Vec<String>, index: usize) -> Option<String> {
+    if index < queue.len() {
+        Some(queue.remove(index))
+    } else {
+        None
+    }
+}
+
+/// Pop the oldest queued message (FIFO dispatch on turn end).
+pub fn queue_pop_front(queue: &mut Vec<String>) -> Option<String> {
+    if queue.is_empty() {
+        None
+    } else {
+        Some(queue.remove(0))
+    }
+}
+
+// ---------- Relative time (F-012) ----------
+
+/// Days since 1970-01-01 for a civil date (Howard Hinnant's algorithm).
+fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = y - era * 400;
+    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
+}
+
+/// Parse an RFC 3339 / ISO 8601 timestamp (or a bare epoch number in seconds
+/// or milliseconds) into epoch seconds. `None` for unrecognized input.
+pub fn parse_timestamp(raw: &str) -> Option<i64> {
+    let raw = raw.trim();
+    if !raw.is_empty() && raw.chars().all(|c| c.is_ascii_digit()) {
+        let n: i64 = raw.parse().ok()?;
+        // Heuristic: epoch milliseconds are 13+ digits this century.
+        return Some(if n >= 1_000_000_000_000 { n / 1000 } else { n });
+    }
+    if raw.len() < 19 {
+        return None;
+    }
+    let (date, rest) = raw.split_at(10);
+    let mut parts = date.split('-');
+    let y: i64 = parts.next()?.parse().ok()?;
+    let m: i64 = parts.next()?.parse().ok()?;
+    let d: i64 = parts.next()?.parse().ok()?;
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    let time = &rest[1..]; // skip 'T' or ' '
+    let h: i64 = time.get(0..2)?.parse().ok()?;
+    let min: i64 = time.get(3..5)?.parse().ok()?;
+    let s: i64 = time.get(6..8)?.parse().ok()?;
+    let mut epoch = days_from_civil(y, m, d) * 86_400 + h * 3600 + min * 60 + s;
+    // Apply a trailing numeric offset (fractional seconds are skipped first).
+    let tail = &time[8..];
+    let tail = tail.strip_prefix('.').map_or(tail, |frac| frac.trim_start_matches(|c: char| c.is_ascii_digit()));
+    if let Some(sign) = tail.chars().next() {
+        if sign == '+' || sign == '-' {
+            let oh: i64 = tail.get(1..3)?.parse().ok()?;
+            let om: i64 = tail.get(4..6).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let off = oh * 3600 + om * 60;
+            epoch -= if sign == '+' { off } else { -off };
+        }
+    }
+    Some(epoch)
+}
+
+/// Human relative label for a past timestamp: "just now", "5m ago", "3h ago",
+/// "2d ago", "4w ago".
+pub fn relative_label(then_epoch: i64, now_epoch: i64) -> String {
+    let diff = (now_epoch - then_epoch).max(0);
+    match diff {
+        0..=59 => "just now".to_string(),
+        60..=3_599 => format!("{}m ago", diff / 60),
+        3_600..=86_399 => format!("{}h ago", diff / 3600),
+        86_400..=604_799 => format!("{}d ago", diff / 86_400),
+        _ => format!("{}w ago", diff / 604_800),
+    }
+}
+
+/// Format a session's `updatedAt` for the sidebar: relative when parseable,
+/// otherwise the raw date prefix (or empty).
+pub fn format_updated_at(raw: &str, now_epoch: i64) -> String {
+    match parse_timestamp(raw) {
+        Some(then) => relative_label(then, now_epoch),
+        None => raw.get(..10).unwrap_or("").to_string(),
+    }
 }
 
 // ---------- Context usage (F-002.14 / F-003.12) ----------
@@ -274,6 +383,63 @@ mod tests {
             vec!["src/main.rs".to_string(), "src/lib.rs".to_string()]
         );
         assert!(mention_candidates_from_diff("No uncommitted changes.").is_empty());
+    }
+
+    #[test]
+    fn queue_preserves_fifo_order_and_rejects_empty() {
+        let mut q = Vec::new();
+        assert!(queue_push(&mut q, "first"));
+        assert!(queue_push(&mut q, "  second  ")); // trimmed
+        assert!(!queue_push(&mut q, "   ")); // whitespace-only rejected
+        assert_eq!(q, vec!["first".to_string(), "second".to_string()]);
+        assert_eq!(queue_pop_front(&mut q), Some("first".to_string()));
+        assert_eq!(queue_pop_front(&mut q), Some("second".to_string()));
+        assert_eq!(queue_pop_front(&mut q), None);
+    }
+
+    #[test]
+    fn queue_remove_supports_edit_and_delete_semantics() {
+        let mut q = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        // click-to-edit: removal returns the text to load into the composer
+        assert_eq!(queue_remove(&mut q, 1), Some("b".to_string()));
+        assert_eq!(q, vec!["a".to_string(), "c".to_string()]); // order preserved
+        assert_eq!(queue_remove(&mut q, 5), None); // out of bounds is a no-op
+        assert_eq!(q.len(), 2);
+    }
+
+    #[test]
+    fn parse_timestamp_handles_rfc3339_offsets_and_epochs() {
+        assert_eq!(parse_timestamp("1970-01-01T00:00:00Z"), Some(0));
+        assert_eq!(parse_timestamp("2026-06-11T12:00:00Z"), Some(1_781_179_200));
+        // Fractional seconds and offsets
+        assert_eq!(parse_timestamp("2026-06-11T12:00:00.123Z"), Some(1_781_179_200));
+        assert_eq!(parse_timestamp("2026-06-11T14:00:00+02:00"), Some(1_781_179_200));
+        assert_eq!(parse_timestamp("2026-06-11T10:00:00-02:00"), Some(1_781_179_200));
+        // Bare epoch seconds and milliseconds
+        assert_eq!(parse_timestamp("1781179200"), Some(1_781_179_200));
+        assert_eq!(parse_timestamp("1781179200000"), Some(1_781_179_200));
+        // Garbage
+        assert_eq!(parse_timestamp(""), None);
+        assert_eq!(parse_timestamp("yesterday"), None);
+    }
+
+    #[test]
+    fn relative_label_thresholds() {
+        let now = 1_781_179_200;
+        assert_eq!(relative_label(now - 5, now), "just now");
+        assert_eq!(relative_label(now - 300, now), "5m ago");
+        assert_eq!(relative_label(now - 2 * 3600, now), "2h ago");
+        assert_eq!(relative_label(now - 3 * 86_400, now), "3d ago");
+        assert_eq!(relative_label(now - 14 * 86_400, now), "2w ago");
+        assert_eq!(relative_label(now + 100, now), "just now"); // clock skew clamps
+    }
+
+    #[test]
+    fn format_updated_at_falls_back_to_date_prefix() {
+        let now = 1_781_179_200;
+        assert_eq!(format_updated_at("2026-06-11T11:59:00Z", now), "1m ago");
+        assert_eq!(format_updated_at("2026-06-11-broken", now), "2026-06-11");
+        assert_eq!(format_updated_at("", now), "");
     }
 
     #[test]

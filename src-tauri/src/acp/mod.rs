@@ -328,6 +328,39 @@ impl AcpClient {
         self.notify("session/cancel", json!({ "sessionId": session_id }));
     }
 
+    /// How long steering waits for the cancelled turn to resolve before
+    /// sending the new prompt anyway (F-015).
+    const STEER_CANCEL_TIMEOUT: Duration = Duration::from_secs(5);
+
+    /// Steer (F-015): cancel the active turn, wait for it to resolve with
+    /// `stopReason: "cancelled"` (which releases the session's turn slot),
+    /// then immediately send the new prompt. If the cancelled turn does not
+    /// resolve within [`Self::STEER_CANCEL_TIMEOUT`], send anyway.
+    pub async fn steer(&self, session_id: &str, params: Value) -> Result<Value, Value> {
+        self.cancel(session_id);
+        let waiter = {
+            let mut turns = self.turns.lock().expect("turn queue poisoned");
+            if turns.try_begin(session_id) {
+                None
+            } else {
+                let (tx, rx) = oneshot::channel();
+                turns.enqueue_waiter(session_id, tx);
+                Some(rx)
+            }
+        };
+        if let Some(rx) = waiter {
+            // Timeout fallback: a hung turn must not block steering forever.
+            let _ = tokio::time::timeout(Self::STEER_CANCEL_TIMEOUT, rx).await;
+        }
+        let res = self.send_request("session/prompt", params).await;
+        if let Ok(mut turns) = self.turns.lock() {
+            if let Some(next) = turns.end_turn(session_id) {
+                let _ = next.send(());
+            }
+        }
+        res
+    }
+
     async fn send_request(&self, method: &str, params: Value) -> Result<Value, Value> {
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let (tx, rx) = oneshot::channel();

@@ -1722,3 +1722,73 @@ details.search-hit {
 
 /* ---------- @mention menu (F-002.12) ---------- */
 .mention-menu .slash-name { color: var(--accent); }
+
+/* ---------- Pending message queue (F-014) ---------- */
+.pending-queue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 6% 0;
+  flex-shrink: 0;
+}
+
+.pending-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 280px;
+  background: var(--bg-hover);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pending-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.pending-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Cancelled-turn marker (F-013) ---------- */
+.turn-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 4px 0;
+}
+
+.turn-cancelled::before,
+.turn-cancelled::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed var(--border-default);
+}
+
+/* ---------- Stop / queue buttons (F-013/F-014) ---------- */
+.stop-btn,
+.queue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

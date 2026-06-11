@@ -20,6 +20,13 @@ pub static PLAN: GlobalSignal<Vec<PlanEntry>> = Signal::global(Vec::new);
 pub static CONFIG_OPTIONS: GlobalSignal<Vec<ConfigOption>> = Signal::global(Vec::new);
 pub static COMMANDS: GlobalSignal<Vec<SlashCommand>> = Signal::global(Vec::new);
 pub static RUNNING: GlobalSignal<bool> = Signal::global(|| false);
+/// Monotonic turn counter (F-013/F-015): each prompt/steer claims an epoch so
+/// a superseded turn's completion does not clobber the newer turn's state.
+pub static TURN_EPOCH: GlobalSignal<u64> = Signal::global(|| 0);
+/// Messages queued while a turn is running (F-014), dispatched FIFO on turn end.
+pub static PENDING_QUEUE: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
+/// One-shot text handed to the composer (a queued chip clicked for editing).
+pub static COMPOSER_PREFILL: GlobalSignal<Option<String>> = Signal::global(|| None);
 pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
 
 pub static ATTACHMENTS: GlobalSignal<Vec<Attachment>> = Signal::global(Vec::new);

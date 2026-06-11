@@ -1,4 +1,5 @@
-use crate::actions::{cancel_turn, send_prompt, set_config};
+use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, set_config, steer_prompt};
+use crate::components::icons::{IconListPlus, IconSquare};
 use crate::conversation::{filter_mentions, mention_candidates_from_diff, mention_token};
 use crate::ipc::invoke;
 use crate::state::*;
@@ -39,13 +40,42 @@ pub fn Composer() -> Element {
         .unwrap_or_default();
     let show_mentions = mention.is_some() && !mentions.is_empty();
 
+    // F-014: a queued chip clicked for editing lands here.
+    use_effect(move || {
+        let pending = COMPOSER_PREFILL.read().clone(); // subscribe
+        if let Some(text) = pending {
+            *COMPOSER_PREFILL.write() = None;
+            draft.set(text);
+        }
+    });
+
+    // Send (idle) or steer (running, F-015): steering cancels the active
+    // turn and immediately sends the new message in its place.
     let mut submit = move |thinking: bool| {
         let text = draft.read().trim().to_string();
-        if text.is_empty() || *RUNNING.read() || SESSION_ID.read().is_none() {
+        if text.is_empty() || SESSION_ID.read().is_none() {
             return;
         }
         draft.set(String::new());
-        spawn(send_prompt(text, thinking));
+        if *RUNNING.read() {
+            spawn(steer_prompt(text));
+        } else {
+            spawn(send_prompt(text, thinking));
+        }
+    };
+
+    // F-014: park the draft in the pending queue (sends after this turn).
+    let mut enqueue = move || {
+        let text = draft.read().trim().to_string();
+        if text.is_empty() || SESSION_ID.read().is_none() {
+            return;
+        }
+        draft.set(String::new());
+        if *RUNNING.read() {
+            enqueue_prompt(&text);
+        } else {
+            spawn(send_prompt(text, false));
+        }
     };
 
     let mut insert_mention = move |path: &str| {
@@ -110,7 +140,13 @@ pub fn Composer() -> Element {
                     }
                 }
                 textarea {
-                    placeholder: if has_session { "Message Kimi…  ( / for commands, @ for files, ⌘⏎ to send)" } else { "Start a session first" },
+                    placeholder: if !has_session {
+                        "Start a session first"
+                    } else if running {
+                        "Send to steer…  (⏎ interrupts and sends, ⌥⏎ queues)"
+                    } else {
+                        "Message Kimi…  ( / for commands, @ for files, ⌘⏎ to send)"
+                    },
                     value: "{draft}",
                     disabled: !has_session,
                     oninput: move |e| {
@@ -178,12 +214,16 @@ pub fn Composer() -> Element {
                             match e.key() {
                                 Key::Enter => {
                                     let m = e.modifiers();
-                                    if m.meta() && m.shift() {
+                                    if m.alt() {
+                                        // F-014: ⌥⏎ queues instead of steering/sending.
+                                        e.prevent_default();
+                                        enqueue();
+                                    } else if m.meta() && m.shift() {
                                         e.prevent_default();
                                         submit(true); // send with thinking
                                     } else if m.meta() || !m.shift() {
                                         e.prevent_default();
-                                        submit(false);
+                                        submit(false); // send, or steer while running
                                     }
                                 }
                                 Key::Escape => {
@@ -248,7 +288,20 @@ pub fn Composer() -> Element {
                     }
                     div { class: "spacer" }
                     if running {
-                        button { class: "danger", onclick: move |_| { spawn(cancel_turn()); }, "Stop" }
+                        button {
+                            class: "ghost queue-btn",
+                            title: "Queue message — sends after the current turn (⌥⏎)",
+                            onclick: move |_| enqueue(),
+                            IconListPlus { size: 14 }
+                            "Queue"
+                        }
+                        button {
+                            class: "danger stop-btn",
+                            title: "Stop the current turn (Esc) — typing ⏎ steers instead",
+                            onclick: move |_| { spawn(cancel_turn()); },
+                            IconSquare { size: 12, color: "currentColor" }
+                            "Stop"
+                        }
                     } else {
                         button {
                             class: "primary",
@@ -256,6 +309,49 @@ pub fn Composer() -> Element {
                             disabled: !has_session,
                             onclick: move |_| submit(false),
                             "Send"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// F-014: messages queued while a turn runs, shown between thread and
+/// composer. Click a chip to edit it back into the composer; ✕ removes it.
+#[component]
+pub fn PendingQueue() -> Element {
+    let queue = PENDING_QUEUE.read().clone();
+    if queue.is_empty() {
+        return rsx! {};
+    }
+    rsx! {
+        div { class: "pending-queue",
+            span { class: "pending-label", "Queued ({queue.len()})" }
+            for (i, text) in queue.iter().enumerate() {
+                {
+                    let text = text.clone();
+                    let label = text.clone();
+                    rsx! {
+                        div {
+                            key: "{i}-{text}",
+                            class: "pending-chip",
+                            title: "Click to edit in the composer",
+                            onclick: move |_| {
+                                if crate::conversation::queue_remove(&mut PENDING_QUEUE.write(), i).is_some() {
+                                    *COMPOSER_PREFILL.write() = Some(text.clone());
+                                }
+                            },
+                            span { class: "pending-chip-text", "{label}" }
+                            button {
+                                class: "chip-x",
+                                title: "Remove from queue",
+                                onclick: move |e| {
+                                    e.stop_propagation();
+                                    crate::conversation::queue_remove(&mut PENDING_QUEUE.write(), i);
+                                },
+                                "✕"
+                            }
                         }
                     }
                 }

@@ -82,6 +82,15 @@ pub async fn acp_cancel(state: State<'_, AppState>, session_id: String) -> Resul
     Ok(())
 }
 
+/// Steer the active turn (F-015): `session/cancel` → await the cancelled
+/// turn's resolution (5s fallback) → immediately `session/prompt` the new
+/// text. The reply is the new prompt's result.
+#[tauri::command]
+pub async fn acp_steer(state: State<'_, AppState>, session_id: String, text: String) -> Result<Value, Value> {
+    let params = crate::acp::protocol::prompt_params(&session_id, &text);
+    client(&state).await?.steer(&session_id, params).await
+}
+
 /// Resolve a pending permission request from the UI.
 #[tauri::command]
 pub async fn acp_respond_permission(

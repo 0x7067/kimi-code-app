@@ -173,6 +173,9 @@ fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str
                 div { class: "thought-body", "{text}" }
             }
         },
+        Item::Cancelled => rsx! {
+            div { key: "{i}", class: "turn-cancelled", span { "cancelled" } }
+        },
         Item::Tool(tc) => rsx! {
             details {
                 key: "{i}",

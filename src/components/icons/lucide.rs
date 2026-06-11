@@ -200,6 +200,46 @@ pub fn IconX(props: IconProps) -> Element {
     }
 }
 
+/// Solid stop square (F-013 stop button).
+#[component]
+pub fn IconSquare(props: IconProps) -> Element {
+    rsx! {
+        svg {
+            width: "{props.size}",
+            height: "{props.size}",
+            view_box: "0 0 24 24",
+            fill: "{props.color}",
+            stroke: "{props.color}",
+            "stroke-width": "{props.stroke_width}",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+            rect { x: "5", y: "5", width: "14", height: "14", rx: "2" }
+        }
+    }
+}
+
+/// Stacked-list icon for the queue button (F-014).
+#[component]
+pub fn IconListPlus(props: IconProps) -> Element {
+    rsx! {
+        svg {
+            width: "{props.size}",
+            height: "{props.size}",
+            view_box: "0 0 24 24",
+            fill: "none",
+            stroke: "{props.color}",
+            "stroke-width": "{props.stroke_width}",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+            path { d: "M11 12H3" }
+            path { d: "M16 6H3" }
+            path { d: "M16 18H3" }
+            path { d: "M18 9v6" }
+            path { d: "M21 12h-6" }
+        }
+    }
+}
+
 // ------------------------------------------------------------------
 // File & Code
 // ------------------------------------------------------------------
