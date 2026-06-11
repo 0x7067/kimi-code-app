@@ -1,6 +1,7 @@
 mod acp;
 mod checkpoint;
 mod commands;
+mod memory;
 mod paths;
 mod terminal;
 

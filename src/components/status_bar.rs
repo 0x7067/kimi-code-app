@@ -42,6 +42,7 @@ pub fn StatusBar() -> Element {
     } else {
         "Disconnected".to_string()
     };
+    let mem_count = *INJECTED_MEMORY_COUNT.read();
 
     rsx! {
         footer { class: "statusbar",
@@ -50,6 +51,12 @@ pub fn StatusBar() -> Element {
             // F-011.6: prominent reminder while every tool call is auto-approved.
             if APP_SETTINGS.read().yolo {
                 span { class: "status-yolo", title: "YOLO mode — all tool calls auto-approved", "YOLO" }
+            }
+            // F-007.12: memory injection indicator.
+            if mem_count > 0 {
+                span { class: "status-memory", title: "Memories injected into this session's context",
+                    "🧠 {mem_count}"
+                }
             }
             span { class: "status-op", "{op}" }
             div { class: "status-spacer" }

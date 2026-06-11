@@ -116,7 +116,8 @@ pub async fn create_session(cwd: String, name: Option<String>, initial_prompt: O
             }
             refresh_sessions().await;
             if let Some(prompt) = initial_prompt.filter(|p| !p.trim().is_empty()) {
-                send_prompt(prompt, false).await;
+                let enriched = enrich_prompt_with_memories(&cwd, &prompt).await;
+                send_prompt(enriched, false).await;
             }
         }
         Err(e) => {
@@ -415,6 +416,64 @@ pub async fn refresh_project_files() {
             }
             Err(e) => *ERROR.write() = Some(err_msg(&e)),
             _ => {}
+        }
+    }
+}
+
+/// F-007.5: retrieve relevant memories for `prompt` and prepend them.
+async fn enrich_prompt_with_memories(cwd: &str, prompt: &str) -> String {
+    match invoke("build_memory_context", json!({"cwd": cwd, "query": prompt, "topK": 5})).await {
+        Ok(Value::String(ctx)) if !ctx.is_empty() => {
+            *INJECTED_MEMORY_COUNT.write() = ctx.lines().filter(|l| l.starts_with("- ")).count();
+            format!("{ctx}\n{prompt}")
+        }
+        _ => {
+            *INJECTED_MEMORY_COUNT.write() = 0;
+            prompt.to_string()
+        }
+    }
+}
+
+// ---------- F-007: memory commands ----------
+
+pub async fn refresh_memories() {
+    if let Some(cwd) = PROJECT.read().clone() {
+        match invoke("list_memories", json!({"cwd": cwd})).await {
+            Ok(Value::Array(arr)) => {
+                let snippets: Vec<Value> = arr.iter().cloned().collect();
+                *MEMORY_SNIPPETS.write() = snippets;
+            }
+            Err(e) => *ERROR.write() = Some(err_msg(&e)),
+            _ => {}
+        }
+    }
+}
+
+pub async fn save_memory(content: String, source: String) {
+    if let Some(cwd) = PROJECT.read().clone() {
+        match invoke("save_memory", json!({"cwd": cwd, "content": content, "source": source})).await {
+            Ok(_) => refresh_memories().await,
+            Err(e) => *ERROR.write() = Some(err_msg(&e)),
+        }
+    }
+}
+
+pub async fn delete_memory(id: String) {
+    if let Some(cwd) = PROJECT.read().clone() {
+        if let Err(e) = invoke("delete_memory", json!({"cwd": cwd, "id": id})).await {
+            *ERROR.write() = Some(err_msg(&e));
+        } else {
+            refresh_memories().await;
+        }
+    }
+}
+
+pub async fn pin_memory(id: String, pinned: bool) {
+    if let Some(cwd) = PROJECT.read().clone() {
+        if let Err(e) = invoke("pin_memory", json!({"cwd": cwd, "id": id, "pinned": pinned})).await {
+            *ERROR.write() = Some(err_msg(&e));
+        } else {
+            refresh_memories().await;
         }
     }
 }

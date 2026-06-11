@@ -87,6 +87,10 @@ pub static PROJECT_FILES: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
 
 /// F-007.10: whether the memory panel is open.
 pub static SHOW_MEMORY: GlobalSignal<bool> = Signal::global(|| false);
+/// F-007.10: memory snippets for the current project.
+pub static MEMORY_SNIPPETS: GlobalSignal<Vec<Value>> = Signal::global(Vec::new);
+/// F-007.12: count of memories injected into the current session's initial prompt.
+pub static INJECTED_MEMORY_COUNT: GlobalSignal<usize> = Signal::global(|| 0);
 
 /// F-006: whether the browser preview pane is open.
 pub static SHOW_BROWSER: GlobalSignal<bool> = Signal::global(|| false);
@@ -107,6 +111,8 @@ pub fn reset_thread() {
     *PERMISSION.write() = None;
     *RUNNING.write() = false;
     *CONTEXT_USAGE.write() = 0.0;
+    *AUTO_COMPACT_FIRED.write() = false;
+    *INJECTED_MEMORY_COUNT.write() = 0;
 }
 
 /// Save current session thread state into the scrollback cache.

@@ -1,5 +1,7 @@
-//! F-007.10: Memory panel showing project index and user preferences.
+//! F-007: Memory panel showing project index, user preferences, and stored
+//! memory snippets with search, pin, and delete.
 
+use crate::actions::{refresh_memories, save_memory, delete_memory, pin_memory};
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
@@ -9,8 +11,10 @@ use serde_json::Value;
 pub fn MemoryPane() -> Element {
     let mut index = use_signal(|| None::<Value>);
     let mut loading = use_signal(|| false);
+    let mut search = use_signal(String::new);
+    let mut new_content = use_signal(String::new);
 
-    let mut refresh = move || {
+    let mut refresh_index = move || {
         if let Some(cwd) = PROJECT.read().clone() {
             loading.set(true);
             spawn(async move {
@@ -26,11 +30,24 @@ pub fn MemoryPane() -> Element {
     };
 
     use_effect(move || {
-        refresh();
+        refresh_index();
+        spawn(async move { refresh_memories().await; });
     });
 
     let idx = index.read().clone();
     let settings = APP_SETTINGS.read().clone();
+    let snippets = MEMORY_SNIPPETS.read().clone();
+    let query = search.read().clone().to_lowercase();
+
+    let filtered: Vec<Value> = if query.is_empty() {
+        snippets
+    } else {
+        snippets.into_iter().filter(|s| {
+            s.get("content").and_then(|v| v.as_str())
+                .map(|c| c.to_lowercase().contains(&query))
+                .unwrap_or(false)
+        }).collect()
+    };
 
     rsx! {
         div { class: "memory-pane",
@@ -42,8 +59,8 @@ pub fn MemoryPane() -> Element {
                     }
                     button {
                         class: "ghost",
-                        onclick: move |_| refresh(),
-                        "Re-index"
+                        onclick: move |_| { refresh_index(); spawn(async move { refresh_memories().await; }); },
+                        "Refresh"
                     }
                     button {
                         class: "ghost",
@@ -53,13 +70,114 @@ pub fn MemoryPane() -> Element {
                 }
             }
             div { class: "memory-body",
+                // -- Add memory --
+                div { class: "memory-section",
+                    h4 { "Add memory" }
+                    div { class: "memory-row",
+                        input {
+                            class: "prefs-input",
+                            placeholder: "Something to remember about this project…",
+                            value: "{new_content}",
+                            oninput: move |e| new_content.set(e.value()),
+                            onkeydown: move |e| {
+                                if e.key() == Key::Enter {
+                                    let text = new_content.read().clone();
+                                    if !text.trim().is_empty() {
+                                        new_content.set(String::new());
+                                        spawn(async move {
+                                            save_memory(text, "user".into()).await;
+                                        });
+                                    }
+                                }
+                            },
+                        }
+                        button {
+                            class: "primary",
+                            onclick: move |_| {
+                                let text = new_content.read().clone();
+                                if !text.trim().is_empty() {
+                                    new_content.set(String::new());
+                                    spawn(async move {
+                                        save_memory(text, "user".into()).await;
+                                    });
+                                }
+                            },
+                            "Save"
+                        }
+                    }
+                }
+
+                // -- Search memories --
+                if !MEMORY_SNIPPETS.read().is_empty() {
+                    div { class: "memory-section",
+                        h4 { "Memories ({filtered.len()})" }
+                        input {
+                            class: "prefs-input",
+                            placeholder: "Search memories…",
+                            value: "{search}",
+                            oninput: move |e| search.set(e.value()),
+                        }
+                        div { class: "memory-list",
+                            for s in filtered.iter() {
+                                MemorySnippetRow { snippet: s.clone() }
+                            }
+                        }
+                    }
+                }
+
+                // -- Project index --
                 if let Some(idx) = idx {
                     ProjectIndexSection { index: idx.clone() }
                 }
+
+                // -- User preferences --
                 UserPrefsSection {
                     tech_stack: settings.tech_stack.clone(),
                     coding_style: settings.coding_style.clone(),
                     naming_conventions: settings.naming_conventions.clone(),
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn MemorySnippetRow(snippet: Value) -> Element {
+    let id = snippet.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let content = snippet.get("content").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let pinned = snippet.get("pinned").and_then(|v| v.as_bool()).unwrap_or(false);
+    let source = snippet.get("source").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let created = snippet.get("createdAt").and_then(|v| v.as_i64()).unwrap_or(0);
+    let rel = snippet.get("relevanceScore").and_then(|v| v.as_f64());
+
+    let id_clone = id.clone();
+    let id_pin = id.clone();
+
+    rsx! {
+        div {
+            class: if pinned { "memory-snippet pinned" } else { "memory-snippet" },
+            div { class: "memory-snippet-content", "{content}" }
+            div { class: "memory-snippet-meta",
+                span { class: "memory-snippet-source", "{source}" }
+                if let Some(r) = rel {
+                    span { class: "memory-snippet-score", "score: {r:.2}" }
+                }
+                span { class: "memory-snippet-date", "{created}" }
+                button {
+                    class: "ghost",
+                    onclick: move |_| {
+                        let id = id_pin.clone();
+                        spawn(async move { pin_memory(id, !pinned).await; });
+                    },
+                    if pinned { "Unpin" } else { "Pin" }
+                }
+                button {
+                    class: "ghost danger",
+                    onclick: move |_| {
+                        let id = id_clone.clone();
+                        spawn(async move { delete_memory(id).await; });
+                    },
+                    "Delete"
                 }
             }
         }

@@ -6,6 +6,7 @@ mod config;
 mod dialogs;
 mod git;
 mod kimi;
+mod memory;
 mod mcp;
 mod projects;
 mod sessions;
@@ -62,5 +63,11 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         checkpoint::list_checkpoints,
         checkpoint::load_checkpoint,
         checkpoint::delete_checkpoint,
+        memory::list_memories,
+        memory::save_memory,
+        memory::delete_memory,
+        memory::pin_memory,
+        memory::retrieve_memories,
+        memory::build_memory_context,
     ]
 }
