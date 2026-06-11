@@ -132,6 +132,9 @@ pub fn App() -> Element {
                         if *SHOW_DIFF.read() {
                             DiffPane {}
                         }
+                        if *SHOW_MEMORY.read() {
+                            MemoryPane {}
+                        }
                     }
                 }
                 StatusBar {}

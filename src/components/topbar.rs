@@ -121,6 +121,15 @@ pub fn Topbar() -> Element {
                     "Terminal"
                 }
                 button {
+                    class: if *SHOW_MEMORY.read() { "ghost active" } else { "ghost" },
+                    title: "Project memory",
+                    onclick: move |_| {
+                        let open = !*SHOW_MEMORY.read();
+                        *SHOW_MEMORY.write() = open;
+                    },
+                    "Memory"
+                }
+                button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();

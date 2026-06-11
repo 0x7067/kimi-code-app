@@ -2511,3 +2511,133 @@ details.search-hit {
   text-align: center;
   padding: 12px 0;
 }
+
+/* ---------- F-007.10: memory pane ---------- */
+
+.memory-pane {
+  width: 34%;
+  min-width: 280px;
+  max-width: 440px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.memory-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.memory-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memory-spinner {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.memory-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+.memory-section {
+  margin-bottom: 20px;
+}
+
+.memory-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.memory-section h5 {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.memory-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.memory-subsection {
+  margin-bottom: 14px;
+}
+
+.memory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.memory-list li {
+  padding: 3px 0;
+  font-family: var(--font-mono);
+}
+
+.memory-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memory-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  font-size: 11px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.memory-pref-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.memory-pref-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.memory-pref-value {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.memory-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
