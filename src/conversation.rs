@@ -824,7 +824,6 @@ mod tests {
         assert_eq!(result.len(), 3);
         assert_eq!(result[2], Item::User("c2".into()));
     }
-}
 
     // ---------- F-007.1 memory preferences ----------
 
@@ -864,3 +863,30 @@ mod tests {
         assert_eq!(restored.coding_style, "snake_case, 2-space indent");
         assert_eq!(restored.naming_conventions, "PascalCase for components");
     }
+
+    // ---------- F-009.2 task templates ----------
+
+    #[test]
+    fn app_settings_includes_default_task_templates() {
+        let settings = crate::state::AppSettings::default();
+        assert!(!settings.task_templates.is_empty());
+        let names: Vec<String> = settings.task_templates.iter().map(|t| t.name.clone()).collect();
+        assert!(names.contains(&"Explain".into()));
+        assert!(names.contains(&"Tests".into()));
+        assert!(names.contains(&"Refactor".into()));
+    }
+
+    #[test]
+    fn app_settings_roundtrips_task_templates() {
+        let mut settings = crate::state::AppSettings::default();
+        settings.task_templates.push(crate::state::TaskTemplate {
+            name: "Custom".into(),
+            description: "My template".into(),
+            prompt: "Do the thing".into(),
+        });
+        let json = serde_json::to_value(&settings).unwrap();
+        let restored: crate::state::AppSettings = serde_json::from_value(json).unwrap();
+        assert!(restored.task_templates.iter().any(|t| t.name == "Custom"));
+        assert_eq!(restored.task_templates.iter().find(|t| t.name == "Custom").unwrap().prompt, "Do the thing");
+    }
+}

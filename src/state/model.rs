@@ -62,6 +62,14 @@ pub struct SlashCommand {
     pub description: String,
 }
 
+/// F-009.2: a reusable task template with a pre-defined prompt.
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct TaskTemplate {
+    pub name: String,
+    pub description: String,
+    pub prompt: String,
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum View {
     Chat,
@@ -104,6 +112,8 @@ pub struct AppSettings {
     pub coding_style: String,
     /// F-007.1: naming conventions (freeform text).
     pub naming_conventions: String,
+    /// F-009.2: reusable task templates.
+    pub task_templates: Vec<TaskTemplate>,
 }
 
 impl Default for AppSettings {
@@ -116,8 +126,39 @@ impl Default for AppSettings {
             tech_stack: String::new(),
             coding_style: String::new(),
             naming_conventions: String::new(),
+            task_templates: default_task_templates(),
         }
     }
+}
+
+fn default_task_templates() -> Vec<TaskTemplate> {
+    vec![
+        TaskTemplate {
+            name: "Explain".into(),
+            description: "Explain how this code works".into(),
+            prompt: "Explain how this code works step by step, including any important design decisions or trade-offs.".into(),
+        },
+        TaskTemplate {
+            name: "Tests".into(),
+            description: "Add unit tests".into(),
+            prompt: "Write comprehensive unit tests for the current module. Cover edge cases, error paths, and typical usage.".into(),
+        },
+        TaskTemplate {
+            name: "Refactor".into(),
+            description: "Improve readability".into(),
+            prompt: "Refactor this code to improve readability and maintainability without changing external behavior.".into(),
+        },
+        TaskTemplate {
+            name: "Debug".into(),
+            description: "Help debug an issue".into(),
+            prompt: "Help me debug this issue. Describe the symptoms, any error messages, and what I've already tried.".into(),
+        },
+        TaskTemplate {
+            name: "Document".into(),
+            description: "Add documentation".into(),
+            prompt: "Add clear documentation comments to this code. Explain the purpose of each public API, parameters, and return values.".into(),
+        },
+    ]
 }
 
 #[derive(Clone, PartialEq, Debug)]

@@ -1,4 +1,5 @@
 use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, set_config, steer_prompt};
+use crate::components::base::{KimiDropdown, KimiDropdownItem};
 use crate::components::icons::{IconListPlus, IconSquare};
 use crate::conversation::{filter_mentions, mention_candidates_from_diff, mention_token};
 use crate::ipc::invoke;
@@ -297,6 +298,24 @@ pub fn Composer() -> Element {
                             });
                         },
                         "Attach"
+                    }
+                    if has_session {
+                        KimiDropdown {
+                            trigger: rsx! {
+                                button { class: "ghost", "Templates" }
+                            },
+                            for tmpl in APP_SETTINGS.read().task_templates.iter() {
+                                {
+                                    let prompt = tmpl.prompt.clone();
+                                    rsx! {
+                                        KimiDropdownItem {
+                                            onclick: move |_| draft.set(prompt.clone()),
+                                            "{tmpl.name} — {tmpl.description}"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     for opt in CONFIG_OPTIONS.read().iter() {
                         {
