@@ -135,6 +135,9 @@ pub fn App() -> Element {
                         if *SHOW_MEMORY.read() {
                             MemoryPane {}
                         }
+                        if *SHOW_BROWSER.read() {
+                            BrowserPane {}
+                        }
                     }
                 }
                 StatusBar {}

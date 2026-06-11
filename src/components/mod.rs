@@ -5,6 +5,7 @@ pub mod base;
 pub mod icons;
 
 mod app;
+mod browser_pane;
 mod composer;
 mod diff_pane;
 mod login_modal;
@@ -21,6 +22,7 @@ mod topbar;
 pub use app::App;
 pub(crate) use composer::{Composer, PendingQueue};
 pub(crate) use diff_pane::DiffPane;
+pub(crate) use browser_pane::BrowserPane;
 pub(crate) use login_modal::LoginModal;
 pub(crate) use memory_pane::MemoryPane;
 pub(crate) use permission_modal::PermissionModal;

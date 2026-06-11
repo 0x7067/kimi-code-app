@@ -130,6 +130,15 @@ pub fn Topbar() -> Element {
                     "Memory"
                 }
                 button {
+                    class: if *SHOW_BROWSER.read() { "ghost active" } else { "ghost" },
+                    title: "Browser preview",
+                    onclick: move |_| {
+                        let open = !*SHOW_BROWSER.read();
+                        *SHOW_BROWSER.write() = open;
+                    },
+                    "Browser"
+                }
+                button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();

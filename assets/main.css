@@ -2641,3 +2641,42 @@ details.search-hit {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ---------- F-006: browser pane ---------- */
+
+.browser-pane {
+  width: 50%;
+  min-width: 320px;
+  max-width: 720px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.browser-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.browser-url {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.browser-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: var(--bg-base);
+}
