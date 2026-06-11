@@ -21,7 +21,7 @@ pub struct AcpClient {
 
 impl AcpClient {
     pub async fn spawn(app: AppHandle) -> Result<Arc<Self>, String> {
-        let mut child = Command::new("kimi")
+        let mut child = Command::new(crate::commands::kimi_bin())
             .arg("acp")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

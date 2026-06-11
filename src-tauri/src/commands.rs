@@ -11,6 +11,24 @@ pub struct AppState {
     pub acp: Mutex<Option<Arc<AcpClient>>>,
 }
 
+/// Locate the kimi binary. GUI apps launched from Finder get a minimal PATH,
+/// so check the known install locations before falling back to PATH lookup.
+pub fn kimi_bin() -> std::path::PathBuf {
+    let home = dirs::home_dir().unwrap_or_default();
+    let candidates = [
+        kimi_home().join("bin/kimi"),
+        home.join(".local/bin/kimi"),
+        "/usr/local/bin/kimi".into(),
+        "/opt/homebrew/bin/kimi".into(),
+    ];
+    for c in candidates {
+        if c.is_file() {
+            return c;
+        }
+    }
+    "kimi".into()
+}
+
 fn kimi_home() -> std::path::PathBuf {
     std::env::var("KIMI_CODE_HOME")
         .map(std::path::PathBuf::from)
@@ -96,7 +114,7 @@ pub async fn acp_respond_permission(
 /// Run `kimi login` (device-code OAuth), streaming output lines to the UI.
 #[tauri::command]
 pub async fn kimi_login(app: AppHandle) -> Result<i32, String> {
-    let mut child = tokio::process::Command::new("kimi")
+    let mut child = tokio::process::Command::new(kimi_bin())
         .arg("login")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -137,7 +155,7 @@ pub fn js_log(msg: String) {
 /// Check kimi availability and version.
 #[tauri::command]
 pub async fn kimi_version() -> Result<String, String> {
-    let out = tokio::process::Command::new("kimi")
+    let out = tokio::process::Command::new(kimi_bin())
         .arg("--version")
         .output()
         .await
