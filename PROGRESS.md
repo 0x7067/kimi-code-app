@@ -45,12 +45,12 @@
 | 11 | F-002.6 Checkpoint system — backend save/load/list/delete with JSON snapshots in `<sessionDir>/checkpoints/<name>.json`, 7 backend tests; frontend panel with save input, restore/delete buttons, CSS styles. | DONE | `TBD` |
 | 12 | F-002.12 @mentions — backend `list_files` command (respects .gitignore, max_depth, limit, skips hidden/build dirs), 5 TDD tests; frontend caches results in PROJECT_FILES for mention autocomplete. | DONE | `TBD` |
 | 13 | F-003.4 Auto-compact — backend flag + reducer trigger + app effect + settings UI (toggle + threshold 60/70/80/85/90%). | DONE | `9891714` |
-| 14 | F-007 Memory — JSON-backed per-project memory store, keyword-overlap retrieval, auto-injection into new-session prompts, memory pane with search/pin/delete, status-bar injection indicator (🧠 count). | DONE | `0b42546` |
+| 14 | F-007 Memory — JSON-backed per-project memory store, keyword-overlap retrieval, auto-injection into new-session prompts, memory pane with search/pin/delete, status-bar injection indicator (🧠 count). Semantic summaries/RAG and memory feedback remain deferred. | PARTIAL | `0b42546` |
 | 15 | F-009 Automations — cron scheduler (60s tick), headless ACP runner, execution history JSON store, automation pane with create/edit/delete/run-now, topbar toggle. | DONE | `fd57740` |
 | 16 | F-004 Multi-Agent — MultiAgentState with AgentTask tracking, task decomposition via headless runner, create/list/get run commands, RunDashboard in MultiAgentPane. | DONE | `90ab7fd` |
 | 17 | F-006 Browser — device size toggles (mobile/tablet/desktop), live-reload file watcher (notify crate), share URL to composer. | DONE | `d8a390f` |
 | 18 | F-008 Preview Iteration — P2 optional, deferred. | DEFERRED | — |
-| 19 | Codex-style UI redesign (SS-01–SS-06): sidebar nav section (New chat/Search/Plugins/Automations) + footer + age badges; composer context selectors (project/mode/branch) + circular send button; settings left category sidebar (Personal/Integrations/Coding/Archived) with mode cards + iOS toggles; thread agent headers with expand/collapse + action bar (thumbs/share/copy) + file card component + hero empty state. CSS decomposed into 12 modular stylesheets in `assets/css/`. Kimi branding preserved. | DONE | `TBD` |
+| 19 | Codex-style UI redesign (SS-01–SS-06): sidebar nav section (New chat/Search/Plugins/Automations) + footer + age badges; composer toolbar + circular send button; settings left category sidebar with backed preference panes; thread agent headers with expand/collapse + copy action + file card component + hero empty state. CSS decomposed into 12 modular stylesheets in `assets/css/`. Kimi branding preserved. | DONE | `TBD` |
 
 ## Phase detail
 
@@ -75,14 +75,14 @@ Backend: parse/upsert/remove servers, transport detection, validation, project-l
 ### F-006 Browser & Visual Feedback — DONE (simplified)
 Embedded iframe preview with URL bar. Device size toggles (375px/768px/100%). Live reload via backend file watcher (notify crate) emitting `browser:reload`. Share button sends current URL to composer. Screenshot capture and annotation canvas deferred to future enhancement (requires Tauri screenshot plugin or native API investigation).
 
-### F-007 Memory & Personalization — DONE
-Per-project JSON memory store with keyword-overlap retrieval. Auto-injection prepends top-5 relevant memories to new-session initial prompts. Memory pane shows project index, user preferences, and stored snippets with search/pin/delete. Status bar shows 🧠 injection count. 1 backend test.
+### F-007 Memory & Personalization — PARTIAL
+Per-project JSON memory store with keyword-overlap retrieval. Auto-injection prepends top-5 relevant memories to new-session initial prompts. Memory pane shows project index, user preferences, and stored snippets with search/pin/delete. Status bar shows 🧠 injection count. Semantic conversation summaries, vector/RAG retrieval, and memory feedback are not wired yet.
 
 ### F-009 Automations — DONE
 Automation definitions stored in AppSettings (name, cron, prompt, cwd, enabled). Background scheduler tick (60s) reads automations from disk and fires headless ACP runs. Execution history stored in JSON. Frontend pane with create/edit/delete, Run Now button, and execution history list. Headless ACP runner spawns short-lived `kimi acp` process for automation prompts.
 
 ### F-010 Terminal Integration — DONE
-PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded panel below composer with streaming output, input line with prompt, Clear/Close controls, auto-scroll. Verified live in `cargo tauri dev`.
+PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded panel below composer with streaming output, input line with prompt, Clear/Close controls, send-output-to-chat, searchable local command history, auto-scroll. Verified live in `cargo tauri dev`.
 
 ### F-011 Settings & Configuration — DONE
 Preferences pane: binary autodetect, auth status, model selector, thinking default, per-tool approvals + YOLO, context limit settings (auto-compact threshold). Raw config editors for config.toml/tui.toml/mcp.json/AGENTS.md. MCP Servers structured UI. All settings persist via atomic JSON store and apply without restart.
