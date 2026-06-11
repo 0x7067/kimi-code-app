@@ -2406,3 +2406,108 @@ details.search-hit {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---------- F-002.6: Checkpoint panel ---------- */
+.checkpoint-panel {
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: msg-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  margin: 0 6%;
+  border-radius: var(--radius-lg);
+}
+
+.checkpoint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.checkpoint-save-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checkpoint-input {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.checkpoint-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.checkpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkpoint-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.checkpoint-item:hover {
+  border-color: var(--border-default);
+}
+
+.checkpoint-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.checkpoint-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.checkpoint-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.checkpoint-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.checkpoint-empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 12px 0;
+}

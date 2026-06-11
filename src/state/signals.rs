@@ -2,6 +2,7 @@
 
 use super::model::*;
 use dioxus::prelude::*;
+use serde_json::Value;
 use std::collections::HashMap;
 
 pub static CONNECTED: GlobalSignal<bool> = Signal::global(|| false);
@@ -68,6 +69,10 @@ pub static TERMINAL_OPEN: GlobalSignal<bool> = Signal::global(|| false);
 pub static TERMINAL_OUTPUT: GlobalSignal<String> = Signal::global(String::new);
 /// F-010: current terminal ID from the backend (None = no active terminal).
 pub static TERMINAL_ID: GlobalSignal<Option<u64>> = Signal::global(|| None);
+
+/// F-002.6: checkpoint panel open state and current session's checkpoints.
+pub static SHOW_CHECKPOINTS: GlobalSignal<bool> = Signal::global(|| false);
+pub static CHECKPOINTS: GlobalSignal<Vec<Value>> = Signal::global(Vec::new);
 
 /// Cached thread state per session so switching sessions does not lose scrollback.
 pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);

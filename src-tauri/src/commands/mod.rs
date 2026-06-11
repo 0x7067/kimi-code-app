@@ -1,6 +1,7 @@
 //! Tauri commands, grouped by concern. All are registered in `lib.rs`.
 
 mod acp;
+mod checkpoint;
 mod config;
 mod dialogs;
 mod git;
@@ -52,5 +53,9 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         terminal::term_write,
         terminal::term_resize,
         terminal::term_close,
+        checkpoint::save_checkpoint,
+        checkpoint::list_checkpoints,
+        checkpoint::load_checkpoint,
+        checkpoint::delete_checkpoint,
     ]
 }

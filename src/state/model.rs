@@ -1,6 +1,6 @@
 //! Domain types shared across the UI.
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ToolCall {
     pub id: String,
     pub title: String,
@@ -9,7 +9,7 @@ pub struct ToolCall {
     pub output: String,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Item {
     User(String),
     Agent(String),
@@ -19,7 +19,7 @@ pub enum Item {
     Cancelled,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct PlanEntry {
     pub content: String,
     pub priority: String,

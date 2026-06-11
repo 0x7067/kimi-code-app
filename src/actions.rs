@@ -351,3 +351,47 @@ pub async fn refresh_diff() {
         }
     }
 }
+
+// ---------- F-002.6: checkpoint save/restore ----------
+
+pub async fn save_checkpoint(name: &str) {
+    let Some(session_id) = SESSION_ID.read().clone() else { return };
+    let items = serde_json::to_value(&*ITEMS.read()).unwrap_or_else(|_| json!([]));
+    let plan = serde_json::to_value(&*PLAN.read()).unwrap_or_else(|_| json!([]));
+    match invoke("save_checkpoint", json!({"sessionId": session_id, "name": name, "items": items, "plan": plan})).await {
+        Ok(_) => { refresh_checkpoints().await; }
+        Err(e) => *ERROR.write() = Some(err_msg(&e)),
+    }
+}
+
+pub async fn refresh_checkpoints() {
+    let Some(session_id) = SESSION_ID.read().clone() else { return };
+    match invoke("list_checkpoints", json!({"sessionId": session_id})).await {
+        Ok(Value::Array(list)) => *CHECKPOINTS.write() = list,
+        _ => {}
+    }
+}
+
+pub async fn load_checkpoint(name: &str) {
+    let Some(session_id) = SESSION_ID.read().clone() else { return };
+    match invoke("load_checkpoint", json!({"sessionId": session_id, "name": name})).await {
+        Ok(v) => {
+            if let Ok(items) = serde_json::from_value::<Vec<Item>>(v.get("items").cloned().unwrap_or_else(|| json!([]))) {
+                *ITEMS.write() = items;
+            }
+            if let Ok(plan) = serde_json::from_value::<Vec<PlanEntry>>(v.get("plan").cloned().unwrap_or_else(|| json!([]))) {
+                *PLAN.write() = plan;
+            }
+        }
+        Err(e) => *ERROR.write() = Some(err_msg(&e)),
+    }
+}
+
+pub async fn delete_checkpoint(name: &str) {
+    let Some(session_id) = SESSION_ID.read().clone() else { return };
+    if let Err(e) = invoke("delete_checkpoint", json!({"sessionId": session_id, "name": name})).await {
+        *ERROR.write() = Some(err_msg(&e));
+    } else {
+        refresh_checkpoints().await;
+    }
+}

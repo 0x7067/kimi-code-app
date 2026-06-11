@@ -93,6 +93,16 @@ pub fn Topbar() -> Element {
                     }
                 }
                 button {
+                    class: if *SHOW_CHECKPOINTS.read() { "ghost active" } else { "ghost" },
+                    title: "Session checkpoints",
+                    onclick: move |_| {
+                        let open = !*SHOW_CHECKPOINTS.read();
+                        *SHOW_CHECKPOINTS.write() = open;
+                        if open { spawn(crate::actions::refresh_checkpoints()); }
+                    },
+                    "Checkpoints"
+                }
+                button {
                     class: if *SHOW_DIFF.read() { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let now = !*SHOW_DIFF.read();

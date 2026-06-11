@@ -2,6 +2,7 @@ use crate::conversation::{item_matches, item_plain_text};
 use crate::markdown::md_to_html;
 use crate::state::*;
 use dioxus::prelude::*;
+use serde_json::Value;
 
 /// Copy text to the system clipboard (F-002.8).
 pub(crate) fn copy_text(text: &str) {
@@ -106,6 +107,9 @@ pub fn ThreadView() -> Element {
                     }
                 }
             }
+        }
+        if *SHOW_CHECKPOINTS.read() {
+            {checkpoint_panel()}
         }
         div { class: "thread", id: "thread",
             if ITEMS.read().is_empty() && SESSION_ID.read().is_none() {
@@ -215,5 +219,89 @@ fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str
                 }
             }
         },
+    }
+}
+
+/// F-002.6: checkpoint panel rendered above the thread when SHOW_CHECKPOINTS is true.
+fn checkpoint_panel() -> Element {
+    let mut name_input = use_signal(String::new);
+    let has_session = SESSION_ID.read().is_some();
+    rsx! {
+        div { class: "checkpoint-panel",
+            div { class: "checkpoint-head",
+                span { "Checkpoints" }
+                button {
+                    class: "ghost",
+                    onclick: move |_| { *SHOW_CHECKPOINTS.write() = false; },
+                    "Close"
+                }
+            }
+            if has_session {
+                div { class: "checkpoint-save-row",
+                    input {
+                        class: "checkpoint-input",
+                        r#type: "text",
+                        placeholder: "Checkpoint name…",
+                        value: "{name_input}",
+                        oninput: move |e| name_input.set(e.value()),
+                    }
+                    button {
+                        class: "primary",
+                        onclick: move |_| {
+                            let text = name_input.read().trim().to_string();
+                            if !text.is_empty() {
+                                spawn(async move {
+                                    crate::actions::save_checkpoint(&text).await;
+                                });
+                                name_input.set(String::new());
+                            }
+                        },
+                        "Save"
+                    }
+                }
+            }
+            div { class: "checkpoint-list",
+                for cp in CHECKPOINTS.read().clone() {
+                    {
+                        let name = cp.get("name").and_then(|v: &Value| v.as_str()).unwrap_or("").to_string();
+                        let saved_at = cp.get("savedAt").and_then(|v: &Value| v.as_str()).unwrap_or("").to_string();
+                        let name_clone = name.clone();
+                        rsx! {
+                            div { key: "{name}", class: "checkpoint-item",
+                                div { class: "checkpoint-meta",
+                                    span { class: "checkpoint-name", "{name}" }
+                                    span { class: "checkpoint-time", "{saved_at}" }
+                                }
+                                div { class: "checkpoint-actions",
+                                    button {
+                                        class: "ghost",
+                                        onclick: move |_| {
+                                            let n = name_clone.clone();
+                                            spawn(async move {
+                                                crate::actions::load_checkpoint(&n).await;
+                                            });
+                                        },
+                                        "Restore"
+                                    }
+                                    button {
+                                        class: "ghost danger",
+                                        onclick: move |_| {
+                                            let n = name.clone();
+                                            spawn(async move {
+                                                crate::actions::delete_checkpoint(&n).await;
+                                            });
+                                        },
+                                        "Delete"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if CHECKPOINTS.read().is_empty() {
+                    div { class: "checkpoint-empty", "No checkpoints saved yet." }
+                }
+            }
+        }
     }
 }
