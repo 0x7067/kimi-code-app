@@ -397,7 +397,7 @@ pub fn IconInfo(props: IconProps) -> Element {
 pub fn IconLoader(props: IconProps) -> Element {
     rsx! {
         svg {
-            class: "animate-spin",
+            class: "kimi-spinner",
             width: "{props.size}",
             height: "{props.size}",
             view_box: "0 0 24 24",

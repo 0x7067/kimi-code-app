@@ -5,3 +5,6 @@
 
 mod lucide;
 
+#[allow(unused_imports)] // public design-system surface; adopted incrementally
+pub use lucide::*;
+

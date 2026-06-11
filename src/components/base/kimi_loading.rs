@@ -4,6 +4,7 @@ use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
 #[derive(Clone, PartialEq)]
+#[allow(dead_code)] // full variant set is part of the design-system API
 pub enum LoadingVariant {
     Spinner,
     Dots,
@@ -18,7 +19,7 @@ pub fn KimiLoading(
     match variant {
         LoadingVariant::Spinner => rsx! {
             svg {
-                class: "animate-spin",
+                class: "kimi-spinner",
                 width: "{size}",
                 height: "{size}",
                 view_box: "0 0 24 24",

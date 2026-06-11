@@ -56,6 +56,43 @@ fn spacing_is_4px_grid() {
 }
 
 #[test]
+fn typography_scale_matches_spec() {
+    assert_eq!(Typography::DISPLAY_SIZE, "24px");
+    assert_eq!(Typography::H1_SIZE, "20px");
+    assert_eq!(Typography::H2_SIZE, "16px");
+    assert_eq!(Typography::H3_SIZE, "14px");
+    assert_eq!(Typography::BODY_SIZE, "14px");
+    assert_eq!(Typography::SMALL_SIZE, "13px");
+    assert_eq!(Typography::CAPTION_SIZE, "12px");
+    assert_eq!(Typography::CODE_SIZE, "13px");
+}
+
+#[test]
+fn typography_weights_and_rhythm_match_spec() {
+    assert_eq!(Typography::WEIGHT_NORMAL, "400");
+    assert_eq!(Typography::WEIGHT_MEDIUM, "500");
+    assert_eq!(Typography::WEIGHT_SEMIBOLD, "600");
+    assert_eq!(Typography::WEIGHT_BOLD, "700");
+    assert_eq!(Typography::LH_TIGHT, "1.2");
+    assert_eq!(Typography::LH_SNUG, "1.3");
+    assert_eq!(Typography::LH_NORMAL, "1.4");
+    assert_eq!(Typography::LH_RELAXED, "1.5");
+    assert_eq!(Typography::LH_CODE, "1.6");
+    assert_eq!(Typography::LS_TIGHT, "-0.02em");
+    assert_eq!(Typography::LS_SNUG, "-0.01em");
+    assert_eq!(Typography::LS_NORMAL, "0");
+    assert_eq!(Typography::LS_WIDE, "0.01em");
+}
+
+#[test]
+fn animation_durations_match_spec() {
+    assert_eq!(animation::Animation::MICRO, "150ms");
+    assert_eq!(animation::Animation::FAST, "200ms");
+    assert_eq!(animation::Animation::NORMAL, "300ms");
+    assert_eq!(animation::Animation::SLOW, "500ms");
+}
+
+#[test]
 fn layout_dimensions_match_spec() {
     assert_eq!(Spacing::SIDEBAR_WIDTH, 240);
     assert_eq!(Spacing::SIDEBAR_COLLAPSED, 64);

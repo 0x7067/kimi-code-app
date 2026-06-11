@@ -16,35 +16,22 @@ pub fn KimiInput(
 ) -> Element {
     let mut local_value = use_signal(|| value.clone());
 
-    let base = "w-full bg-[#1E1E1E] border rounded-xl text-[#F5F5F5] placeholder-[#737373] transition-all duration-150 ease-out focus:outline-none";
-
-    let state_cls = if error {
-        "border-[#EF4444] focus:border-[#EF4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.3)]"
-    } else if disabled {
-        "border-[#2E2E2E] opacity-50 cursor-not-allowed"
-    } else {
-        "border-[#2E2E2E] focus:border-[#1E90FF] focus:shadow-[0_0_0_2px_rgba(30,144,255,0.3)]"
-    };
-
-    let size_cls = if multiline {
-        "py-3 px-3 min-h-[80px] resize-y"
-    } else {
-        "h-11 py-2 px-3"
-    };
-
-    let pad_left = if leading_icon.is_some() && !multiline { " pl-10" } else { "" };
-    let pad_right = if trailing_icon.is_some() && !multiline { " pr-10" } else { "" };
+    let error_cls = if error { "error" } else { "" };
+    let leading_cls = if leading_icon.is_some() && !multiline { "has-leading" } else { "" };
+    let trailing_cls = if trailing_icon.is_some() && !multiline { "has-trailing" } else { "" };
 
     rsx! {
-        div { class: "relative flex items-center",
+        div {
+            style: "position: relative; display: flex; align-items: center; width: 100%;",
             if let Some(icon) = leading_icon {
-                div { class: "absolute left-3 text-[#737373] pointer-events-none",
+                div {
+                    style: "position: absolute; left: 12px; color: #737373; pointer-events: none; display: flex;",
                     {icon}
                 }
             }
             if multiline {
                 textarea {
-                    class: "{base} {state_cls} {size_cls}",
+                    class: "kimi-input multi {error_cls}",
                     value: "{local_value()}",
                     placeholder: "{placeholder}",
                     disabled: disabled,
@@ -56,7 +43,7 @@ pub fn KimiInput(
                 }
             } else {
                 input {
-                    class: "{base} {state_cls} {size_cls}{pad_left}{pad_right}",
+                    class: "kimi-input single {error_cls} {leading_cls} {trailing_cls}",
                     r#type: "text",
                     value: "{local_value()}",
                     placeholder: "{placeholder}",
@@ -74,7 +61,8 @@ pub fn KimiInput(
                 }
             }
             if let Some(icon) = trailing_icon {
-                div { class: "absolute right-3 text-[#737373] pointer-events-none",
+                div {
+                    style: "position: absolute; right: 12px; color: #737373; pointer-events: none; display: flex;",
                     {icon}
                 }
             }

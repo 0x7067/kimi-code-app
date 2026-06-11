@@ -1,4 +1,6 @@
 use crate::actions::{load_session, new_session};
+use crate::components::base::KimiIcon;
+use crate::components::icons::IconSearch;
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
@@ -24,8 +26,8 @@ pub fn Sidebar() -> Element {
         aside { class: "sidebar",
             div { class: "sidebar-head",
                 span { class: "brand",
-                    span { class: "brand-mark", "K" }
-                    "Kimi Code"
+                    KimiIcon { size: 22, variant: "rounded", animate_dot: true }
+                    span { class: "brand-text", "Kimi Code" }
                 }
             }
             div { class: "project-picker",
@@ -65,6 +67,7 @@ pub fn Sidebar() -> Element {
                 "+ New session"
             }
             div { class: "session-search-wrap",
+                IconSearch { size: 14 }
                 input {
                     class: "session-search",
                     r#type: "search",

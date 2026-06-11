@@ -103,9 +103,12 @@ pub fn App() -> Element {
                 LoginModal {}
             }
             if let Some(err) = ERROR.read().clone() {
-                div { class: "toast",
-                    span { "{err}" }
-                    button { onclick: move |_| *ERROR.write() = None, "Dismiss" }
+                base::KimiToast {
+                    key: "{err}",
+                    message: err,
+                    variant: "error",
+                    duration: 8000_u64,
+                    onclose: move |_| *ERROR.write() = None,
                 }
             }
         }

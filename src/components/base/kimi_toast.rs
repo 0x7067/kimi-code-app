@@ -54,9 +54,9 @@ pub fn KimiToast(
                 font-size: 14px;
                 line-height: 1.4;
             ",
-            span { class: "flex-1", "{message}" }
+            span { style: "flex: 1;", "{message}" }
             button {
-                class: "bg-transparent border-none text-[#737373] hover:text-[#F5F5F5] cursor-pointer p-0 flex items-center justify-center",
+                class: "kimi-toast-close",
                 onclick: move |_| {
                     visible.set(false);
                     onclose.call(());

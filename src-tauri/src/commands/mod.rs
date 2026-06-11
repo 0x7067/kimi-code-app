@@ -16,6 +16,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         acp::acp_connect,
         acp::acp_request,
         acp::acp_notify,
+        acp::acp_cancel,
         acp::acp_respond_permission,
         kimi::kimi_login,
         kimi::js_log,

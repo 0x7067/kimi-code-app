@@ -11,16 +11,43 @@ pub fn KimiDropdown(
     onclose: Option<EventHandler<()>>,
 ) -> Element {
     let mut is_open = use_signal(|| open);
+    // True while the 100ms close animation plays; the menu stays mounted
+    // with the `kimi-scale-out` class until the timer unmounts it.
+    let mut closing = use_signal(|| false);
+
+    let mut close = move || {
+        if closing() || !is_open() {
+            return;
+        }
+        closing.set(true);
+        let handle = gloo_timers::callback::Timeout::new(100, move || {
+            is_open.set(false);
+            closing.set(false);
+            if let Some(h) = onclose {
+                h.call(());
+            }
+        });
+        std::mem::forget(handle);
+    };
+
+    let anim_cls = if closing() { "kimi-scale-out" } else { "kimi-fade-in kimi-scale-in" };
 
     rsx! {
-        div { class: "relative inline-block",
+        div {
+            style: "position: relative; display: inline-block;",
             div {
-                onclick: move |_| is_open.set(!is_open()),
+                onclick: move |_| {
+                    if is_open() {
+                        close();
+                    } else {
+                        is_open.set(true);
+                    }
+                },
                 {trigger}
             }
             if is_open() {
                 div {
-                    class: "kimi-fade-in kimi-scale-in",
+                    class: "{anim_cls}",
                     style: "
                         position: absolute;
                         top: calc(100% + 6px);
@@ -37,8 +64,7 @@ pub fn KimiDropdown(
                     onclick: move |_e| {
                         // Close when clicking inside (typical dropdown behavior)
                         // If child items want to keep it open they can call e.stop_propagation()
-                        is_open.set(false);
-                        if let Some(h) = onclose { h.call(()); }
+                        close();
                     },
                     {children}
                 }
@@ -59,6 +85,7 @@ pub fn KimiDropdownItem(
 
     rsx! {
         div {
+            class: "kimi-dropdown-item",
             style: "
                 display: flex;
                 align-items: center;
@@ -72,7 +99,6 @@ pub fn KimiDropdownItem(
                 transition: background 150ms ease-out;
                 white-space: nowrap;
             ",
-            class: "hover:bg-[#262626]",
             onclick: move |e| {
                 e.stop_propagation();
                 if let Some(h) = onclick { h.call(e); }
