@@ -31,7 +31,7 @@ pub fn Sidebar() -> Element {
             div { class: "project-picker",
                 select {
                     value: project.clone().unwrap_or_default(),
-                    onchange: |e| {
+                    onchange: move |e| {
                         let v = e.value();
                         *PROJECT.write() = if v.is_empty() { None } else { Some(v) };
                     },
@@ -45,7 +45,7 @@ pub fn Sidebar() -> Element {
                 button {
                     class: "ghost icon-btn",
                     title: "Open folder…",
-                    onclick: |_| {
+                    onclick: move |_| {
                         spawn(async {
                             if let Ok(Value::String(path)) = invoke("pick_folder", json!({})).await {
                                 if !RECENT_PROJECTS.read().contains(&path) {
@@ -61,7 +61,7 @@ pub fn Sidebar() -> Element {
             button {
                 class: "primary new-session",
                 disabled: PROJECT.read().is_none() || !*CONNECTED.read(),
-                onclick: |_| { spawn(new_session()); },
+                onclick: move |_| { spawn(new_session()); },
                 "+ New session"
             }
             div { class: "session-search-wrap",
@@ -70,7 +70,7 @@ pub fn Sidebar() -> Element {
                     r#type: "search",
                     placeholder: "Search sessions…",
                     value: "{SESSION_SEARCH}",
-                    oninput: |e| *SESSION_SEARCH.write() = e.value(),
+                    oninput: move |e| *SESSION_SEARCH.write() = e.value(),
                 }
             }
             div { class: "session-list",
@@ -82,7 +82,7 @@ pub fn Sidebar() -> Element {
                             div {
                                 key: "{sess.id}",
                                 class: if active { "session-item active" } else { "session-item" },
-                                onclick: |_| { spawn(load_session(meta.clone())); },
+                                onclick: move |_| { spawn(load_session(meta.clone())); },
                                 div { class: "session-title", "{sess.title}" }
                                 div { class: "session-meta",
                                     {sess.cwd.rsplit('/').next().unwrap_or("").to_string()}

@@ -32,7 +32,7 @@ pub fn SettingsView() -> Element {
                     button {
                         key: "{name}",
                         class: if *file.read() == name { "tab active" } else { "tab" },
-                        onclick: |_| load(name.to_string()),
+                        onclick: move |_| load(name.to_string()),
                         "{name}"
                     }
                 }
@@ -41,13 +41,13 @@ pub fn SettingsView() -> Element {
                 class: "settings-editor",
                 spellcheck: false,
                 value: "{content}",
-                oninput: |e| content.set(e.value()),
+                oninput: move |e| content.set(e.value()),
             }
             div { class: "settings-actions",
                 span { class: "settings-status", "{status}" }
                 button {
                     class: "primary",
-                    onclick: |_| {
+                    onclick: move |_| {
                         let name = file.read().clone();
                         let body = content.read().clone();
                         spawn(async move {

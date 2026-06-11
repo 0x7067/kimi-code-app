@@ -1,4 +1,5 @@
 //! UI components, one file per view region.
+#![allow(unused_qualifications)]
 
 mod app;
 mod composer;

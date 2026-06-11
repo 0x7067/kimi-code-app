@@ -9,7 +9,7 @@ pub fn DiffPane() -> Element {
         aside { class: "diff-pane",
             div { class: "diff-head",
                 span { "Working tree changes" }
-                button { class: "ghost icon-btn", onclick: |_| { spawn(refresh_diff()); }, "Refresh" }
+                button { class: "ghost icon-btn", onclick: move |_| { spawn(refresh_diff()); }, "Refresh" }
             }
             pre { class: "diff-body",
                 for (i, line) in diff.lines().enumerate() {

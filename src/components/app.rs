@@ -91,7 +91,7 @@ pub fn App() -> Element {
             if let Some(err) = ERROR.read().clone() {
                 div { class: "toast",
                     span { "{err}" }
-                    button { onclick: |_| *ERROR.write() = None "Dismiss" }
+                    button { onclick: move |_| *ERROR.write() = None, "Dismiss" }
                 }
             }
         }

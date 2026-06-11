@@ -11,13 +11,13 @@ pub fn Topbar() -> Element {
                 span { class: if connected { "dot ok" } else { "dot bad" } }
                 span { class: "agent-name", "{AGENT_INFO}" }
                 if !connected {
-                    button { class: "ghost", onclick: |_| { spawn(connect()); }, "Reconnect" }
+                    button { class: "ghost", onclick: move |_| { spawn(connect()); }, "Reconnect" }
                 }
             }
             div { class: "topbar-right",
                 button {
                     class: if *SHOW_DIFF.read() { "ghost active" } else { "ghost" },
-                    onclick: |_| {
+                    onclick: move |_| {
                         let now = !*SHOW_DIFF.read();
                         *SHOW_DIFF.write() = now;
                         if now { spawn(refresh_diff()); }
@@ -26,7 +26,7 @@ pub fn Topbar() -> Element {
                 }
                 button {
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
-                    onclick: |_| {
+                    onclick: move |_| {
                         let v = *VIEW.read();
                         *VIEW.write() = if v == View::Settings { View::Chat } else { View::Settings };
                     },

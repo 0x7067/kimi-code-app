@@ -24,7 +24,7 @@ pub fn PermissionModal() -> Element {
                                 button {
                                     key: "{option_id}",
                                     class: "{class}",
-                                    onclick: |_| {
+                                    onclick: move |_| {
                                         let oid = oid.clone();
                                         *PERMISSION.write() = None;
                                         spawn(async move {

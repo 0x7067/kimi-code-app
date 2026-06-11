@@ -19,7 +19,7 @@ pub fn LoginModal() -> Element {
                     button {
                         class: "primary",
                         disabled: running,
-                        onclick: |_| {
+                        onclick: move |_| {
                             LOGIN_LINES.write().clear();
                             *LOGIN_RUNNING.write() = true;
                             spawn(async {
@@ -28,7 +28,7 @@ pub fn LoginModal() -> Element {
                         },
                         if running { "Waiting for login…" } else { "Login with Kimi" }
                     }
-                    button { class: "ghost", onclick: |_| *NEEDS_LOGIN.write() = false, "Close" }
+                    button { class: "ghost", onclick: move |_| *NEEDS_LOGIN.write() = false, "Close" }
                 }
             }
         }

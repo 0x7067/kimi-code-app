@@ -32,7 +32,7 @@ pub fn Composer() -> Element {
                                 div {
                                     key: "{cmd.name}",
                                     class: "slash-item",
-                                    onclick: |_| draft.set(format!("/{name} ")),
+                                    onclick: move |_| draft.set(format!("/{name} ")),
                                     span { class: "slash-name", "/{cmd.name}" }
                                     span { class: "slash-desc", "{cmd.description}" }
                                 }
@@ -49,7 +49,7 @@ pub fn Composer() -> Element {
                                 "{a.name}"
                                 button {
                                     class: "chip-x",
-                                    onclick: |_| { ATTACHMENTS.write().remove(i); },
+                                    onclick: move |_| { ATTACHMENTS.write().remove(i); },
                                     "Remove"
                                 }
                             }
@@ -60,8 +60,8 @@ pub fn Composer() -> Element {
                     placeholder: if has_session { "Message Kimi…  ( / for commands, Enter to send)" } else { "Start a session first" },
                     value: "{draft}",
                     disabled: !has_session,
-                    oninput: |e| draft.set(e.value()),
-                    onkeydown: |e| {
+                    oninput: move |e| draft.set(e.value()),
+                    onkeydown: move |e| {
                         if e.key() == Key::Enter && !e.modifiers().shift() {
                             e.prevent_default();
                             submit();
@@ -73,7 +73,7 @@ pub fn Composer() -> Element {
                         class: "ghost",
                         title: "Attach image",
                         disabled: !has_session,
-                        onclick: |_| {
+                        onclick: move |_| {
                             spawn(async {
                                 if let Ok(Value::Object(img)) = invoke("pick_image", json!({})).await {
                                     ATTACHMENTS.write().push(Attachment {
@@ -95,7 +95,7 @@ pub fn Composer() -> Element {
                                     class: "cfg-select",
                                     title: "{opt.name}",
                                     value: "{opt.current}",
-                                    onchange: |e| { spawn(set_config(id.clone(), e.value())); },
+                                    onchange: move |e| { spawn(set_config(id.clone(), e.value())); },
                                     for so in opt.options.iter() {
                                         option { value: "{so.value}", selected: so.value == opt.current, "{so.name}" }
                                     }
@@ -105,9 +105,9 @@ pub fn Composer() -> Element {
                     }
                     div { class: "spacer" }
                     if running {
-                        button { class: "danger", onclick: |_| { spawn(cancel_turn()); }, "Stop" }
+                        button { class: "danger", onclick: move |_| { spawn(cancel_turn()); }, "Stop" }
                     } else {
-                        button { class: "primary", disabled: !has_session, onclick: |_| submit(), "Send" }
+                        button { class: "primary", disabled: !has_session, onclick: move |_| submit(), "Send" }
                     }
                 }
             }
