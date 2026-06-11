@@ -5,7 +5,22 @@ use dioxus::prelude::*;
 #[component]
 pub fn ThreadView() -> Element {
     use_effect(move || {
-        let _ = (ITEMS.read().len(), RUNNING.read());
+        let items = ITEMS.read();
+        let running = *RUNNING.read();
+        // Track total output length of in-progress tools so auto-scroll fires
+        // when CLI output streams in in real time.
+        let cli_output_len: usize = items
+            .iter()
+            .filter_map(|item| {
+                if let Item::Tool(tc) = item {
+                    if tc.status == "in_progress" {
+                        return Some(tc.output.len());
+                    }
+                }
+                None
+            })
+            .sum();
+        let _ = (items.len(), running, cli_output_len);
         document::eval(
             "requestAnimationFrame(() => { \
                 const t = document.getElementById('thread'); \
@@ -68,7 +83,10 @@ fn render_item(i: usize, item: &Item) -> Element {
             }
         },
         Item::Tool(tc) => rsx! {
-            details { key: "{i}", class: "tool {tc.status}",
+            details {
+                key: "{i}",
+                class: "tool {tc.status}",
+                open: tc.status == "in_progress",
                 summary {
                     span { class: "tool-badge {tc.status}",
                         {match tc.status.as_str() {

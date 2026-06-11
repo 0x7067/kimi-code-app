@@ -102,7 +102,21 @@ pub fn apply_update(params: &Value) {
                         }
                         let out = content_text(update.get("content").unwrap_or(&Value::Null));
                         if !out.is_empty() {
-                            tc.output = out;
+                            // Handle both full-replacement and incremental-chunk protocols
+                            // so CLI output accumulates correctly for real-time rendering.
+                            if tc.output.is_empty() {
+                                tc.output = out;
+                            } else if out.starts_with(&tc.output) {
+                                // Full output that grew — take the longer version.
+                                tc.output = out;
+                            } else if tc.output.ends_with(&out)
+                                && out.len() <= tc.output.len()
+                            {
+                                // Repeated suffix — ignore.
+                            } else {
+                                // Incremental chunk — append.
+                                tc.output.push_str(&out);
+                            }
                         }
                         break;
                     }
