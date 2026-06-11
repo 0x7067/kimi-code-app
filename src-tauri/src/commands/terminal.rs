@@ -11,7 +11,7 @@ use tauri::{AppHandle, Emitter, State};
 #[derive(Default)]
 pub struct TermState(pub std::sync::Mutex<Registry<Term>>);
 
-fn lock(state: &State<'_, TermState>) -> Result<std::sync::MutexGuard<'_, Registry<Term>>, String> {
+fn lock<'a>(state: &'a State<'a, TermState>) -> Result<std::sync::MutexGuard<'a, Registry<Term>>, String> {
     state.0.lock().map_err(|_| "terminal registry poisoned".to_string())
 }
 
@@ -48,8 +48,8 @@ pub fn term_open(
 pub fn term_write(state: State<'_, TermState>, id: u64, data: String) -> Result<(), String> {
     let mut reg = lock(&state)?;
     let term = reg.get_mut(id).ok_or("no such terminal")?;
-    term.writer.write_all(data.as_bytes()).map_err(|e| e.to_string())?;
-    term.writer.flush().map_err(|e| e.to_string())
+    term.writer.write_all(data.as_bytes()).map_err(|e: std::io::Error| e.to_string())?;
+    term.writer.flush().map_err(|e: std::io::Error| e.to_string())
 }
 
 /// Resize the PTY.

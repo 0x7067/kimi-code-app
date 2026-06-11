@@ -5,9 +5,11 @@ mod config;
 mod dialogs;
 mod git;
 mod kimi;
+mod mcp;
 mod projects;
 mod sessions;
 mod settings_store;
+pub mod terminal;
 
 pub use acp::AppState;
 pub use sessions::spawn_session_index_watcher;
@@ -43,5 +45,12 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         projects::mcp_servers,
         projects::read_agents_md,
         git::git_diff,
+        mcp::list_mcp_servers,
+        mcp::save_mcp_server,
+        mcp::delete_mcp_server,
+        terminal::term_open,
+        terminal::term_write,
+        terminal::term_resize,
+        terminal::term_close,
     ]
 }

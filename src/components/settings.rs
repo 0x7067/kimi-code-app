@@ -41,7 +41,7 @@ pub fn SettingsView() -> Element {
     rsx! {
         div { class: "settings",
             div { class: "settings-tabs",
-                for name in ["Preferences", "config.toml", "tui.toml", "mcp.json", "AGENTS.md"] {
+                for name in ["Preferences", "MCP Servers", "config.toml", "tui.toml", "mcp.json", "AGENTS.md"] {
                     button {
                         key: "{name}",
                         class: if *file.read() == name { "tab active" } else { "tab" },
@@ -52,6 +52,8 @@ pub fn SettingsView() -> Element {
             }
             if prefs_open {
                 PreferencesPane {}
+            } else if *file.read() == "MCP Servers" {
+                McpServersPane {}
             } else {
                 textarea {
                     class: "settings-editor",
@@ -390,6 +392,292 @@ fn ApprovalsSection() -> Element {
                 }
                 p { class: "prefs-warning",
                     "Danger: the agent will run shell commands, edit files, and call tools without asking. Use only in throwaway environments."
+                }
+            }
+        }
+    }
+}
+
+// ---------- F-005: MCP server management UI ----------
+
+#[component]
+pub fn McpServersPane() -> Element {
+    let mut servers = use_signal(Vec::<Value>::new);
+    let mut loading = use_signal(|| true);
+    let mut editing = use_signal(|| None::<Value>);
+    let mut status = use_signal(String::new);
+
+    let mut refresh = move || {
+        loading.set(true);
+        spawn(async move {
+            match invoke("list_mcp_servers", json!({})).await {
+                Ok(Value::Object(mut o)) => {
+                    let list = o.remove("servers").and_then(|v| v.as_array().cloned()).unwrap_or_default();
+                    servers.set(list);
+                    status.set(String::new());
+                }
+                Ok(_) => servers.set(Vec::new()),
+                Err(e) => status.set(err_msg(&e)),
+            }
+            loading.set(false);
+        });
+    };
+
+    use_effect(move || {
+        refresh();
+    });
+
+    rsx! {
+        div { class: "mcp-pane",
+            div { class: "mcp-head",
+                h3 { "MCP Servers" }
+                button {
+                    class: "primary",
+                    onclick: move |_| {
+                        editing.set(Some(json!({
+                            "name": "",
+                            "transport": "stdio",
+                            "command": "",
+                            "args": [],
+                            "url": "",
+                            "env": {},
+                            "enabled": true
+                        })));
+                    },
+                    "+ Add server"
+                }
+            }
+            if *loading.read() {
+                p { class: "prefs-hint", "Loading…" }
+            } else if servers.read().is_empty() {
+                div { class: "mcp-empty",
+                    p { "No MCP servers configured." }
+                    p { class: "prefs-hint", "Add a server to extend the agent with external tools." }
+                }
+            } else {
+                div { class: "mcp-list",
+                    for srv in servers.read().iter().cloned() {
+                        {
+                            let key = srv.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                            rsx! {
+                                McpServerCard {
+                                    key: "{key}",
+                                    server: srv,
+                                    on_edit: move |s| editing.set(Some(s)),
+                                    on_delete: move |name| {
+                                        spawn(async move {
+                                            match invoke("delete_mcp_server", json!({"name": name})).await {
+                                                Ok(_) => refresh(),
+                                                Err(e) => status.set(err_msg(&e)),
+                                            }
+                                        });
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if !status.read().is_empty() {
+                p { class: "prefs-warning", "{status}" }
+            }
+            if let Some(srv) = editing.read().clone() {
+                McpServerEditModal {
+                    server: srv,
+                    on_save: move |s| {
+                        spawn(async move {
+                            match invoke("save_mcp_server", json!({"server": s})).await {
+                                Ok(_) => {
+                                    editing.set(None);
+                                    refresh();
+                                }
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    on_cancel: move || editing.set(None),
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn McpServerCard(server: Value, on_edit: EventHandler<Value>, on_delete: EventHandler<String>) -> Element {
+    let name = server.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let transport = server.get("transport").and_then(|v| v.as_str()).unwrap_or("stdio").to_string();
+    let enabled = server.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+    let status = server.get("status").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let name_for_delete = name.clone();
+    let server_for_toggle = server.clone();
+    let server_for_edit = server.clone();
+
+    rsx! {
+        div { class: "mcp-card",
+            div { class: "mcp-card-main",
+                div { class: "mcp-card-top",
+                    span { class: "mcp-name", "{name}" }
+                    span { class: "mcp-badge mcp-badge-{transport}", "{transport}" }
+                    span { class: "mcp-status mcp-status-{status}", "{status}" }
+                }
+                div { class: "mcp-card-meta",
+                    if transport == "stdio" {
+                        if let Some(cmd) = server.get("command").and_then(|v| v.as_str()) {
+                            code { "{cmd}" }
+                        }
+                    } else {
+                        if let Some(url) = server.get("url").and_then(|v| v.as_str()) {
+                            span { "{url}" }
+                        }
+                    }
+                }
+            }
+            div { class: "mcp-card-actions",
+                label { class: "mcp-toggle",
+                    input {
+                        r#type: "checkbox",
+                        checked: enabled,
+                        onchange: move |e| {
+                            let mut s = server_for_toggle.clone();
+                            if let Some(o) = s.as_object_mut() {
+                                o.insert("enabled".into(), json!(e.checked()));
+                            }
+                            on_edit.call(s);
+                        },
+                    }
+                    span { class: "mcp-toggle-track",
+                        span { class: "mcp-toggle-thumb" }
+                    }
+                }
+                button {
+                    class: "ghost icon-btn",
+                    onclick: move |_| on_edit.call(server_for_edit.clone()),
+                    "Edit"
+                }
+                button {
+                    class: "danger icon-btn",
+                    onclick: move |_| on_delete.call(name_for_delete.clone()),
+                    "Delete"
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn McpServerEditModal(server: Value, on_save: EventHandler<Value>, on_cancel: EventHandler<()>) -> Element {
+    let mut draft = use_signal(|| server.clone());
+
+    let name = draft.read().get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let transport = draft.read().get("transport").and_then(|v| v.as_str()).unwrap_or("stdio").to_string();
+    let is_new = name.is_empty();
+    let cmd_val = draft.read().get("command").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let args_val = draft.read().get("args").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join("\n")).unwrap_or_default();
+    let url_val = draft.read().get("url").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let env_val = draft.read().get("env").and_then(|v| v.as_object()).map(|o| o.iter().map(|(k,v)| format!("{}={}", k, v.as_str().unwrap_or(""))).collect::<Vec<_>>().join("\n")).unwrap_or_default();
+
+    rsx! {
+        div { class: "overlay",
+            div { class: "modal mcp-modal",
+                h3 { if is_new { "Add MCP server" } else { "Edit MCP server" } }
+                div { class: "modal-label", "Name" }
+                input {
+                    class: "prefs-input",
+                    placeholder: "e.g. filesystem",
+                    value: "{name}",
+                    disabled: !is_new,
+                    oninput: move |e| {
+                        let mut d = draft.write().clone();
+                        if let Some(o) = d.as_object_mut() {
+                            o.insert("name".into(), json!(e.value()));
+                        }
+                        draft.set(d);
+                    },
+                }
+                div { class: "modal-label", "Transport" }
+                select {
+                    class: "cfg-select",
+                    value: "{transport}",
+                    onchange: move |e| {
+                        let mut d = draft.write().clone();
+                        if let Some(o) = d.as_object_mut() {
+                            o.insert("transport".into(), json!(e.value()));
+                        }
+                        draft.set(d);
+                    },
+                    option { value: "stdio", selected: transport == "stdio", "stdio (local command)" }
+                    option { value: "http", selected: transport == "http", "HTTP (remote endpoint)" }
+                }
+                if transport == "stdio" {
+                    div { class: "modal-label", "Command" }
+                    input {
+                        class: "prefs-input",
+                        placeholder: "e.g. npx -y @modelcontextprotocol/server-filesystem",
+                        value: "{cmd_val}",
+                        oninput: move |e| {
+                            let mut d = draft.write().clone();
+                            if let Some(o) = d.as_object_mut() {
+                                o.insert("command".into(), json!(e.value()));
+                            }
+                            draft.set(d);
+                        },
+                    }
+                    div { class: "modal-label", "Arguments (one per line)" }
+                    textarea {
+                        class: "settings-editor",
+                        style: "min-height: 60px;",
+                        value: "{args_val}",
+                        oninput: move |e| {
+                            let lines: Vec<String> = e.value().lines().map(|s| s.to_string()).collect();
+                            let mut d = draft.write().clone();
+                            if let Some(o) = d.as_object_mut() {
+                                o.insert("args".into(), json!(lines));
+                            }
+                            draft.set(d);
+                        },
+                    }
+                } else {
+                    div { class: "modal-label", "URL" }
+                    input {
+                        class: "prefs-input",
+                        placeholder: "https://mcp.example.com/v1",
+                        value: "{url_val}",
+                        oninput: move |e| {
+                            let mut d = draft.write().clone();
+                            if let Some(o) = d.as_object_mut() {
+                                o.insert("url".into(), json!(e.value()));
+                            }
+                            draft.set(d);
+                        },
+                    }
+                }
+                div { class: "modal-label", "Environment variables (KEY=VALUE, one per line)" }
+                textarea {
+                    class: "settings-editor",
+                    style: "min-height: 60px;",
+                    value: "{env_val}",
+                    oninput: move |e| {
+                        let mut map = serde_json::Map::new();
+                        for line in e.value().lines() {
+                            if let Some((k, v)) = line.split_once('=') {
+                                map.insert(k.trim().to_string(), json!(v.trim().to_string()));
+                            }
+                        }
+                        let mut d = draft.write().clone();
+                        if let Some(o) = d.as_object_mut() {
+                            o.insert("env".into(), Value::Object(map));
+                        }
+                        draft.set(d);
+                    },
+                }
+                div { class: "modal-actions",
+                    button { class: "ghost", onclick: move |_| on_cancel.call(()), "Cancel" }
+                    button {
+                        class: "primary",
+                        disabled: name.trim().is_empty(),
+                        onclick: move |_| on_save.call(draft.read().clone()),
+                        "Save"
+                    }
                 }
             }
         }
