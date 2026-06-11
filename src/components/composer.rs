@@ -6,13 +6,16 @@ use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::{json, Value};
 
-/// Candidate paths for @mentions (F-002.12 scaffold).
-///
-/// TODO(F-002.12): no backend file-listing command exists yet in
-/// `src-tauri/src/commands/`; until one does, fall back to the changed files
-/// already known from the diff state.
+/// Candidate paths for @mentions (F-002.12).
+/// Prefers the cached backend file list; falls back to diff-changed files
+/// when the backend listing is empty.
 fn mention_candidates() -> Vec<String> {
-    mention_candidates_from_diff(&DIFF.read())
+    let backend = PROJECT_FILES.read().clone();
+    if !backend.is_empty() {
+        backend
+    } else {
+        mention_candidates_from_diff(&DIFF.read())
+    }
 }
 
 #[component]
@@ -48,6 +51,12 @@ pub fn Composer() -> Element {
             *COMPOSER_PREFILL.write() = None;
             draft.set(text);
         }
+    });
+
+    // F-002.12: warm the project file cache for @mentions.
+    use_effect(move || {
+        let _ = PROJECT.read().clone(); // re-run when project changes
+        spawn(async { crate::actions::refresh_project_files().await; });
     });
 
     // Send (idle) or steer (running, F-015): steering cancels the active

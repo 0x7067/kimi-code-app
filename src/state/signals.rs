@@ -74,6 +74,9 @@ pub static TERMINAL_ID: GlobalSignal<Option<u64>> = Signal::global(|| None);
 pub static SHOW_CHECKPOINTS: GlobalSignal<bool> = Signal::global(|| false);
 pub static CHECKPOINTS: GlobalSignal<Vec<Value>> = Signal::global(Vec::new);
 
+/// F-002.12: cached project file listing for @mention autocomplete.
+pub static PROJECT_FILES: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
+
 /// Cached thread state per session so switching sessions does not lose scrollback.
 pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);
 /// Locally-overridden semantic titles for sessions (key = sessionId).

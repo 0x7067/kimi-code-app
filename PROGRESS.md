@@ -41,7 +41,8 @@
 | 9 | F-010 terminal frontend (PTY panel, streaming output, input, Clear/Close) verified in `cargo tauri dev`. | DONE | `01d4923` |
 | 10 | F-002.7 Message editing and resend — Edit button on user messages, truncate+replace on send, composer placeholder reflects edit mode. | DONE | `4430e0d` |
 | 11 | F-002.6 Checkpoint system — backend save/load/list/delete with JSON snapshots in `<sessionDir>/checkpoints/`, 7 backend tests; frontend panel with save input, restore/delete buttons, CSS styles. | DONE | `TBD` |
-| 12 | P1/P2 remaining: F-002.12 @mentions enhancement (backend file listing), F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
+| 12 | F-002.12 @mentions — backend `list_files` command (respects .gitignore, max_depth, limit, skips hidden/build dirs), 5 TDD tests; frontend caches results in PROJECT_FILES for mention autocomplete. | DONE | `TBD` |
+| 13 | P1/P2 remaining: F-007 memory, F-004 multi-agent, F-006 browser, F-009 automations | TODO | — |
 
 ## Phase detail
 

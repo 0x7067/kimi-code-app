@@ -41,6 +41,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         settings_store::write_app_settings,
         dialogs::pick_file,
         projects::recent_projects,
+        projects::list_files,
         dialogs::pick_folder,
         dialogs::pick_image,
         projects::mcp_servers,

@@ -395,3 +395,17 @@ pub async fn delete_checkpoint(name: &str) {
         refresh_checkpoints().await;
     }
 }
+
+/// F-002.12: fetch the project file list for @mention candidates.
+pub async fn refresh_project_files() {
+    if let Some(cwd) = PROJECT.read().clone() {
+        match invoke("list_files", json!({"cwd": cwd})).await {
+            Ok(Value::Array(list)) => {
+                let files: Vec<String> = list.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                *PROJECT_FILES.write() = files;
+            }
+            Err(e) => *ERROR.write() = Some(err_msg(&e)),
+            _ => {}
+        }
+    }
+}
