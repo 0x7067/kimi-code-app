@@ -92,6 +92,7 @@ fn PreferencesPane() -> Element {
             ModelSection {}
             ThinkingSection {}
             ApprovalsSection {}
+            MemorySection {}
         }
     }
 }
@@ -392,6 +393,48 @@ fn ApprovalsSection() -> Element {
                 }
                 p { class: "prefs-warning",
                     "Danger: the agent will run shell commands, edit files, and call tools without asking. Use only in throwaway environments."
+                }
+            }
+        }
+    }
+}
+
+// ---------- F-007.1/11: memory preferences ----------
+
+#[component]
+fn MemorySection() -> Element {
+    let settings = APP_SETTINGS.read().clone();
+    rsx! {
+        section { class: "prefs-section",
+            h3 { "Memory preferences" }
+            p { class: "prefs-hint",
+                "These preferences are saved to your app settings and passed to the agent as context."
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Tech stack" }
+                input {
+                    class: "prefs-input",
+                    placeholder: "e.g. Rust + Dioxus + Tauri, TypeScript + React…",
+                    value: "{settings.tech_stack}",
+                    onchange: move |e| update_settings(|s| s.tech_stack = e.value()),
+                }
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Coding style" }
+                input {
+                    class: "prefs-input",
+                    placeholder: "e.g. Prefer functional, minimal mutability, type-driven design…",
+                    value: "{settings.coding_style}",
+                    onchange: move |e| update_settings(|s| s.coding_style = e.value()),
+                }
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Naming conventions" }
+                input {
+                    class: "prefs-input",
+                    placeholder: "e.g. snake_case for Rust, camelCase for JS, PascalCase for components…",
+                    value: "{settings.naming_conventions}",
+                    onchange: move |e| update_settings(|s| s.naming_conventions = e.value()),
                 }
             }
         }

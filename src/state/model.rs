@@ -98,6 +98,12 @@ pub struct AppSettings {
     pub approvals: ApprovalPrefs,
     /// F-011.6: YOLO — auto-approve everything.
     pub yolo: bool,
+    /// F-007.1: preferred tech stack (comma-separated list).
+    pub tech_stack: String,
+    /// F-007.1: coding style notes (freeform text).
+    pub coding_style: String,
+    /// F-007.1: naming conventions (freeform text).
+    pub naming_conventions: String,
 }
 
 impl Default for AppSettings {
@@ -107,6 +113,9 @@ impl Default for AppSettings {
             thinking_default: "ask".into(),
             approvals: ApprovalPrefs::default(),
             yolo: false,
+            tech_stack: String::new(),
+            coding_style: String::new(),
+            naming_conventions: String::new(),
         }
     }
 }

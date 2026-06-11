@@ -825,3 +825,42 @@ mod tests {
         assert_eq!(result[2], Item::User("c2".into()));
     }
 }
+
+    // ---------- F-007.1 memory preferences ----------
+
+    #[test]
+    fn app_settings_defaults_memory_fields_to_empty() {
+        let settings = crate::state::AppSettings::default();
+        assert_eq!(settings.tech_stack, "");
+        assert_eq!(settings.coding_style, "");
+        assert_eq!(settings.naming_conventions, "");
+    }
+
+    #[test]
+    fn app_settings_deserializes_missing_memory_fields_as_empty() {
+        let json = serde_json::json!({
+            "kimiBinOverride": null,
+            "thinkingDefault": "ask",
+            "approvals": {"shell": "ask", "fileEdit": "ask", "mcp": "ask", "git": "ask"},
+            "yolo": false
+        });
+        let settings: crate::state::AppSettings = serde_json::from_value(json).unwrap();
+        assert_eq!(settings.tech_stack, "");
+        assert_eq!(settings.coding_style, "");
+        assert_eq!(settings.naming_conventions, "");
+    }
+
+    #[test]
+    fn app_settings_roundtrips_memory_fields() {
+        let settings = crate::state::AppSettings {
+            tech_stack: "Rust, TypeScript".into(),
+            coding_style: "snake_case, 2-space indent".into(),
+            naming_conventions: "PascalCase for components".into(),
+            ..crate::state::AppSettings::default()
+        };
+        let json = serde_json::to_value(&settings).unwrap();
+        let restored: crate::state::AppSettings = serde_json::from_value(json).unwrap();
+        assert_eq!(restored.tech_stack, "Rust, TypeScript");
+        assert_eq!(restored.coding_style, "snake_case, 2-space indent");
+        assert_eq!(restored.naming_conventions, "PascalCase for components");
+    }
