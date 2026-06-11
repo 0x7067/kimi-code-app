@@ -40,7 +40,7 @@ pub async fn run_prompt(cwd: &str, prompt: &str) -> Result<HeadlessResult, Strin
     wait_for_response(&mut lines, init_id, HEADLESS_TIMEOUT_SECS).await?;
 
     // 2. Create session
-    let new_id = send_request(&mut stdin, "session/new", json!({"cwd": cwd})).await?;
+    let new_id = send_request(&mut stdin, "session/new", session_new_params(cwd)).await?;
     let new_res = wait_for_response(&mut lines, new_id, HEADLESS_TIMEOUT_SECS).await?;
     let session_id = new_res
         .get("result")
@@ -56,7 +56,7 @@ pub async fn run_prompt(cwd: &str, prompt: &str) -> Result<HeadlessResult, Strin
     let prompt_id = send_request(
         &mut stdin,
         "session/prompt",
-        json!({"sessionId": session_id, "text": prompt}),
+        prompt_params(&session_id, prompt),
     )
     .await?;
 
@@ -212,5 +212,39 @@ fn content_text(v: Option<&Value>) -> Option<String> {
             .map(String::from)
             .or_else(|| content_text(v.get("content"))),
         _ => None,
+    }
+}
+
+fn session_new_params(cwd: &str) -> Value {
+    json!({ "cwd": cwd, "mcpServers": [] })
+}
+
+fn prompt_params(session_id: &str, prompt: &str) -> Value {
+    json!({
+        "sessionId": session_id,
+        "prompt": [{ "type": "text", "text": prompt }],
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn session_new_params_include_empty_mcp_servers() {
+        let params = session_new_params("/tmp/project");
+
+        assert_eq!(params["cwd"], "/tmp/project");
+        assert_eq!(params["mcpServers"].as_array().map(Vec::len), Some(0));
+    }
+
+    #[test]
+    fn prompt_params_use_acp_content_blocks() {
+        let params = prompt_params("session_1", "Reply with exactly OK.");
+
+        assert_eq!(params["sessionId"], "session_1");
+        assert!(params.get("text").is_none(), "headless prompt must not use the old text field");
+        assert_eq!(params["prompt"][0]["type"], "text");
+        assert_eq!(params["prompt"][0]["text"], "Reply with exactly OK.");
     }
 }
