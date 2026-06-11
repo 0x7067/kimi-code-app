@@ -7,10 +7,18 @@ use serde_json::{json, Value};
 #[component]
 pub fn Composer() -> Element {
     let mut draft = use_signal(String::new);
+    let mut slash_selected = use_signal(|| 0usize);
     let running = *RUNNING.read();
     let has_session = SESSION_ID.read().is_some();
     let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
     let filter = draft.read().trim_start_matches('/').to_string();
+
+    let filtered: Vec<SlashCommand> = COMMANDS
+        .read()
+        .iter()
+        .filter(|c| c.name.starts_with(&filter))
+        .cloned()
+        .collect();
 
     let mut submit = move || {
         let text = draft.read().trim().to_string();
@@ -23,15 +31,16 @@ pub fn Composer() -> Element {
 
     rsx! {
         div { class: "composer",
-            if show_slash && !COMMANDS.read().is_empty() {
+            if show_slash && !filtered.is_empty() {
                 div { class: "slash-menu",
-                    for cmd in COMMANDS.read().iter().filter(|c| c.name.starts_with(&filter)).take(8) {
+                    for (i, cmd) in filtered.iter().enumerate() {
                         {
                             let name = cmd.name.clone();
+                            let selected = i == *slash_selected.read();
                             rsx! {
                                 div {
                                     key: "{cmd.name}",
-                                    class: "slash-item",
+                                    class: if selected { "slash-item selected" } else { "slash-item" },
                                     onclick: move |_| draft.set(format!("/{name} ")),
                                     span { class: "slash-name", "/{cmd.name}" }
                                     span { class: "slash-desc", "{cmd.description}" }
@@ -60,9 +69,46 @@ pub fn Composer() -> Element {
                     placeholder: if has_session { "Message Kimi…  ( / for commands, Enter to send)" } else { "Start a session first" },
                     value: "{draft}",
                     disabled: !has_session,
-                    oninput: move |e| draft.set(e.value()),
+                    oninput: move |e| {
+                        draft.set(e.value());
+                        slash_selected.set(0);
+                    },
                     onkeydown: move |e| {
-                        if e.key() == Key::Enter && !e.modifiers().shift() {
+                        if show_slash {
+                            match e.key() {
+                                Key::ArrowUp => {
+                                    e.prevent_default();
+                                    if !filtered.is_empty() {
+                                        let new_sel = if *slash_selected.read() == 0 {
+                                            filtered.len() - 1
+                                        } else {
+                                            *slash_selected.read() - 1
+                                        };
+                                        slash_selected.set(new_sel);
+                                    }
+                                }
+                                Key::ArrowDown => {
+                                    e.prevent_default();
+                                    if !filtered.is_empty() {
+                                        let new_sel = (*slash_selected.read() + 1) % filtered.len();
+                                        slash_selected.set(new_sel);
+                                    }
+                                }
+                                Key::Enter => {
+                                    if !e.modifiers().shift() {
+                                        e.prevent_default();
+                                        if let Some(cmd) = filtered.get(*slash_selected.read()) {
+                                            draft.set(format!("/{cmd} ", cmd = cmd.name));
+                                        }
+                                    }
+                                }
+                                Key::Escape => {
+                                    // just let the menu close naturally by clearing draft prefix
+                                    // or do nothing; user can type space/backspace
+                                }
+                                _ => {}
+                            }
+                        } else if e.key() == Key::Enter && !e.modifiers().shift() {
                             e.prevent_default();
                             submit();
                         }

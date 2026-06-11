@@ -78,12 +78,13 @@ pub fn Sidebar() -> Element {
                     {
                         let active = SESSION_ID.read().as_deref() == Some(sess.id.as_str());
                         let meta = sess.clone();
+                        let title = SESSION_TITLES.read().get(&sess.id).cloned().unwrap_or(sess.title.clone());
                         rsx! {
                             div {
                                 key: "{sess.id}",
                                 class: if active { "session-item active" } else { "session-item" },
                                 onclick: move |_| { spawn(load_session(meta.clone())); },
-                                div { class: "session-title", "{sess.title}" }
+                                div { class: "session-title", "{title}" }
                                 div { class: "session-meta",
                                     {sess.cwd.rsplit('/').next().unwrap_or("").to_string()}
                                     " - "

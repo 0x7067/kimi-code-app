@@ -2,6 +2,7 @@
 
 use super::model::*;
 use dioxus::prelude::*;
+use std::collections::HashMap;
 
 pub static CONNECTED: GlobalSignal<bool> = Signal::global(|| false);
 pub static AGENT_INFO: GlobalSignal<String> = Signal::global(String::new);
@@ -28,6 +29,11 @@ pub static SHOW_DIFF: GlobalSignal<bool> = Signal::global(|| false);
 pub static DIFF: GlobalSignal<String> = Signal::global(String::new);
 pub static ERROR: GlobalSignal<Option<String>> = Signal::global(|| None);
 
+/// Cached thread state per session so switching sessions does not lose scrollback.
+pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);
+/// Locally-overridden semantic titles for sessions (key = sessionId).
+pub static SESSION_TITLES: GlobalSignal<HashMap<String, String>> = Signal::global(HashMap::new);
+
 pub fn reset_thread() {
     ITEMS.write().clear();
     PLAN.write().clear();
@@ -35,4 +41,13 @@ pub fn reset_thread() {
     CONFIG_OPTIONS.write().clear();
     *PERMISSION.write() = None;
     *RUNNING.write() = false;
+}
+
+/// Save current session thread state into the scrollback cache.
+pub fn cache_current_scrollback() {
+    if let Some(sid) = SESSION_ID.read().clone() {
+        let items = ITEMS.read().clone();
+        let plan = PLAN.read().clone();
+        SCROLLBACK_CACHE.write().insert(sid, (items, plan));
+    }
 }

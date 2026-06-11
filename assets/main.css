@@ -595,6 +595,41 @@ input[type="search"]::placeholder {
   border: none;
 }
 
+/* Inline diff blocks rendered inside agent messages */
+.md-diff {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  margin: 0.7em 0;
+  overflow-x: auto;
+}
+
+.md-diff-line {
+  display: block;
+  white-space: pre;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.md-diff-line.add {
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.md-diff-line.del {
+  color: var(--red);
+  background: var(--red-dim);
+}
+
+.md-diff-line.hunk {
+  color: var(--accent);
+  opacity: 0.8;
+}
+
 .bubble.md h1, .bubble.md h2, .bubble.md h3, .bubble.md h4 {
   margin: 1.2em 0 0.5em;
   font-weight: 600;
@@ -842,6 +877,20 @@ input[type="search"]::placeholder {
   color: var(--text-tertiary);
 }
 
+/* Sticky plan panel above thread */
+.plan-sticky {
+  flex-shrink: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  font-size: 13px;
+  margin: 12px 6% 0;
+  animation: msg-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Working indicator */
 .working {
   color: var(--text-secondary);
@@ -930,6 +979,8 @@ input[type="search"]::placeholder {
   z-index: 10;
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .slash-item {
@@ -941,8 +992,13 @@ input[type="search"]::placeholder {
   transition: background var(--transition-fast);
 }
 
-.slash-item:hover {
+.slash-item:hover,
+.slash-item.selected {
   background: var(--bg-hover);
+}
+
+.slash-item.selected {
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .slash-item:first-child {

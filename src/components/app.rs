@@ -6,6 +6,7 @@ use crate::ipc::listen_forever;
 use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::Value;
+use wasm_bindgen::prelude::*;
 
 #[component]
 pub fn App() -> Element {
@@ -61,6 +62,19 @@ pub fn App() -> Element {
             refresh_projects().await;
             refresh_sessions().await;
         });
+
+        // Poll for new sessions started outside the app
+        let window = web_sys::window().unwrap();
+        let cb = Closure::wrap(Box::new(move || {
+            wasm_bindgen_futures::spawn_local(async {
+                refresh_sessions().await;
+            });
+        }) as Box<dyn FnMut()>);
+        let _ = window.set_interval_with_callback_and_timeout_and_arguments_0(
+            cb.as_ref().unchecked_ref(),
+            3000,
+        );
+        cb.forget();
     });
 
     rsx! {

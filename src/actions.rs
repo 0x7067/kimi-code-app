@@ -69,8 +69,20 @@ async fn project_mcp_servers(cwd: &str) -> Value {
     invoke("mcp_servers", json!({"cwd": cwd})).await.unwrap_or(json!([]))
 }
 
+fn semantic_title(text: &str) -> String {
+    let trimmed = text.trim();
+    let first = trimmed.lines().next().unwrap_or(trimmed);
+    let cleaned = first.trim_start_matches('/').trim();
+    if cleaned.len() > 40 {
+        format!("{}…", &cleaned[..39])
+    } else {
+        cleaned.to_string()
+    }
+}
+
 pub async fn new_session() {
     let Some(cwd) = PROJECT.read().clone() else { return };
+    cache_current_scrollback();
     reset_thread();
     *SESSION_ID.write() = None;
     let mcp = project_mcp_servers(&cwd).await;
@@ -93,9 +105,15 @@ pub async fn new_session() {
 }
 
 pub async fn load_session(meta: SessionMeta) {
+    cache_current_scrollback();
     reset_thread();
     *SESSION_ID.write() = Some(meta.id.clone());
     *PROJECT.write() = Some(meta.cwd.clone());
+    // Restore cached scrollback if present
+    if let Some((items, plan)) = SCROLLBACK_CACHE.read().get(&meta.id).cloned() {
+        *ITEMS.write() = items;
+        *PLAN.write() = plan;
+    }
     let mcp = project_mcp_servers(&meta.cwd).await;
     match invoke(
         "acp_request",
@@ -116,7 +134,11 @@ pub async fn send_prompt(text: String) {
     } else {
         format!("{text}\n[{} image(s) attached]", attachments.len())
     };
+    let is_first = ITEMS.read().is_empty();
     ITEMS.write().push(Item::User(label));
+    if is_first {
+        SESSION_TITLES.write().insert(sid.clone(), semantic_title(&text));
+    }
     *RUNNING.write() = true;
     let mut blocks = vec![json!({"type": "text", "text": text})];
     for a in attachments {

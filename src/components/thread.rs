@@ -6,31 +6,39 @@ use dioxus::prelude::*;
 pub fn ThreadView() -> Element {
     use_effect(move || {
         let _ = (ITEMS.read().len(), RUNNING.read());
-        document::eval("requestAnimationFrame(() => { const t = document.getElementById('thread'); if (t) t.scrollTop = t.scrollHeight; });");
+        document::eval(
+            "requestAnimationFrame(() => { \
+                const t = document.getElementById('thread'); \
+                if (t) { \
+                    const near = t.scrollHeight - t.scrollTop - t.clientHeight < 120; \
+                    if (near) t.scrollTop = t.scrollHeight; \
+                } \
+            });",
+        );
     });
     rsx! {
+        if !PLAN.read().is_empty() {
+            div { class: "plan-sticky",
+                div { class: "plan-head", "Plan" }
+                for (i, entry) in PLAN.read().iter().enumerate() {
+                    div { key: "{i}", class: "plan-entry {entry.status}",
+                        span { class: "plan-status {entry.status}",
+                            {match entry.status.as_str() {
+                                "completed" => "✓",
+                                "in_progress" => "▶",
+                                _ => "○",
+                            }}
+                        }
+                        span { class: "plan-content", "{entry.content}" }
+                    }
+                }
+            }
+        }
         div { class: "thread", id: "thread",
             if ITEMS.read().is_empty() && SESSION_ID.read().is_none() {
                 div { class: "empty",
                     h2 { "Welcome to Kimi Code" }
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
-                }
-            }
-            if !PLAN.read().is_empty() {
-                div { class: "plan-panel",
-                    div { class: "plan-head", "Plan" }
-                    for (i, entry) in PLAN.read().iter().enumerate() {
-                        div { key: "{i}", class: "plan-entry {entry.status}",
-                            span { class: "plan-status {entry.status}",
-                                {match entry.status.as_str() {
-                                    "completed" => "✓",
-                                    "in_progress" => "▶",
-                                    _ => "○",
-                                }}
-                            }
-                            span { class: "plan-content", "{entry.content}" }
-                        }
-                    }
                 }
             }
             for (i, item) in ITEMS.read().iter().enumerate() {
