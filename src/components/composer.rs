@@ -1,6 +1,8 @@
 use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, set_config, steer_prompt};
 use crate::components::base::{KimiDropdown, KimiDropdownItem};
-use crate::components::icons::{IconListPlus, IconSquare};
+use crate::components::icons::{
+    IconChevronDown, IconCpu, IconFolder, IconGitBranch, IconListPlus, IconPlus, IconSquare,
+};
 use crate::conversation::{filter_mentions, mention_candidates_from_diff, mention_token};
 use crate::ipc::invoke;
 use crate::state::*;
@@ -110,6 +112,8 @@ pub fn Composer() -> Element {
             draft.set(format!("{}@{path} ", &current[..at]));
         }
     };
+
+    let project_label = PROJECT.read().clone().unwrap_or_else(|| "No project".to_string());
 
     rsx! {
         div { class: "composer",
@@ -284,95 +288,170 @@ pub fn Composer() -> Element {
                         }
                     },
                 }
-                div { class: "composer-controls",
-                    button {
-                        class: "ghost",
-                        title: "Attach image",
-                        disabled: !has_session,
-                        onclick: move |_| {
-                            spawn(async {
-                                if let Ok(Value::Object(img)) = invoke("pick_image", json!({})).await {
-                                    ATTACHMENTS.write().push(Attachment {
-                                        name: img.get("name").and_then(|v| v.as_str()).unwrap_or("image").into(),
-                                        mime: img.get("mimeType").and_then(|v| v.as_str()).unwrap_or("image/png").into(),
-                                        data: img.get("data").and_then(|v| v.as_str()).unwrap_or("").into(),
-                                    });
-                                }
-                            });
-                        },
-                        "Attach"
-                    }
-                    if has_session {
-                        KimiDropdown {
-                            trigger: rsx! {
-                                button { class: "ghost", "Templates" }
+
+                // SS-03: Codex-style toolbar (inside composer-box, below textarea).
+                div { class: "composer-toolbar",
+                    div { class: "composer-toolbar-left",
+                        button {
+                            class: "ghost",
+                            title: "Attach image",
+                            disabled: !has_session,
+                            onclick: move |_| {
+                                spawn(async {
+                                    if let Ok(Value::Object(img)) = invoke("pick_image", json!({})).await {
+                                        ATTACHMENTS.write().push(Attachment {
+                                            name: img.get("name").and_then(|v| v.as_str()).unwrap_or("image").into(),
+                                            mime: img.get("mimeType").and_then(|v| v.as_str()).unwrap_or("image/png").into(),
+                                            data: img.get("data").and_then(|v| v.as_str()).unwrap_or("").into(),
+                                        });
+                                    }
+                                });
                             },
-                            for tmpl in APP_SETTINGS.read().task_templates.iter() {
-                                {
-                                    let prompt = tmpl.prompt.clone();
-                                    rsx! {
-                                        KimiDropdownItem {
-                                            onclick: move |_| draft.set(prompt.clone()),
-                                            "{tmpl.name} — {tmpl.description}"
+                            IconPlus { size: 16 }
+                        }
+                        if has_session {
+                            KimiDropdown {
+                                trigger: rsx! {
+                                    button { class: "ghost", "Templates" }
+                                },
+                                for tmpl in APP_SETTINGS.read().task_templates.iter() {
+                                    {
+                                        let prompt = tmpl.prompt.clone();
+                                        rsx! {
+                                            KimiDropdownItem {
+                                                onclick: move |_| draft.set(prompt.clone()),
+                                                "{tmpl.name} — {tmpl.description}"
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+                        KimiDropdown {
+                            trigger: rsx! {
+                                button { class: "ghost",
+                                    svg {
+                                        width: "14",
+                                        height: "14",
+                                        view_box: "0 0 24 24",
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        "stroke-width": "2",
+                                        "stroke-linecap": "round",
+                                        "stroke-linejoin": "round",
+                                        path { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }
+                                    }
+                                    "Approve for me"
+                                }
+                            },
+                            KimiDropdownItem {
+                                onclick: move |_| {},
+                                "Always approve"
+                            }
+                            KimiDropdownItem {
+                                onclick: move |_| {},
+                                "Ask every time"
+                            }
+                        }
+                        if !project_label.is_empty() && project_label != "No project" {
+                            span {
+                                class: "composer-context-item",
+                                style: "cursor: default;",
+                                IconFolder { size: 13, color: "currentColor" }
+                                "{project_label}"
+                            }
+                        }
                     }
-                    for opt in CONFIG_OPTIONS.read().iter() {
-                        {
-                            let id = opt.id.clone();
-                            rsx! {
-                                select {
-                                    key: "{opt.id}",
-                                    class: "cfg-select",
-                                    title: "{opt.name}",
-                                    value: "{opt.current}",
-                                    onchange: move |e| { spawn(set_config(id.clone(), e.value())); },
-                                    for so in opt.options.iter() {
-                                        option { value: "{so.value}", selected: so.value == opt.current, "{so.name}" }
+                    div { class: "composer-toolbar-right",
+                        for opt in CONFIG_OPTIONS.read().iter() {
+                            {
+                                let id = opt.id.clone();
+                                rsx! {
+                                    select {
+                                        key: "{opt.id}",
+                                        class: "cfg-select",
+                                        title: "{opt.name}",
+                                        value: "{opt.current}",
+                                        onchange: move |e| { spawn(set_config(id.clone(), e.value())); },
+                                        for so in opt.options.iter() {
+                                            option { value: "{so.value}", selected: so.value == opt.current, "{so.name}" }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    div { class: "spacer" }
-                    if observing {
-                        button {
-                            class: "primary",
-                            title: "Take control of this session",
-                            onclick: move |_| {
-                                if let Some(id) = SESSION_ID.read().clone() {
-                                    if let Some(meta) = SESSIONS.read().iter().find(|s| s.id == id).cloned() {
-                                        *RESUME_CONFLICT.write() = Some(meta);
+                        if observing {
+                            button {
+                                class: "primary",
+                                title: "Take control of this session",
+                                onclick: move |_| {
+                                    if let Some(id) = SESSION_ID.read().clone() {
+                                        if let Some(meta) = SESSIONS.read().iter().find(|s| s.id == id).cloned() {
+                                            *RESUME_CONFLICT.write() = Some(meta);
+                                        }
                                     }
+                                },
+                                "Take Control"
+                            }
+                        } else if running {
+                            button {
+                                class: "ghost queue-btn",
+                                title: "Queue message — sends after the current turn (⌥⏎)",
+                                onclick: move |_| enqueue(),
+                                IconListPlus { size: 14 }
+                                "Queue"
+                            }
+                            button {
+                                class: "danger stop-btn",
+                                title: "Stop the current turn (Esc) — typing ⏎ steers instead",
+                                onclick: move |_| { spawn(cancel_turn()); },
+                                IconSquare { size: 12, color: "currentColor" }
+                                "Stop"
+                            }
+                        } else {
+                            button {
+                                class: "composer-send",
+                                title: "Send (⌘⏎) · Send with thinking (⌘⇧⏎)",
+                                disabled: !has_session,
+                                onclick: move |_| submit(false),
+                                svg {
+                                    width: "16",
+                                    height: "16",
+                                    view_box: "0 0 24 24",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    "stroke-width": "2.5",
+                                    "stroke-linecap": "round",
+                                    "stroke-linejoin": "round",
+                                    path { d: "M12 19V5" }
+                                    path { d: "M5 12l7-7 7 7" }
                                 }
-                            },
-                            "Take Control"
+                            }
                         }
-                    } else if running {
-                        button {
-                            class: "ghost queue-btn",
-                            title: "Queue message — sends after the current turn (⌥⏎)",
-                            onclick: move |_| enqueue(),
-                            IconListPlus { size: 14 }
-                            "Queue"
+                    }
+                }
+
+                // SS-03: Context selectors below the toolbar.
+                div { class: "composer-context",
+                    div { class: "composer-context-item",
+                        IconFolder { size: 13, color: "currentColor" }
+                        span { "{project_label}" }
+                        span { class: "chevron-down",
+                            IconChevronDown { size: 10, color: "currentColor" }
                         }
-                        button {
-                            class: "danger stop-btn",
-                            title: "Stop the current turn (Esc) — typing ⏎ steers instead",
-                            onclick: move |_| { spawn(cancel_turn()); },
-                            IconSquare { size: 12, color: "currentColor" }
-                            "Stop"
+                    }
+                    div { class: "composer-context-item",
+                        IconCpu { size: 13, color: "currentColor" }
+                        span { "Work locally" }
+                        span { class: "chevron-down",
+                            IconChevronDown { size: 10, color: "currentColor" }
                         }
-                    } else {
-                        button {
-                            class: "primary",
-                            title: "Send (⌘⏎) · Send with thinking (⌘⇧⏎)",
-                            disabled: !has_session,
-                            onclick: move |_| submit(false),
-                            "Send"
+                    }
+                    div { class: "composer-context-item",
+                        IconGitBranch { size: 13, color: "currentColor" }
+                        span { "main" }
+                        span { class: "chevron-down",
+                            IconChevronDown { size: 10, color: "currentColor" }
                         }
                     }
                 }

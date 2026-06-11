@@ -1,0 +1,838 @@
+/* ---------- Diff pane ---------- */
+.diff-pane {
+  width: 38%;
+  min-width: 300px;
+  max-width: 520px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.diff-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.diff-body {
+  flex: 1;
+  overflow: auto;
+  margin: 0;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.dl {
+  display: block;
+  white-space: pre;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.dl.add {
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.dl.del {
+  color: var(--red);
+  background: var(--red-dim);
+}
+
+.dl.hunk {
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+/* ---------- F-010: Terminal panel ---------- */
+.terminal-pane {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 240px;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-default);
+  animation: msg-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+.terminal-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.terminal-status {
+  font-size: 10px;
+  color: var(--green);
+  line-height: 1;
+}
+
+.terminal-status.dead {
+  color: var(--text-muted);
+}
+
+.terminal-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.terminal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: var(--bg-base);
+}
+
+.terminal-body pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.terminal-prompt {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  user-select: none;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.terminal-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.terminal-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- F-002.6: Checkpoint panel ---------- */
+.checkpoint-panel {
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: msg-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  margin: 0 6%;
+  border-radius: var(--radius-lg);
+}
+
+.checkpoint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.checkpoint-save-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checkpoint-input {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.checkpoint-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.checkpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkpoint-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.checkpoint-item:hover {
+  border-color: var(--border-default);
+}
+
+.checkpoint-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.checkpoint-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.checkpoint-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.checkpoint-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.checkpoint-empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* ---------- F-007.10: memory pane ---------- */
+
+.memory-pane {
+  width: 34%;
+  min-width: 280px;
+  max-width: 440px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.memory-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.memory-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memory-spinner {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.memory-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+.memory-section {
+  margin-bottom: 20px;
+}
+
+.memory-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.memory-section h5 {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.memory-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.memory-subsection {
+  margin-bottom: 14px;
+}
+
+.memory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.memory-list li {
+  padding: 3px 0;
+  font-family: var(--font-mono);
+}
+
+.memory-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.memory-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  font-size: 11px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.memory-pref-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.memory-pref-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.memory-pref-value {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.memory-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---------- F-006: browser pane ---------- */
+
+.browser-pane {
+  width: 50%;
+  min-width: 320px;
+  max-width: 720px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.browser-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.browser-url {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.browser-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: var(--bg-base);
+}
+
+/* ---------- F-004: multi-agent pane ---------- */
+
+.multi-agent-pane {
+  width: 36%;
+  min-width: 300px;
+  max-width: 480px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.multi-agent-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.multi-agent-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+.multi-agent-create {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.multi-agent-create input {
+  flex: 1;
+}
+
+.multi-agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.multi-agent-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.multi-agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.multi-agent-branch {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.multi-agent-path {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- F-007: memory pane additions ---------- */
+
+.memory-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.memory-row input {
+  flex: 1;
+}
+
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.memory-snippet {
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-snippet.pinned {
+  border-color: var(--accent-primary);
+  background: rgba(74, 158, 255, 0.06);
+}
+
+.memory-snippet-content {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.memory-snippet-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.memory-snippet-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.memory-snippet-score {
+  font-size: 11px;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.memory-snippet-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-right: auto;
+}
+
+/* Status bar memory indicator */
+.status-memory {
+  font-size: 12px;
+  color: var(--accent-primary);
+  background: rgba(74, 158, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+/* ---------- F-009: automations pane ---------- */
+
+.automation-pane {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100%;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+}
+
+.automation-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.automation-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.automation-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+.automation-section {
+  margin-bottom: 20px;
+}
+
+.automation-section h4 {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.automation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automation-card {
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.automation-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.automation-cron {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.automation-status {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.automation-status.enabled {
+  color: var(--accent-success);
+}
+
+.automation-status.disabled {
+  color: var(--text-muted);
+}
+
+.automation-editor {
+  padding: 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.automation-runs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automation-run {
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.run-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.run-status {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.run-status.success {
+  color: var(--accent-success);
+}
+
+.run-status.error {
+  color: var(--accent-error);
+}
+
+.run-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.run-output {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow: auto;
+  margin: 0;
+  padding: 6px;
+  background: var(--bg-surface);
+  border-radius: 4px;
+}
+
+/* ---------- F-006: browser pane additions ---------- */
+
+.browser-devices {
+  display: flex;
+  gap: 4px;
+}
+
+.browser-frame-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg-base);
+}
+
+.browser-frame {
+  height: 100%;
+  min-height: 400px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: white;
+  transition: width 0.3s ease;
+}
+
+/* ============================================
+   Codex-style UI patterns — Kimi branded
+   ============================================ */
+
+/* ---------- Right panel environment (Codex SS-02) ---------- */
+.env-panel {
+  width: 280px;
+  min-width: 260px;
+  max-width: 360px;
+  border-left: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.env-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.env-section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.env-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.env-diff-summary {
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 500;
+}
+
+.env-branch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.env-commit-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+

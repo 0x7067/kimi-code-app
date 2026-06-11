@@ -1,0 +1,332 @@
+/* ---------- Composer ---------- */
+.composer {
+  padding: 12px 6% 18px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.composer-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.composer-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-md);
+}
+
+.composer-box textarea {
+  min-height: 52px;
+  max-height: 200px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.composer-box textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.composer-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cfg-select {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Slash menu */
+.slash-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 6%;
+  right: 6%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.slash-item {
+  display: flex;
+  gap: 12px;
+  padding: 9px 14px;
+  cursor: pointer;
+  align-items: center;
+  transition: background var(--transition-fast);
+}
+
+.slash-item:hover,
+.slash-item.selected {
+  background: var(--bg-hover);
+}
+
+.slash-item.selected {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.slash-item:first-child {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.slash-item:last-child {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.slash-name {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.slash-desc {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Attachments ---------- */
+.attachments {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.attachment-chip:hover {
+  border-color: var(--border-strong);
+}
+
+.chip-x {
+  background: transparent;
+  color: var(--text-tertiary);
+  padding: 0 2px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-x:hover {
+  color: var(--red);
+}
+
+/* ---------- In-conversation search (F-002.9) ---------- */
+.convo-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-dark, #141414);
+  flex-shrink: 0;
+}
+.convo-search-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  background: var(--bg-surface, #1E1E1E);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+}
+.convo-search-input:focus { border-color: var(--accent); }
+.convo-search-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.search-hit > .bubble,
+details.search-hit {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-md);
+}
+.search-dim { opacity: 0.3; }
+
+/* ---------- @mention menu (F-002.12) ---------- */
+.mention-menu .slash-name { color: var(--accent); }
+
+/* ---------- Pending message queue (F-014) ---------- */
+.pending-queue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 6% 0;
+  flex-shrink: 0;
+}
+
+.pending-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 280px;
+  background: var(--bg-hover);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pending-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.pending-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Cancelled-turn marker (F-013) ---------- */
+.turn-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 4px 0;
+}
+
+.turn-cancelled::before,
+.turn-cancelled::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed var(--border-default);
+}
+
+/* ---------- Composer context selectors (SS-03) ---------- */
+.composer-context {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 2px 0;
+  flex-wrap: wrap;
+}
+
+.composer-context-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.composer-context-item:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.composer-context-item svg {
+  flex-shrink: 0;
+}
+
+.composer-context-item .chevron-down {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* ---------- Composer toolbar separator ---------- */
+.composer-toolbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.composer-toolbar-left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.composer-toolbar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.composer-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.composer-send:not(:disabled):hover {
+  background: var(--accent-hover);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.composer-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+

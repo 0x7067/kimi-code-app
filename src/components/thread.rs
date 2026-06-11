@@ -3,6 +3,7 @@ use crate::markdown::md_to_html;
 use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::Value;
+use std::collections::HashSet;
 
 /// Copy text to the system clipboard (F-002.8).
 pub(crate) fn copy_text(text: &str) {
@@ -25,6 +26,7 @@ fn flash_copied(mut copied: Signal<Option<usize>>, i: usize) {
 #[component]
 pub fn ThreadView() -> Element {
     let copied = use_signal(|| None::<usize>);
+    let collapsed = use_signal(|| HashSet::<usize>::new());
     use_effect(move || {
         let items = ITEMS.read();
         let running = *RUNNING.read();
@@ -113,13 +115,14 @@ pub fn ThreadView() -> Element {
         }
         div { class: "thread", id: "thread",
             if ITEMS.read().is_empty() && SESSION_ID.read().is_none() {
-                div { class: "empty",
+                div { class: "thread-hero",
+                    div { class: "thread-hero-icon", "✦" }
                     h2 { "Welcome to Kimi Code" }
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
                 }
             }
             for (i, item) in ITEMS.read().iter().enumerate() {
-                {render_item(i, item, copied, &query)}
+                {render_item(i, item, copied, &query, collapsed)}
             }
             if *RUNNING.read() {
                 div { class: "working", span { class: "spinner" } "Working…" }
@@ -172,7 +175,35 @@ fn edit_button(i: usize, text: &str) -> Element {
     }
 }
 
-fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str) -> Element {
+/// Action bar below agent messages: thumbs up/down, share, copy.
+fn action_bar(i: usize, item: &Item, copied: Signal<Option<usize>>) -> Element {
+    let text = item_plain_text(item);
+    let is_copied = *copied.read() == Some(i);
+    rsx! {
+        div { class: "msg-actions",
+            button { class: "msg-action-btn", title: "Helpful", "👍" }
+            button { class: "msg-action-btn", title: "Not helpful", "👎" }
+            button { class: "msg-action-btn", title: "Share", "Share" }
+            button {
+                class: "msg-action-btn",
+                title: "Copy message",
+                onclick: move |_| {
+                    copy_text(&text);
+                    flash_copied(copied, i);
+                },
+                if is_copied { "Copied" } else { "Copy" }
+            }
+        }
+    }
+}
+
+fn render_item(
+    i: usize,
+    item: &Item,
+    copied: Signal<Option<usize>>,
+    query: &str,
+    mut collapsed: Signal<HashSet<usize>>,
+) -> Element {
     let sc = search_class(item, query);
     match item {
         Item::User(text) => rsx! {
@@ -182,12 +213,39 @@ fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str
                 div { class: "bubble", "{text}" }
             }
         },
-        Item::Agent(text) => rsx! {
-            div { key: "{i}", class: "msg agent{sc}",
-                div { class: "bubble md", dangerous_inner_html: md_to_html(text) }
-                {copy_button(i, item, copied)}
+        Item::Agent(text) => {
+            let is_collapsed = collapsed.read().contains(&i);
+            let sid = SESSION_ID.read().clone();
+            let title = sid
+                .as_ref()
+                .and_then(|sid| SESSION_TITLES.read().get(sid).cloned())
+                .unwrap_or_else(|| "Agent response".to_string());
+            rsx! {
+                div { key: "{i}", class: "msg agent{sc}",
+                    div { class: "agent-header",
+                        span { class: "agent-header-title", "{title}" }
+                        span { class: "agent-header-duration", "Worked for 2m 34s" }
+                        button {
+                            class: "agent-header-expand",
+                            onclick: move |_| {
+                                let mut set = collapsed.read().clone();
+                                if set.contains(&i) {
+                                    set.remove(&i);
+                                } else {
+                                    set.insert(i);
+                                }
+                                collapsed.set(set);
+                            },
+                            if is_collapsed { "Show more" } else { "Show less" }
+                        }
+                    }
+                    if !is_collapsed {
+                        div { class: "bubble md", dangerous_inner_html: md_to_html(text) }
+                        {action_bar(i, item, copied)}
+                    }
+                }
             }
-        },
+        }
         Item::Thought(text) => rsx! {
             details { key: "{i}", class: "thought{sc}",
                 summary { "Thinking" }
@@ -219,6 +277,27 @@ fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str
                 }
             }
         },
+    }
+}
+
+/// File attachment card (placeholder for future wiring).
+#[component]
+pub fn FileCard(name: String, mime: String, meta: String) -> Element {
+    let icon = if mime.starts_with("image/") {
+        "🖼"
+    } else if mime.contains("pdf") {
+        "📄"
+    } else {
+        "📎"
+    };
+    rsx! {
+        div { class: "file-card",
+            div { class: "file-card-icon", "{icon}" }
+            div { class: "file-card-info",
+                div { class: "file-card-name", "{name}" }
+                div { class: "file-card-meta", "{meta}" }
+            }
+        }
     }
 }
 

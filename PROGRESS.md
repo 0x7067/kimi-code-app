@@ -5,7 +5,7 @@
 > when a phase lands, record decisions and verified facts, commit at each checkpoint.
 
 **Last updated:** 2026-06-11
-**Build state:** Workspace green (`cargo check --workspace`, `cargo test --workspace` = 47 passed, 0 failed). Frontend hot-reloads via `cargo tauri dev`.
+**Build state:** Workspace green (`cargo check --workspace`, `cargo check --target wasm32-unknown-unknown`, `cargo test --workspace` = 47 passed, 0 failed). Frontend hot-reloads via `cargo tauri dev`.
 
 ## How to work this plan
 
@@ -13,7 +13,7 @@
 - Verify with: `cargo check --workspace`, `cargo check --target wasm32-unknown-unknown`, `cargo test --workspace`.
 - Git commit per checkpoint with a green workspace. Never commit a red build.
 - User has pre-approved adding any dependency.
-- Frontend: Dioxus 0.7 RSX, state via GlobalSignals in `src/state/signals.rs`, styles in `assets/main.css` (NO Tailwind pipeline — use semantic classes), tokens in `src/design_tokens/`.
+- Frontend: Dioxus 0.7 RSX, state via GlobalSignals in `src/state/signals.rs`, styles in `assets/css/*.css` (NO Tailwind pipeline — use semantic classes), tokens in `src/design_tokens/`.
 - Known rsx quirk: interpolating module-level consts/fns inside attribute strings triggers false-positive `dead_code`; annotate `#[allow(dead_code)] // used via rsx attribute interpolation`.
 
 ## Verified protocol facts (do NOT re-derive; live-tested against kimi CLI 0.14.0)
@@ -48,11 +48,12 @@
 | 16 | F-004 Multi-Agent — MultiAgentState with AgentTask tracking, task decomposition via headless runner, create/list/get run commands, RunDashboard in MultiAgentPane. | DONE | `90ab7fd` |
 | 17 | F-006 Browser — device size toggles (mobile/tablet/desktop), live-reload file watcher (notify crate), share URL to composer. | DONE | `d8a390f` |
 | 18 | F-008 Preview Iteration — P2 optional, deferred. | DEFERRED | — |
+| 19 | Codex-style UI redesign (SS-01–SS-06): sidebar nav section (New chat/Search/Plugins/Automations) + footer + age badges; composer context selectors (project/mode/branch) + circular send button; settings left category sidebar (Personal/Integrations/Coding/Archived) with mode cards + iOS toggles; thread agent headers with expand/collapse + action bar (thumbs/share/copy) + file card component + hero empty state. CSS decomposed into 12 modular stylesheets in `assets/css/`. Kimi branding preserved. | DONE | `TBD` |
 
 ## Phase detail
 
 ### Design system (DESIGN_SYSTEM.md) — 18/18 criteria PASS
-Agent-verified checklist: tokens match spec (tests in `src/design_tokens/tests.rs`); KimiIcon 4 variants + pulse dot; KimiButton 4 variants/3 sizes/loading/disabled rewritten to `.kimi-btn` CSS (Tailwind classes were dead — no pipeline); KimiInput focus/error/disabled; KimiCard states; KimiToggle 150ms; KimiDropdown open/close anims (gloo-timers unmount); KimiToast auto-dismiss, integrated in `app.rs`; breakpoints 1280px (sidebar→64px icons) / 1440px (right panel overlay) in `assets/main.css`; custom scrollbar; prefers-reduced-motion; all keyframes; no `#4a9eff`; no visible Codex/GPT strings.
+Agent-verified checklist: tokens match spec (tests in `src/design_tokens/tests.rs`); KimiIcon 4 variants + pulse dot; KimiButton 4 variants/3 sizes/loading/disabled rewritten to `.kimi-btn` CSS (Tailwind classes were dead — no pipeline); KimiInput focus/error/disabled; KimiCard states; KimiToggle 150ms; KimiDropdown open/close anims (gloo-timers unmount); KimiToast auto-dismiss, integrated in `app.rs`; breakpoints 1280px (sidebar→64px icons) / 1440px (right panel overlay) in `assets/css/12-responsive.css`; custom scrollbar; prefers-reduced-motion; all keyframes; no `#4a9eff`; no visible Codex/GPT strings.
 
 ### F-001 ACP client core — DONE
 Scope: protocol module with typed message routing (text/tool_call/tool_result/error/status), integer version negotiation + capability capture, MessageQueue (doubles as per-session turn serializer), crash supervisor with injectable transport, concurrent session registry. 25 backend tests.
@@ -84,6 +85,14 @@ PTY spawning via portable-pty, Registry, event streaming. Frontend: embedded pan
 ### F-011 Settings & Configuration — DONE
 Preferences pane: binary autodetect, auth status, model selector, thinking default, per-tool approvals + YOLO, context limit settings (auto-compact threshold). Raw config editors for config.toml/tui.toml/mcp.json/AGENTS.md. MCP Servers structured UI. All settings persist via atomic JSON store and apply without restart.
 
+### Codex-style UI redesign — DONE
+Cloned Codex app layout patterns (REQUIREMENTS.md §9 screenshots SS-01–SS-06) while preserving Kimi branding (#1E90FF accent, "Kimi Code" name).
+- **Sidebar (SS-01)**: nav section with New chat/Search/Plugins/Automations rows, project tree with age badges, "Show more" expander, footer with Settings + user profile.
+- **Composer (SS-03)**: toolbar with attach/Templates/Approve-for-me/project-chip on left, config options + circular send button on right; context selectors (project/mode/branch) below toolbar.
+- **Settings (SS-04)**: left category sidebar (Personal/Integrations/Coding/Archived) replacing top tabs; General pane has work-mode cards + iOS-style permission toggles + form fields; Configuration pane hosts raw config editors; MCP servers under Integrations.
+- **Thread (SS-02)**: agent response header with session title + duration + expand/collapse; action bar with thumbs/share/copy; `.thread-hero` empty state; `FileCard` component ready for attachment rendering.
+- All new CSS classes appended to `assets/main.css` (no Tailwind pipeline). 47 tests pass, workspace green.
+
 ### P1/P2 status
 - **F-005 MCP** — backend + frontend DONE.
 - **F-010 Terminal** — backend + frontend DONE.
@@ -96,6 +105,8 @@ Preferences pane: binary autodetect, auth status, model selector, thinking defau
 - **F-006 Browser** — DONE (device toggles + live reload + share).
 - **F-009 Automations** — DONE.
 - **F-008 Preview iteration** — P2 optional, deferred.
+- **Codex UI clone** — DONE.
+- **CSS modularization** — DONE (12 feature-based stylesheets in `assets/css/`).
 
 ## Decisions log
 

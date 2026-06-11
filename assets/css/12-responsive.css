@@ -1,0 +1,175 @@
+/* ============================================
+   Kimi Code — Premium macOS-native interface
+   Dark mode | Liquid glass | System typography
+   ============================================ */
+
+/* ---------- Responsive breakpoints (§5.1) ---------- */
+/* < 1440px: right panel leaves the layout flow and overlays instead
+   (toggled by the "Diff" button in the header). */
+@media (max-width: 1439px) {
+  .diff-pane {
+    position: fixed;
+    top: 44px;
+    right: 0;
+    bottom: 0;
+    width: 380px;
+    max-width: 90vw;
+    z-index: 30;
+    box-shadow: var(--shadow-lg);
+    animation: panel-slide-in 200ms ease-out;
+  }
+}
+
+@keyframes panel-slide-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* < 1280px: sidebar collapses to 64px, icons-only */
+@media (max-width: 1279px) {
+  .sidebar {
+    width: 64px;
+    min-width: 64px;
+    padding: 14px 8px;
+    align-items: center;
+    transition: width 200ms ease-out;
+  }
+
+  .sidebar .brand-text,
+  .sidebar .project-picker,
+  .sidebar .session-search-wrap,
+  .sidebar .session-list {
+    display: none;
+  }
+
+  .sidebar .new-session {
+    width: 40px;
+    padding: 7px 0;
+    font-size: 0;
+  }
+
+  .sidebar .new-session::before {
+    content: "+";
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Status bar (F-002.14, DESIGN_SYSTEM §5.5) ---------- */
+.statusbar {
+  height: 28px;
+  flex-shrink: 0;
+  background: #0A0A0A;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #737373;
+  user-select: none;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #737373;
+  flex-shrink: 0;
+}
+.status-dot.connected {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(30, 144, 255, 0.5);
+}
+.status-model {
+  color: #737373;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+.status-op {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-spacer { flex: 1; }
+.status-ctx-label { white-space: nowrap; }
+.status-ctx-bar {
+  width: 96px;
+  height: 4px;
+  background: #262626;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.status-ctx-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 280ms cubic-bezier(0.16, 1, 0.3, 1), background 280ms ease-out;
+}
+
+/* ---------- Copy to clipboard (F-002.8) ---------- */
+.code-block { position: relative; }
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(20, 20, 20, 0.85);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease-out, color 150ms ease-out;
+}
+.code-block:hover .code-copy-btn { opacity: 1; }
+.code-copy-btn:hover { color: var(--text-primary); }
+.code-copy-btn.copied { color: var(--green); opacity: 1; }
+
+.msg { position: relative; }
+.msg-copy {
+  align-self: flex-start;
+  height: 22px;
+  margin: 2px 6px;
+  padding: 0 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 150ms ease-out, color 150ms ease-out;
+}
+.msg:hover .msg-copy { opacity: 1; }
+.msg-copy:hover { color: var(--text-primary); }
+.msg-copy.copied { color: var(--green); opacity: 1; }
+
+/* ---------- Responsive: hide env panel below 1440px ---------- */
+@media (max-width: 1439px) {
+  .env-panel {
+    position: fixed;
+    top: 44px;
+    right: 0;
+    bottom: 0;
+    width: 340px;
+    max-width: 90vw;
+    z-index: 30;
+    box-shadow: var(--shadow-lg);
+    animation: panel-slide-in 200ms ease-out;
+  }
+}

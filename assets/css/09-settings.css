@@ -1,0 +1,445 @@
+/* ---------- Settings ---------- */
+.settings {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  gap: 14px;
+  min-height: 0;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.tab.active {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 1px var(--accent-dim) inset;
+}
+
+.settings-editor {
+  flex: 1;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+  resize: none;
+}
+
+.settings-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.settings-status {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* ---------- Status bar YOLO badge (F-011.6) ---------- */
+.status-yolo {
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 1px 8px;
+}
+
+/* ---------- Settings preferences (F-011) ---------- */
+.prefs {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  max-width: 720px;
+}
+
+.prefs-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prefs-section h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prefs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.prefs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prefs-input {
+  flex: 1;
+  min-width: 240px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.prefs-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.prefs-detected {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.prefs-detected code {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: var(--bg-code);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.prefs-version {
+  color: var(--text-tertiary);
+}
+
+.prefs-tag {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.prefs-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.prefs-warning {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--red);
+}
+
+.prefs-auth {
+  font-size: 12.5px;
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+}
+
+.prefs-auth.ok {
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.prefs-auth.missing {
+  color: var(--yellow);
+  background: var(--yellow-dim);
+}
+
+.prefs-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.prefs-radio input {
+  accent-color: var(--accent);
+}
+
+.prefs-approval-label {
+  width: 140px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.prefs-yolo {
+  margin-top: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all var(--transition-base);
+}
+
+.prefs-yolo.active {
+  border-color: var(--red);
+  background: var(--red-dim);
+  box-shadow: 0 0 0 1px var(--red) inset;
+}
+
+.prefs-yolo strong {
+  color: var(--text-primary);
+}
+
+.prefs-yolo.active strong {
+  color: var(--red);
+}
+
+.prefs-yolo input {
+  accent-color: var(--red);
+}
+
+/* ---------- F-005: MCP server management UI ---------- */
+.mcp-pane {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+}
+.mcp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mcp-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.mcp-empty {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.mcp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mcp-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color var(--transition-fast);
+}
+.mcp-card:hover {
+  border-color: var(--border-strong);
+}
+.mcp-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.mcp-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mcp-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+.mcp-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mcp-badge-stdio {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.mcp-badge-http {
+  background: var(--green-dim);
+  color: var(--green);
+}
+.mcp-status {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 500;
+}
+.mcp-status-ok {
+  background: var(--green-dim);
+  color: var(--green);
+}
+.mcp-status-missing-command {
+  background: var(--red-dim);
+  color: var(--red);
+}
+.mcp-status-bad-url {
+  background: var(--red-dim);
+  color: var(--red);
+}
+.mcp-status-unsupported {
+  background: var(--yellow-dim);
+  color: var(--yellow);
+}
+.mcp-card-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mcp-card-meta code {
+  font-family: var(--font-mono);
+  background: var(--bg-code);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+}
+.mcp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Toggle switch (iOS-style) */
+.mcp-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  width: 36px;
+  height: 20px;
+}
+.mcp-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.mcp-toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-hover);
+  border-radius: 999px;
+  transition: background 150ms ease-out;
+  border: 1px solid var(--border-default);
+}
+.mcp-toggle input:checked + .mcp-toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.mcp-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 150ms ease-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.mcp-toggle input:checked + .mcp-toggle-track .mcp-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* MCP modal */
+.mcp-modal {
+  width: min(480px, 92vw);
+}
+.mcp-modal .modal-label {
+  display: block;
+  margin: 14px 0 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.mcp-modal .prefs-input {
+  width: 100%;
+}
+.mcp-modal .settings-editor {
+  min-height: 80px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  outline: none;
+  resize: vertical;
+}
+.mcp-modal .settings-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+

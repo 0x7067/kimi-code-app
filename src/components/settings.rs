@@ -1,6 +1,6 @@
-//! SettingsView (F-011): Preferences pane (binary, auth, model, thinking,
-//! approvals, YOLO) plus the raw kimi config-file editor tabs. All
-//! preferences live in `APP_SETTINGS` and persist via the backend
+//! SettingsView (F-011, SS-04): Preferences pane with left category sidebar.
+//! Categories: Personal, Integrations, Coding, Archived.
+//! All preferences live in `APP_SETTINGS` and persist via the backend
 //! app-settings store, applying immediately without restart (F-011.13).
 
 use crate::actions::{save_app_settings, set_config};
@@ -9,24 +9,287 @@ use crate::state::*;
 use dioxus::prelude::*;
 use serde_json::{json, Value};
 
+struct SubCategory {
+    id: &'static str,
+    label: &'static str,
+}
+
+struct Category {
+    label: &'static str,
+    subs: &'static [SubCategory],
+}
+
+const CATEGORIES: &[Category] = &[
+    Category {
+        label: "Personal",
+        subs: &[
+            SubCategory { id: "general", label: "General" },
+            SubCategory { id: "profile", label: "Profile" },
+            SubCategory { id: "appearance", label: "Appearance" },
+            SubCategory { id: "configuration", label: "Configuration" },
+            SubCategory { id: "personalization", label: "Personalization" },
+            SubCategory { id: "shortcuts", label: "Keyboard shortcuts" },
+            SubCategory { id: "billing", label: "Usage & billing" },
+        ],
+    },
+    Category {
+        label: "Integrations",
+        subs: &[
+            SubCategory { id: "appshots", label: "Appshots" },
+            SubCategory { id: "mcp-servers", label: "MCP servers" },
+            SubCategory { id: "browser", label: "Browser" },
+            SubCategory { id: "computer-use", label: "Computer use" },
+        ],
+    },
+    Category {
+        label: "Coding",
+        subs: &[
+            SubCategory { id: "hooks", label: "Hooks" },
+            SubCategory { id: "connections", label: "Connections" },
+            SubCategory { id: "git", label: "Git" },
+            SubCategory { id: "environments", label: "Environments" },
+            SubCategory { id: "worktrees", label: "Worktrees" },
+        ],
+    },
+    Category {
+        label: "Archived",
+        subs: &[
+            SubCategory { id: "archived-chats", label: "Archived chats" },
+        ],
+    },
+];
+
 /// Mutate the in-memory settings and persist them (F-011.13).
 fn update_settings(f: impl FnOnce(&mut AppSettings)) {
     f(&mut APP_SETTINGS.write());
     spawn(async { save_app_settings().await });
 }
 
+fn sub_label(id: &str) -> &'static str {
+    for cat in CATEGORIES {
+        for sub in cat.subs {
+            if sub.id == id {
+                return sub.label;
+            }
+        }
+    }
+    ""
+}
+
 #[component]
 pub fn SettingsView() -> Element {
-    let mut file = use_signal(|| "Preferences".to_string());
+    let mut active_sub = use_signal(|| "general".to_string());
+
+    rsx! {
+        div { class: "settings-layout",
+            div { class: "settings-cats",
+                for cat in CATEGORIES {
+                    div { class: "settings-cat",
+                        div { class: "settings-cat-label", "{cat.label}" }
+                        for sub in cat.subs {
+                            button {
+                                key: "{sub.id}",
+                                class: if *active_sub.read() == sub.id { "settings-subcat active" } else { "settings-subcat" },
+                                onclick: move |_| active_sub.set(sub.id.to_string()),
+                                "{sub.label}"
+                            }
+                        }
+                    }
+                }
+            }
+            div { class: "settings-content",
+                match active_sub.read().as_str() {
+                    "general" => rsx! { GeneralPane {} },
+                    "mcp-servers" => rsx! { McpServersPane {} },
+                    "configuration" => rsx! { ConfigurationPane {} },
+                    _ => rsx! { PlaceholderPane { label: sub_label(active_sub.read().as_str()) } },
+                }
+            }
+        }
+    }
+}
+
+// ---------- Personal > General ----------
+
+#[component]
+fn GeneralPane() -> Element {
+    rsx! {
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "General" }
+
+            WorkModeCards {}
+            PermissionsToggles {}
+            GeneralFormFields {}
+
+            // Existing preference sections
+            BinarySection {}
+            AuthSection {}
+            ModelSection {}
+            ThinkingSection {}
+            ContextSection {}
+            ApprovalsSection {}
+            MemorySection {}
+        }
+    }
+}
+
+#[component]
+fn WorkModeCards() -> Element {
+    let mut mode = use_signal(|| "coding".to_string());
+
+    rsx! {
+        div { class: "mode-cards",
+            div {
+                class: if *mode.read() == "coding" { "mode-card active" } else { "mode-card" },
+                onclick: move |_| mode.set("coding".to_string()),
+                span { class: "mode-card-dot" }
+                div { class: "mode-card-text",
+                    span { class: "mode-card-title", "For coding" }
+                    span { class: "mode-card-desc", "Optimized for software development tasks" }
+                }
+            }
+            div {
+                class: if *mode.read() == "everyday" { "mode-card active" } else { "mode-card" },
+                onclick: move |_| mode.set("everyday".to_string()),
+                span { class: "mode-card-dot" }
+                div { class: "mode-card-text",
+                    span { class: "mode-card-title", "For everyday work" }
+                    span { class: "mode-card-desc", "General purpose assistance and writing" }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn PermissionsToggles() -> Element {
+    let mut default_perm = use_signal(|| true);
+    let mut auto_review = use_signal(|| false);
+    let mut full_access = use_signal(|| false);
+
+    rsx! {
+        div { class: "settings-group",
+            h3 { class: "settings-section-title", "Permissions" }
+            ToggleRow {
+                label: "Default permissions",
+                desc: "Use standard permission prompts for all actions",
+                checked: *default_perm.read(),
+                onchange: move |v| default_perm.set(v),
+            }
+            ToggleRow {
+                label: "Auto-review",
+                desc: "Automatically review suggested changes before applying",
+                checked: *auto_review.read(),
+                onchange: move |v| auto_review.set(v),
+            }
+            ToggleRow {
+                label: "Full access",
+                desc: "Allow agent to run commands and edit files without confirmation",
+                checked: *full_access.read(),
+                onchange: move |v| full_access.set(v),
+            }
+        }
+    }
+}
+
+#[component]
+fn GeneralFormFields() -> Element {
+    let mut open_dest = use_signal(|| "tab".to_string());
+    let mut language = use_signal(|| "en".to_string());
+    let mut menu_bar = use_signal(|| true);
+    let mut bottom_panel = use_signal(|| false);
+    let mut terminal_loc = use_signal(|| "bottom".to_string());
+    let mut prevent_sleep = use_signal(|| true);
+
+    rsx! {
+        div { class: "settings-group",
+            h3 { class: "settings-section-title", "Interface" }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Default open destination" }
+                select {
+                    class: "cfg-select",
+                    value: "{open_dest}",
+                    onchange: move |e| open_dest.set(e.value()),
+                    option { value: "tab", "New tab" }
+                    option { value: "window", "New window" }
+                    option { value: "current", "Current tab" }
+                }
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Language" }
+                select {
+                    class: "cfg-select",
+                    value: "{language}",
+                    onchange: move |e| language.set(e.value()),
+                    option { value: "en", "English" }
+                    option { value: "zh", "中文" }
+                }
+            }
+            ToggleRow {
+                label: "Show in menu bar",
+                desc: "Display app icon in system menu bar",
+                checked: *menu_bar.read(),
+                onchange: move |v| menu_bar.set(v),
+            }
+            ToggleRow {
+                label: "Bottom panel",
+                desc: "Show bottom panel by default",
+                checked: *bottom_panel.read(),
+                onchange: move |v| bottom_panel.set(v),
+            }
+            div { class: "prefs-row",
+                label { class: "prefs-label", "Default terminal location" }
+                select {
+                    class: "cfg-select",
+                    value: "{terminal_loc}",
+                    onchange: move |e| terminal_loc.set(e.value()),
+                    option { value: "bottom", "Bottom" }
+                    option { value: "right", "Right" }
+                }
+            }
+            ToggleRow {
+                label: "Prevent sleep while running",
+                desc: "Keep system awake during agent tasks",
+                checked: *prevent_sleep.read(),
+                onchange: move |v| prevent_sleep.set(v),
+            }
+        }
+    }
+}
+
+#[component]
+fn ToggleRow(label: String, desc: String, checked: bool, onchange: EventHandler<bool>) -> Element {
+    rsx! {
+        div { class: "toggle-row",
+            div { class: "toggle-row-info",
+                span { class: "toggle-row-label", "{label}" }
+                span { class: "toggle-row-desc", "{desc}" }
+            }
+            label { class: "ios-toggle",
+                input {
+                    r#type: "checkbox",
+                    checked: checked,
+                    onchange: move |e| onchange.call(e.checked()),
+                }
+                span { class: "ios-toggle-track",
+                    span { class: "ios-toggle-thumb" }
+                }
+            }
+        }
+    }
+}
+
+// ---------- Personal > Configuration ----------
+
+#[component]
+fn ConfigurationPane() -> Element {
+    let mut file = use_signal(|| "config.toml".to_string());
     let mut content = use_signal(String::new);
     let mut status = use_signal(String::new);
 
     let mut load = move |name: String| {
         file.set(name.clone());
         status.set(String::new());
-        if name == "Preferences" {
-            return;
-        }
         spawn(async move {
             match invoke("read_kimi_config", json!({"name": name})).await {
                 Ok(Value::String(s)) => content.set(s),
@@ -36,12 +299,18 @@ pub fn SettingsView() -> Element {
         });
     };
 
-    let prefs_open = *file.read() == "Preferences";
+    use_effect(move || {
+        load(file.read().clone());
+    });
+
+    let files = ["config.toml", "tui.toml", "mcp.json", "AGENTS.md"];
 
     rsx! {
-        div { class: "settings",
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "Configuration" }
+            p { class: "settings-section-desc", "Edit raw configuration files." }
             div { class: "settings-tabs",
-                for name in ["Preferences", "MCP Servers", "config.toml", "tui.toml", "mcp.json", "AGENTS.md"] {
+                for name in files {
                     button {
                         key: "{name}",
                         class: if *file.read() == name { "tab active" } else { "tab" },
@@ -50,50 +319,41 @@ pub fn SettingsView() -> Element {
                     }
                 }
             }
-            if prefs_open {
-                PreferencesPane {}
-            } else if *file.read() == "MCP Servers" {
-                McpServersPane {}
-            } else {
-                textarea {
-                    class: "settings-editor",
-                    spellcheck: false,
-                    value: "{content}",
-                    oninput: move |e| content.set(e.value()),
-                }
-                div { class: "settings-actions",
-                    span { class: "settings-status", "{status}" }
-                    button {
-                        class: "primary",
-                        onclick: move |_| {
-                            let name = file.read().clone();
-                            let body = content.read().clone();
-                            spawn(async move {
-                                match invoke("write_kimi_config", json!({"name": name, "content": body})).await {
-                                    Ok(_) => status.set("Saved".into()),
-                                    Err(e) => status.set(err_msg(&e)),
-                                }
-                            });
-                        },
-                        "Save"
-                    }
+            textarea {
+                class: "settings-editor",
+                spellcheck: false,
+                value: "{content}",
+                oninput: move |e| content.set(e.value()),
+            }
+            div { class: "settings-actions",
+                span { class: "settings-status", "{status}" }
+                button {
+                    class: "primary",
+                    onclick: move |_| {
+                        let name = file.read().clone();
+                        let body = content.read().clone();
+                        spawn(async move {
+                            match invoke("write_kimi_config", json!({"name": name, "content": body})).await {
+                                Ok(_) => status.set("Saved".into()),
+                                Err(e) => status.set(err_msg(&e)),
+                            }
+                        });
+                    },
+                    "Save"
                 }
             }
         }
     }
 }
 
+// ---------- Placeholder for unimplemented subcategories ----------
+
 #[component]
-fn PreferencesPane() -> Element {
+fn PlaceholderPane(label: &'static str) -> Element {
     rsx! {
-        div { class: "prefs",
-            BinarySection {}
-            AuthSection {}
-            ModelSection {}
-            ThinkingSection {}
-            ContextSection {}
-            ApprovalsSection {}
-            MemorySection {}
+        div { class: "settings-pane",
+            h2 { class: "settings-section-title", "{label}" }
+            p { class: "settings-section-desc", "This section is coming soon." }
         }
     }
 }
