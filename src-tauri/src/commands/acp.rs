@@ -23,6 +23,7 @@ pub struct AppState {
     pub supervisor: std::sync::Mutex<Supervisor>,
     pub capabilities: std::sync::Mutex<AgentCapabilities>,
     pub multi_agent: crate::multi_agent::MultiAgentState,
+    pub browser_watcher: std::sync::Mutex<Option<notify::RecommendedWatcher>>,
 }
 
 impl Default for AppState {
@@ -34,6 +35,7 @@ impl Default for AppState {
             supervisor: std::sync::Mutex::new(Supervisor::new(MAX_RESTARTS, BASE_BACKOFF_MS)),
             capabilities: std::sync::Mutex::new(AgentCapabilities::default()),
             multi_agent: crate::multi_agent::MultiAgentState::default(),
+            browser_watcher: std::sync::Mutex::new(None),
         }
     }
 }

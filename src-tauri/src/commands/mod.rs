@@ -2,6 +2,7 @@
 
 mod acp;
 mod automation;
+mod browser;
 mod checkpoint;
 mod config;
 mod dialogs;
@@ -78,5 +79,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         multi_agent::get_multi_agent_run,
         multi_agent::set_task_session,
         multi_agent::set_task_status,
+        browser::start_browser_watcher,
+        browser::stop_browser_watcher,
     ]
 }

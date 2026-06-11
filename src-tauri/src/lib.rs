@@ -1,5 +1,6 @@
 mod acp;
 mod automation;
+mod browser;
 mod checkpoint;
 mod commands;
 mod headless;

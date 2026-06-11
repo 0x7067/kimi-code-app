@@ -3002,3 +3002,29 @@ details.search-hit {
   background: var(--bg-surface);
   border-radius: 4px;
 }
+
+/* ---------- F-006: browser pane additions ---------- */
+
+.browser-devices {
+  display: flex;
+  gap: 4px;
+}
+
+.browser-frame-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg-base);
+}
+
+.browser-frame {
+  height: 100%;
+  min-height: 400px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: white;
+  transition: width 0.3s ease;
+}

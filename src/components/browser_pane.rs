@@ -1,12 +1,65 @@
-//! F-006: Minimal embedded browser preview via iframe.
+//! F-006: Browser preview pane with device toggles, live reload, and URL sharing.
 
+use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
+
+#[derive(Clone, Copy, PartialEq)]
+enum Device {
+    Mobile,
+    Tablet,
+    Desktop,
+}
+
+impl Device {
+    fn width(&self) -> &str {
+        match self {
+            Device::Mobile => "375px",
+            Device::Tablet => "768px",
+            Device::Desktop => "100%",
+        }
+    }
+    fn label(&self) -> &str {
+        match self {
+            Device::Mobile => "Mobile",
+            Device::Tablet => "Tablet",
+            Device::Desktop => "Desktop",
+        }
+    }
+}
 
 #[component]
 pub fn BrowserPane() -> Element {
     let mut url = use_signal(|| "http://localhost:3000".to_string());
     let mut active = use_signal(|| "http://localhost:3000".to_string());
+    let mut device = use_signal(|| Device::Desktop);
+
+    use_effect(move || {
+        // F-006.5: start live-reload watcher when pane opens.
+        if let Some(cwd) = PROJECT.read().clone() {
+            spawn(async move {
+                let _ = invoke("start_browser_watcher", serde_json::json!({"cwd": cwd})).await;
+            });
+        }
+        // Listen for reload events from the backend.
+        let mut reload_count = use_signal(|| 0_usize);
+        crate::ipc::listen_forever("browser:reload", move |_| {
+            let next = *reload_count.read() + 1;
+            reload_count.set(next);
+            // Force iframe refresh by toggling the active URL.
+            let current = active.read().clone();
+            active.set(current.clone());
+        });
+    });
+
+    let send_url_to_chat = move || {
+        let u = active.read().clone();
+        if !u.is_empty() {
+            *COMPOSER_PREFILL.write() = Some(format!("Check out this page: {u}"));
+        }
+    };
+
+    let dev = *device.read();
 
     rsx! {
         div { class: "browser-pane",
@@ -34,15 +87,33 @@ pub fn BrowserPane() -> Element {
                     },
                     "Refresh"
                 }
+                div { class: "browser-devices",
+                    for d in [Device::Mobile, Device::Tablet, Device::Desktop] {
+                        button {
+                            key: "{d.label()}",
+                            class: if dev == d { "ghost active" } else { "ghost" },
+                            onclick: move |_| device.set(d),
+                            "{d.label()}"
+                        }
+                    }
+                }
+                button {
+                    class: "ghost",
+                    onclick: move |_| send_url_to_chat(),
+                    "Share"
+                }
                 button {
                     class: "ghost",
                     onclick: move |_| *SHOW_BROWSER.write() = false,
                     "Close"
                 }
             }
-            iframe {
-                class: "browser-frame",
-                src: "{active}",
+            div { class: "browser-frame-wrap",
+                iframe {
+                    class: "browser-frame",
+                    style: "width: {dev.width()};",
+                    src: "{active}",
+                }
             }
         }
     }
