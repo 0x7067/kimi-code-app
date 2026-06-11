@@ -6,8 +6,10 @@ mod dialogs;
 mod git;
 mod kimi;
 mod projects;
+mod sessions;
 
 pub use acp::AppState;
+pub use sessions::spawn_session_index_watcher;
 
 /// Generate the Tauri invoke handler with all commands.
 /// Kept inside this module so the macro can see the private submodules.
@@ -18,6 +20,8 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         acp::acp_notify,
         acp::acp_cancel,
         acp::acp_respond_permission,
+        sessions::kimi_list_sessions,
+        sessions::kimi_load_session,
         kimi::kimi_login,
         kimi::js_log,
         kimi::kimi_version,

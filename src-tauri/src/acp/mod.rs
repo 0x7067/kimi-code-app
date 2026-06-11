@@ -3,6 +3,7 @@
 pub mod protocol;
 pub mod queue;
 pub mod sessions;
+pub mod store;
 pub mod supervisor;
 
 use queue::{MessageQueue, TurnQueue};

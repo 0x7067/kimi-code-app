@@ -30,3 +30,6 @@ tokio = { version = "1", features = ["process", "io-util", "sync", "fs", "macros
 dirs = "6"
 base64 = "0.22"
 
+[dev-dependencies]
+tempfile = "3"
+

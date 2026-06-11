@@ -24,6 +24,12 @@ pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(
 
 pub static ATTACHMENTS: GlobalSignal<Vec<Attachment>> = Signal::global(Vec::new);
 pub static SESSION_SEARCH: GlobalSignal<String> = Signal::global(String::new);
+/// In-conversation search (F-002.9): whether the search bar is open and its query.
+pub static SEARCH_OPEN: GlobalSignal<bool> = Signal::global(|| false);
+pub static CONVO_SEARCH: GlobalSignal<String> = Signal::global(String::new);
+/// Context-window usage fraction 0.0–1.0 (F-002.14 / F-003.12), populated from
+/// ACP status/usage payloads when the agent reports them.
+pub static CONTEXT_USAGE: GlobalSignal<f64> = Signal::global(|| 0.0);
 pub static VIEW: GlobalSignal<View> = Signal::global(|| View::Chat);
 pub static SHOW_DIFF: GlobalSignal<bool> = Signal::global(|| false);
 pub static DIFF: GlobalSignal<String> = Signal::global(String::new);
@@ -41,6 +47,7 @@ pub fn reset_thread() {
     CONFIG_OPTIONS.write().clear();
     *PERMISSION.write() = None;
     *RUNNING.write() = false;
+    *CONTEXT_USAGE.write() = 0.0;
 }
 
 /// Save current session thread state into the scrollback cache.

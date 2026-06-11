@@ -45,6 +45,9 @@ pub fn apply_update(params: &Value) {
             return; // update for another session
         }
     }
+    if let Some(frac) = crate::conversation::parse_context_usage(params) {
+        *CONTEXT_USAGE.write() = frac;
+    }
     let update = params.get("update").unwrap_or(params);
     let kind = s(update, "sessionUpdate");
 

@@ -1,5 +1,6 @@
 mod actions;
 mod components;
+mod conversation;
 mod design_tokens;
 mod ipc;
 mod markdown;

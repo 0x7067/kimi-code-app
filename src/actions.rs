@@ -126,7 +126,7 @@ pub async fn load_session(meta: SessionMeta) {
     }
 }
 
-pub async fn send_prompt(text: String) {
+pub async fn send_prompt(text: String, thinking: bool) {
     let Some(sid) = SESSION_ID.read().clone() else { return };
     let attachments = ATTACHMENTS.write().drain(..).collect::<Vec<_>>();
     let label = if attachments.is_empty() {
@@ -144,11 +144,13 @@ pub async fn send_prompt(text: String) {
     for a in attachments {
         blocks.push(json!({"type": "image", "data": a.data, "mimeType": a.mime}));
     }
-    let res = invoke(
-        "acp_request",
-        json!({"method": "session/prompt", "params": {"sessionId": sid, "prompt": blocks}}),
-    )
-    .await;
+    let mut params = json!({"sessionId": sid, "prompt": blocks});
+    if thinking {
+        // F-002.13: flag the prompt for thinking mode so the backend can map it
+        // to the agent's thinking toggle when forwarding the request.
+        params["_meta"] = json!({"thinking": true});
+    }
+    let res = invoke("acp_request", json!({"method": "session/prompt", "params": params})).await;
     *RUNNING.write() = false;
     if let Err(e) = res {
         *ERROR.write() = Some(err_msg(&e));

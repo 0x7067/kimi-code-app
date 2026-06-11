@@ -1580,3 +1580,145 @@ input[type="search"]::placeholder {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Status bar (F-002.14, DESIGN_SYSTEM §5.5) ---------- */
+.statusbar {
+  height: 28px;
+  flex-shrink: 0;
+  background: #0A0A0A;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #737373;
+  user-select: none;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #737373;
+  flex-shrink: 0;
+}
+.status-dot.connected {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(30, 144, 255, 0.5);
+}
+.status-model {
+  color: #737373;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+.status-op {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-spacer { flex: 1; }
+.status-ctx-label { white-space: nowrap; }
+.status-ctx-bar {
+  width: 96px;
+  height: 4px;
+  background: #262626;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.status-ctx-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 280ms cubic-bezier(0.16, 1, 0.3, 1), background 280ms ease-out;
+}
+
+/* ---------- Copy to clipboard (F-002.8) ---------- */
+.code-block { position: relative; }
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(20, 20, 20, 0.85);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease-out, color 150ms ease-out;
+}
+.code-block:hover .code-copy-btn { opacity: 1; }
+.code-copy-btn:hover { color: var(--text-primary); }
+.code-copy-btn.copied { color: var(--green); opacity: 1; }
+
+.msg { position: relative; }
+.msg-copy {
+  align-self: flex-start;
+  height: 22px;
+  margin: 2px 6px;
+  padding: 0 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 150ms ease-out, color 150ms ease-out;
+}
+.msg:hover .msg-copy { opacity: 1; }
+.msg-copy:hover { color: var(--text-primary); }
+.msg-copy.copied { color: var(--green); opacity: 1; }
+
+/* ---------- In-conversation search (F-002.9) ---------- */
+.convo-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-dark, #141414);
+  flex-shrink: 0;
+}
+.convo-search-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+  background: var(--bg-surface, #1E1E1E);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+}
+.convo-search-input:focus { border-color: var(--accent); }
+.convo-search-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.search-hit > .bubble,
+details.search-hit {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-md);
+}
+.search-dim { opacity: 0.3; }
+
+/* ---------- Color-coded roles (F-002.15) ---------- */
+.msg.agent .bubble { border-left: 2px solid var(--accent); }
+.thought { border-left: 2px solid var(--yellow); }
+.tool { border-left: 2px solid var(--text-muted); }
+.tool.completed { border-left-color: var(--green); }
+.tool.failed { border-left-color: var(--red); }
+.tool.failed .tool-title { color: var(--red); }
+.tool.in_progress { border-left-color: var(--accent); }
+
+/* ---------- @mention menu (F-002.12) ---------- */
+.mention-menu .slash-name { color: var(--accent); }

@@ -1,10 +1,62 @@
 use crate::actions::{connect, refresh_diff};
+use crate::components::base::{KimiDropdown, KimiDropdownItem};
+use crate::conversation::{export_filename, export_json, export_markdown};
 use crate::state::*;
 use dioxus::prelude::*;
+
+/// Trigger a browser download of `content` as `name` (F-002.10).
+fn download_file(name: &str, mime: &str, content: &str) {
+    if let (Ok(n), Ok(c)) = (serde_json::to_string(name), serde_json::to_string(content)) {
+        document::eval(&format!(
+            "(() => {{ \
+                const blob = new Blob([{c}], {{ type: '{mime}' }}); \
+                const a = document.createElement('a'); \
+                a.href = URL.createObjectURL(blob); \
+                a.download = {n}; \
+                a.click(); \
+                setTimeout(() => URL.revokeObjectURL(a.href), 1000); \
+            }})();"
+        ));
+    }
+}
+
+/// Today's date as YYYY-MM-DD from the webview clock.
+fn today() -> String {
+    String::from(js_sys::Date::new_0().to_iso_string()).chars().take(10).collect()
+}
+
+/// Export the current thread as Markdown or JSON.
+fn export_conversation(as_markdown: bool) {
+    let items = ITEMS.read().clone();
+    if items.is_empty() {
+        return;
+    }
+    let sid = SESSION_ID.read().clone().unwrap_or_default();
+    let title = SESSION_TITLES
+        .read()
+        .get(&sid)
+        .cloned()
+        .unwrap_or_else(|| "Conversation".to_string());
+    let date = today();
+    if as_markdown {
+        download_file(
+            &export_filename(&sid, &date, "md"),
+            "text/markdown",
+            &export_markdown(&title, &items),
+        );
+    } else {
+        download_file(
+            &export_filename(&sid, &date, "json"),
+            "application/json",
+            &export_json(&sid, &items),
+        );
+    }
+}
 
 #[component]
 pub fn Topbar() -> Element {
     let connected = *CONNECTED.read();
+    let has_items = !ITEMS.read().is_empty();
     rsx! {
         header { class: "topbar",
             div { class: "topbar-left",
@@ -15,6 +67,31 @@ pub fn Topbar() -> Element {
                 }
             }
             div { class: "topbar-right",
+                button {
+                    class: if *SEARCH_OPEN.read() { "ghost active" } else { "ghost" },
+                    title: "Search in conversation (⌘F)",
+                    onclick: move |_| {
+                        let open = !*SEARCH_OPEN.read();
+                        *SEARCH_OPEN.write() = open;
+                        if !open { CONVO_SEARCH.write().clear(); }
+                    },
+                    "Search"
+                }
+                if has_items {
+                    KimiDropdown {
+                        trigger: rsx! {
+                            button { class: "ghost", title: "Export conversation", "Export" }
+                        },
+                        KimiDropdownItem {
+                            onclick: move |_| export_conversation(true),
+                            "Export as Markdown"
+                        }
+                        KimiDropdownItem {
+                            onclick: move |_| export_conversation(false),
+                            "Export as JSON"
+                        }
+                    }
+                }
                 button {
                     class: if *SHOW_DIFF.read() { "ghost active" } else { "ghost" },
                     onclick: move |_| {

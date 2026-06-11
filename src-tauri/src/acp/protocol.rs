@@ -153,6 +153,19 @@ pub fn parse_agent_capabilities(init_result: &Value) -> AgentCapabilities {
     }
 }
 
+/// Whether a JSON-RPC error means the agent rejected the call because a turn
+/// is in flight (kimi reports `TURN_AGENT_BUSY` / "another turn is active";
+/// `session/load` is rejected mid-turn the same way).
+pub fn is_turn_busy(error: &Value) -> bool {
+    let mut haystack = String::new();
+    for v in [error.get("message"), error.get("code"), error.get("data")] {
+        if let Some(v) = v {
+            haystack.push_str(&v.to_string());
+        }
+    }
+    haystack.contains("TURN_AGENT_BUSY") || haystack.contains("another turn is active")
+}
+
 /// Stop reason from a `session/prompt` result. Cancellation resolves the
 /// in-flight prompt with `stopReason: "cancelled"` rather than a JSON-RPC
 /// error, so callers must inspect this.
@@ -307,6 +320,15 @@ mod tests {
             }
         );
         assert_eq!(parse_agent_capabilities(&json!({})), AgentCapabilities::default());
+    }
+
+    #[test]
+    fn detects_turn_busy_errors() {
+        assert!(is_turn_busy(&json!({"code": -32603, "message": "TURN_AGENT_BUSY"})));
+        assert!(is_turn_busy(&json!({"message": "another turn is active"})));
+        assert!(is_turn_busy(&json!({"data": {"reason": "TURN_AGENT_BUSY"}})));
+        assert!(!is_turn_busy(&json!({"code": -32601, "message": "method not found"})));
+        assert!(!is_turn_busy(&json!({})));
     }
 
     #[test]

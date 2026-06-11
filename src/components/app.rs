@@ -57,6 +57,26 @@ pub fn App() -> Element {
                 });
             }
         });
+        // F-002.8: delegated click handler for the copy buttons that
+        // md_to_html injects into rendered code blocks.
+        document::eval(
+            "if (!window.__kimiCodeCopy) { \
+                window.__kimiCodeCopy = true; \
+                document.addEventListener('click', (e) => { \
+                    const btn = e.target.closest('.code-copy-btn'); \
+                    if (!btn) return; \
+                    const pre = btn.parentElement.querySelector('pre'); \
+                    navigator.clipboard.writeText(pre ? pre.innerText : '').then(() => { \
+                        btn.textContent = 'Copied'; \
+                        btn.classList.add('copied'); \
+                        setTimeout(() => { \
+                            btn.textContent = 'Copy'; \
+                            btn.classList.remove('copied'); \
+                        }, 1500); \
+                    }); \
+                }); \
+            }",
+        );
         spawn(async {
             connect().await;
             refresh_projects().await;
@@ -95,6 +115,7 @@ pub fn App() -> Element {
                         }
                     }
                 }
+                StatusBar {}
             }
             if PERMISSION.read().is_some() {
                 PermissionModal {}

@@ -1,9 +1,29 @@
+use crate::conversation::{item_matches, item_plain_text};
 use crate::markdown::md_to_html;
 use crate::state::*;
 use dioxus::prelude::*;
 
+/// Copy text to the system clipboard (F-002.8).
+pub(crate) fn copy_text(text: &str) {
+    if let Ok(js) = serde_json::to_string(text) {
+        document::eval(&format!("navigator.clipboard.writeText({js});"));
+    }
+}
+
+/// Mark message `i` as copied, then clear the flag after a short delay.
+fn flash_copied(mut copied: Signal<Option<usize>>, i: usize) {
+    copied.set(Some(i));
+    let handle = gloo_timers::callback::Timeout::new(1500, move || {
+        if *copied.peek() == Some(i) {
+            copied.set(None);
+        }
+    });
+    handle.forget();
+}
+
 #[component]
 pub fn ThreadView() -> Element {
+    let copied = use_signal(|| None::<usize>);
     use_effect(move || {
         let items = ITEMS.read();
         let running = *RUNNING.read();
@@ -31,7 +51,45 @@ pub fn ThreadView() -> Element {
             });",
         );
     });
+    let query = CONVO_SEARCH.read().trim().to_string();
+    let hits = if query.is_empty() {
+        0
+    } else {
+        ITEMS.read().iter().filter(|item| item_matches(item, &query)).count()
+    };
     rsx! {
+        if *SEARCH_OPEN.read() {
+            div { class: "convo-search",
+                input {
+                    class: "convo-search-input",
+                    r#type: "text",
+                    placeholder: "Search in conversation…",
+                    value: "{CONVO_SEARCH}",
+                    autofocus: true,
+                    oninput: move |e| *CONVO_SEARCH.write() = e.value(),
+                    onkeydown: move |e| {
+                        if e.key() == Key::Escape {
+                            e.prevent_default();
+                            *SEARCH_OPEN.write() = false;
+                            CONVO_SEARCH.write().clear();
+                        }
+                    },
+                }
+                if !query.is_empty() {
+                    span { class: "convo-search-count",
+                        if hits == 1 { "1 match" } else { "{hits} matches" }
+                    }
+                }
+                button {
+                    class: "ghost",
+                    onclick: move |_| {
+                        *SEARCH_OPEN.write() = false;
+                        CONVO_SEARCH.write().clear();
+                    },
+                    "Close"
+                }
+            }
+        }
         if !PLAN.read().is_empty() {
             div { class: "plan-sticky",
                 div { class: "plan-head", "Plan" }
@@ -57,7 +115,7 @@ pub fn ThreadView() -> Element {
                 }
             }
             for (i, item) in ITEMS.read().iter().enumerate() {
-                {render_item(i, item)}
+                {render_item(i, item, copied, &query)}
             }
             if *RUNNING.read() {
                 div { class: "working", span { class: "spinner" } "Working…" }
@@ -66,18 +124,51 @@ pub fn ThreadView() -> Element {
     }
 }
 
-fn render_item(i: usize, item: &Item) -> Element {
+/// Search modifier class for an item: highlight hits, dim everything else.
+fn search_class(item: &Item, query: &str) -> &'static str {
+    if query.is_empty() {
+        ""
+    } else if item_matches(item, query) {
+        " search-hit"
+    } else {
+        " search-dim"
+    }
+}
+
+/// Per-message copy button (F-002.8).
+fn copy_button(i: usize, item: &Item, copied: Signal<Option<usize>>) -> Element {
+    let text = item_plain_text(item);
+    let is_copied = *copied.read() == Some(i);
+    rsx! {
+        button {
+            class: if is_copied { "msg-copy copied" } else { "msg-copy" },
+            title: "Copy message",
+            onclick: move |_| {
+                copy_text(&text);
+                flash_copied(copied, i);
+            },
+            if is_copied { "Copied" } else { "Copy" }
+        }
+    }
+}
+
+fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str) -> Element {
+    let sc = search_class(item, query);
     match item {
         Item::User(text) => rsx! {
-            div { key: "{i}", class: "msg user", div { class: "bubble", "{text}" } }
+            div { key: "{i}", class: "msg user{sc}",
+                {copy_button(i, item, copied)}
+                div { class: "bubble", "{text}" }
+            }
         },
         Item::Agent(text) => rsx! {
-            div { key: "{i}", class: "msg agent",
+            div { key: "{i}", class: "msg agent{sc}",
                 div { class: "bubble md", dangerous_inner_html: md_to_html(text) }
+                {copy_button(i, item, copied)}
             }
         },
         Item::Thought(text) => rsx! {
-            details { key: "{i}", class: "thought",
+            details { key: "{i}", class: "thought{sc}",
                 summary { "Thinking" }
                 div { class: "thought-body", "{text}" }
             }
@@ -85,7 +176,7 @@ fn render_item(i: usize, item: &Item) -> Element {
         Item::Tool(tc) => rsx! {
             details {
                 key: "{i}",
-                class: "tool {tc.status}",
+                class: "tool {tc.status}{sc}",
                 open: tc.status == "in_progress",
                 summary {
                     span { class: "tool-badge {tc.status}",

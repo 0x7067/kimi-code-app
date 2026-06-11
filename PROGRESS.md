@@ -30,7 +30,7 @@
 | # | Scope | Status | Commit |
 |---|-------|--------|--------|
 | 1 | Design system wired into build (tokens, 11 base components, icons, token tests) | DONE | `fd67389` |
-| 2 | Design system 18/18 acceptance criteria + F-001 ACP core TDD | IN PROGRESS | — |
+| 2 | Design system 18/18 acceptance criteria + F-001 ACP core TDD (25 backend tests: protocol routing, integer-v1 negotiation + capability capture, MessageQueue + per-session TurnQueue, crash Supervisor w/ backoff+replay, SessionRegistry, acp_cancel command) | DONE | `db5d161` |
 | 3 | F-013 stop + F-014 queueing + F-015 steering (cancel+reprompt) | TODO | — |
 | 4 | F-012 CLI↔app session sync (`session/list`/`session/load` + index fallback) | TODO | — |
 | 5 | F-002 chat interface gaps | TODO | — |
@@ -47,7 +47,8 @@ Agent-verified checklist: tokens match spec (tests in `src/design_tokens/tests.r
 Scope: protocol module with typed message routing (text/tool_call/tool_result/error/status), integer version negotiation + capability capture, MessageQueue (doubles as per-session turn serializer), crash supervisor with injectable transport, concurrent session registry. Corrections about integer version + cancel semantics already sent to the agent.
 
 ### F-012 session sync (user requirement, not in REQUIREMENTS.md)
-Plan: on connect, call kimi's `session/list` extension (fallback: parse `~/.kimi-code/session_index.jsonl`, filter by workDir); render in sidebar; open via `session/load` replaying history into the thread; new app sessions automatically appear in CLI (shared store). Watch session_index.jsonl for changes (notify crate) for live refresh.
+Backend DONE (uncommitted): `acp/store.rs` (index/state.json parsing, workDir filter, title derivation, updatedAt-desc sort; 12 tests), `commands/sessions.rs` (`kimi_list_sessions` ACP-first w/ disk fallback, `kimi_load_session` w/ TURN_AGENT_BUSY mapped error), 2s mtime watcher emitting `sessions:changed`. 37 backend tests green.
+Frontend TODO: sidebar session list consuming `kimi_list_sessions` + `sessions:changed`, open-session → `kimi_load_session` replay into thread. NOTE: `session/list` request param shape unverified live — verify during `cargo tauri dev` smoke test; fallback covers failures.
 
 ### F-013 stop (user requirement)
 Backend: `acp_cancel(session_id)` command → `session/cancel` notification; handle `stopReason: cancelled`. Frontend: stop button in composer while turn active; Escape shortcut; preserve partial output.

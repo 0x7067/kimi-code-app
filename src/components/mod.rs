@@ -11,6 +11,7 @@ mod login_modal;
 mod permission_modal;
 mod settings;
 mod sidebar;
+mod status_bar;
 mod thread;
 mod topbar;
 
@@ -21,5 +22,6 @@ pub(crate) use login_modal::LoginModal;
 pub(crate) use permission_modal::PermissionModal;
 pub(crate) use settings::SettingsView;
 pub(crate) use sidebar::Sidebar;
+pub(crate) use status_bar::StatusBar;
 pub(crate) use thread::ThreadView;
 pub(crate) use topbar::Topbar;
