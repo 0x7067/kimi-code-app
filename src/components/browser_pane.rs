@@ -28,10 +28,16 @@ impl Device {
     }
 }
 
+fn cache_busted_url(url: &str, reload_count: usize) -> String {
+    let separator = if url.contains('?') { '&' } else { '?' };
+    format!("{url}{separator}__kimi_reload={reload_count}")
+}
+
 #[component]
 pub fn BrowserPane() -> Element {
     let mut url = use_signal(|| "http://localhost:3000".to_string());
     let mut active = use_signal(|| "http://localhost:3000".to_string());
+    let mut reload_count = use_signal(|| 0_usize);
     let mut device = use_signal(|| Device::Desktop);
 
     use_effect(move || {
@@ -42,13 +48,9 @@ pub fn BrowserPane() -> Element {
             });
         }
         // Listen for reload events from the backend.
-        let mut reload_count = use_signal(|| 0_usize);
         crate::ipc::listen_forever("browser:reload", move |_| {
             let next = *reload_count.read() + 1;
             reload_count.set(next);
-            // Force iframe refresh by toggling the active URL.
-            let current = active.read().clone();
-            active.set(current.clone());
         });
     });
 
@@ -82,8 +84,8 @@ pub fn BrowserPane() -> Element {
                 button {
                     class: "ghost",
                     onclick: move |_| {
-                        let current = active.read().clone();
-                        active.set(current);
+                        let next = *reload_count.read() + 1;
+                        reload_count.set(next);
                     },
                     "Refresh"
                 }
@@ -104,7 +106,12 @@ pub fn BrowserPane() -> Element {
                 }
                 button {
                     class: "ghost",
-                    onclick: move |_| *SHOW_BROWSER.write() = false,
+                    onclick: move |_| {
+                        spawn(async {
+                            let _ = invoke("stop_browser_watcher", serde_json::json!({})).await;
+                        });
+                        *SHOW_BROWSER.write() = false;
+                    },
                     "Close"
                 }
             }
@@ -112,9 +119,30 @@ pub fn BrowserPane() -> Element {
                 iframe {
                     class: "browser-frame",
                     style: "width: {dev.width()};",
-                    src: "{active}",
+                    src: "{cache_busted_url(&active.read(), *reload_count.read())}",
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cache_busted_url_adds_reload_parameter() {
+        assert_eq!(
+            cache_busted_url("http://localhost:3000", 7),
+            "http://localhost:3000?__kimi_reload=7"
+        );
+    }
+
+    #[test]
+    fn cache_busted_url_preserves_existing_query() {
+        assert_eq!(
+            cache_busted_url("http://localhost:3000/?a=1", 8),
+            "http://localhost:3000/?a=1&__kimi_reload=8"
+        );
     }
 }
