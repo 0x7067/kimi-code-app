@@ -4,7 +4,7 @@
 # src
 
 ## Purpose
-Tauri 2 backend source code. Defines the application runtime (`lib.rs`, `main.rs`), the JSON-RPC ACP client (`acp.rs`), and the full set of Tauri commands (`commands.rs`) that the Dioxus frontend invokes. This is where all native/desktop logic lives: process spawning, async I/O, file system, git, dialogs, and config management.
+Tauri 2 backend source code. Defines the application runtime (`lib.rs`, `main.rs`), the JSON-RPC ACP client (`acp.rs`), and the full set of Tauri commands (under `commands/`) that the Dioxus frontend invokes. This is where all native/desktop logic lives: process spawning, async I/O, file system, git, dialogs, and config management.
 
 ## Key Files
 
@@ -12,13 +12,14 @@ Tauri 2 backend source code. Defines the application runtime (`lib.rs`, `main.rs
 |------|-------------|
 | `lib.rs` | Tauri app builder — plugin initialization, `AppState` management, command routing, page-load JS error forwarding |
 | `main.rs` | Binary entry point — delegates to `kimi_code_app_lib::run()` |
-| `commands.rs` | All `#[tauri::command]` handlers: ACP connect/request/notify, login, config R/W, dialogs, git diff, MCP server resolution |
 | `acp.rs` | `AcpClient` — spawns `kimi acp`, manages JSON-RPC 2.0 request/response mapping, handles server->client requests (permissions, fs ops) |
-| `app.rs` | Empty placeholder file (reserved) |
+| `paths.rs` | Path helpers — `kimi_home()`, `kimi_bin()`, cross-platform config directory resolution |
 
 ## Subdirectories
 
-*None.*
+| Directory | Purpose |
+|-----------|---------|
+| `commands/` | Tauri command handlers grouped by concern (see `commands/AGENTS.md`) |
 
 ## For AI Agents
 

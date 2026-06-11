@@ -21,6 +21,7 @@ A native desktop GUI for [Kimi Code](https://www.kimi.com/code/docs/en/) (Moonsh
 |-----------|---------|
 | `.vscode/` | VS Code workspace recommendations (see `.vscode/AGENTS.md`) |
 | `assets/` | Static assets shipped to the webview (see `assets/AGENTS.md`) |
+| `scripts/` | Development automation scripts (see `scripts/AGENTS.md`) |
 | `src/` | Dioxus frontend source — UI components, state, Tauri IPC glue (see `src/AGENTS.md`) |
 | `src-tauri/` | Tauri 2 backend — Rust commands, ACP JSON-RPC client, native integrations (see `src-tauri/AGENTS.md`) |
 
@@ -38,8 +39,8 @@ A native desktop GUI for [Kimi Code](https://www.kimi.com/code/docs/en/) (Moonsh
 
 ### Common Patterns
 - Frontend/backend communication uses Tauri invoke/listen APIs over `window.__TAURI__`.
-- All UI state lives in Dioxus `GlobalSignal`s defined in `src/state.rs`.
-- Backend commands are organized in `src-tauri/src/commands.rs` and registered in `src-tauri/src/lib.rs`.
+- All UI state lives in Dioxus `GlobalSignal`s defined in `src/state/signals.rs`.
+- Backend commands are organized in `src-tauri/src/commands/` and registered in `src-tauri/src/lib.rs`.
 
 ## Dependencies
 
