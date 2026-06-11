@@ -7,6 +7,7 @@ mod git;
 mod kimi;
 mod projects;
 mod sessions;
+mod settings_store;
 
 pub use acp::AppState;
 pub use sessions::spawn_session_index_watcher;
@@ -27,8 +28,15 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         kimi::kimi_login,
         kimi::js_log,
         kimi::kimi_version,
+        kimi::detect_kimi_binary,
+        kimi::kimi_auth_status,
         config::read_kimi_config,
         config::write_kimi_config,
+        config::list_kimi_models,
+        config::set_default_model,
+        settings_store::read_app_settings,
+        settings_store::write_app_settings,
+        dialogs::pick_file,
         projects::recent_projects,
         dialogs::pick_folder,
         dialogs::pick_image,

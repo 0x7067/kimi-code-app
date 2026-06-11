@@ -47,6 +47,10 @@ pub fn StatusBar() -> Element {
         footer { class: "statusbar",
             span { class: if connected { "status-dot connected" } else { "status-dot" } }
             span { class: "status-model", "{model}" }
+            // F-011.6: prominent reminder while every tool call is auto-approved.
+            if APP_SETTINGS.read().yolo {
+                span { class: "status-yolo", title: "YOLO mode — all tool calls auto-approved", "YOLO" }
+            }
             span { class: "status-op", "{op}" }
             div { class: "status-spacer" }
             // F-003.13: manual compact trigger, gated off while a turn runs.

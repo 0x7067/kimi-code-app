@@ -33,8 +33,8 @@
 | 2 | Design system 18/18 acceptance criteria + F-001 ACP core TDD (25 backend tests: protocol routing, integer-v1 negotiation + capability capture, MessageQueue + per-session TurnQueue, crash Supervisor w/ backoff+replay, SessionRegistry, acp_cancel command) | DONE | `db5d161` |
 | 3 | F-002 chat UI (shortcuts, status bar w/ context colors, copy, role colors, search, MD/JSON export, @mention scaffold; 19 UI tests) + F-012 backend (store parsing, list/load commands, sessions:changed watcher; 37 backend tests) | DONE | `2bdfde0` |
 | 4 | F-013 stop (Stop button, Esc, cancelled marker) + F-014 queue (chips, ⌥⏎, FIFO dispatch) + F-015 steer (acp_steer cancel→reprompt w/ 5s timeout; default on send-while-running) + F-012 frontend (synced sidebar list, sessions:changed listener, load replay, relative times). 62 tests. NOTE: steer timing needs live smoke test in `cargo tauri dev`. | DONE | `41b4509` |
-| 6 | F-003 session/project management gaps | TODO | — |
-| 7 | F-011 settings & configuration | TODO | — |
+| 5 | F-003: AGENTS.md detect+preview (`read_agents_md`), NewSessionModal (name/cwd/initial prompt/AGENTS.md preview), project-grouped session tree, manual /compact w/ confirm, background-sessions panel, resume-conflict guard (`kimi_session_activity`, 30s threshold). 74 tests. Live-verify: /compact handling, wire.jsonl layout. | DONE | `c01aa4a` |
+| 6 | F-011 settings & configuration | IN PROGRESS | — |
 | 8 | P1/P2: F-004 multi-agent, F-005 MCP, F-006 browser, F-007 memory, F-009 automations, F-010 terminal | TODO | — |
 
 ## Phase detail

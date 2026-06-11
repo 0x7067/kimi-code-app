@@ -315,6 +315,25 @@ pub async fn set_config(config_id: String, value: String) {
     }
 }
 
+/// F-011.13: load persisted app settings from the backend store on startup.
+/// The backend also applies the kimi binary override as a side effect.
+pub async fn load_app_settings() {
+    if let Ok(v) = invoke("read_app_settings", json!({})).await {
+        if let Ok(settings) = serde_json::from_value::<AppSettings>(v) {
+            *APP_SETTINGS.write() = settings;
+        }
+    }
+}
+
+/// F-011.13: persist the current app settings (atomic write backend-side).
+pub async fn save_app_settings() {
+    let settings = APP_SETTINGS.read().clone();
+    let payload = serde_json::to_value(&settings).unwrap_or_else(|_| json!({}));
+    if let Err(e) = invoke("write_app_settings", json!({"settings": payload})).await {
+        *ERROR.write() = Some(err_msg(&e));
+    }
+}
+
 pub async fn refresh_diff() {
     if let Some(cwd) = PROJECT.read().clone() {
         if let Ok(res) = invoke("git_diff", json!({"cwd": cwd})).await {

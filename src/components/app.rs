@@ -32,9 +32,28 @@ pub fn App() -> Element {
                                 o.get("kind").and_then(|x| x.as_str()).unwrap_or("").to_string(),
                             )
                         })
-                        .collect()
+                        .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
+            // F-011.5/.6: approval preferences — auto-approve short-circuits
+            // the modal via the normal acp_respond_permission path.
+            let kind = tool.get("kind").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let settings = APP_SETTINGS.read().clone();
+            if let Some(option_id) = crate::conversation::auto_approve_option(
+                settings.yolo,
+                &settings.approvals,
+                &kind,
+                &title,
+                &options,
+            ) {
+                spawn(async move {
+                    let _ = crate::ipc::invoke(
+                        "acp_respond_permission",
+                        serde_json::json!({"requestId": request_id, "outcome": {"outcome": "selected", "optionId": option_id}}),
+                    ).await;
+                });
+                return;
+            }
             *PERMISSION.write() = Some(PermissionRequest { request_id, title, detail, options });
         });
         listen_forever("acp:disconnected", |_| {
@@ -84,6 +103,9 @@ pub fn App() -> Element {
             });
         });
         spawn(async {
+            // F-011.13: load persisted app settings before anything else so
+            // the kimi binary override applies to the ACP connection.
+            crate::actions::load_app_settings().await;
             connect().await;
             refresh_projects().await;
             refresh_sessions().await;

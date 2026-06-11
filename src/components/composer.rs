@@ -51,11 +51,17 @@ pub fn Composer() -> Element {
 
     // Send (idle) or steer (running, F-015): steering cancels the active
     // turn and immediately sends the new message in its place.
-    let mut submit = move |thinking: bool| {
+    let mut submit = move |explicit_thinking: bool| {
         let text = draft.read().trim().to_string();
         if text.is_empty() || SESSION_ID.read().is_none() {
             return;
         }
+        // F-011.4: the thinking-mode default makes plain ⏎ send with the
+        // thinking flag when set to "always"; ⌘⇧⏎ stays an explicit override.
+        let thinking = crate::conversation::effective_thinking(
+            &APP_SETTINGS.read().thinking_default,
+            explicit_thinking,
+        );
         draft.set(String::new());
         if *RUNNING.read() {
             spawn(steer_prompt(text));

@@ -51,6 +51,10 @@ pub static CONVO_SEARCH: GlobalSignal<String> = Signal::global(String::new);
 /// Context-window usage fraction 0.0–1.0 (F-002.14 / F-003.12), populated from
 /// ACP status/usage payloads when the agent reports them.
 pub static CONTEXT_USAGE: GlobalSignal<f64> = Signal::global(|| 0.0);
+/// F-011: GUI app settings, loaded from the backend store on startup and
+/// re-saved on every change (live-apply, F-011.13).
+pub static APP_SETTINGS: GlobalSignal<AppSettings> = Signal::global(AppSettings::default);
+
 pub static VIEW: GlobalSignal<View> = Signal::global(|| View::Chat);
 pub static SHOW_DIFF: GlobalSignal<bool> = Signal::global(|| false);
 pub static DIFF: GlobalSignal<String> = Signal::global(String::new);

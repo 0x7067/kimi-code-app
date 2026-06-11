@@ -68,6 +68,49 @@ pub enum View {
     Settings,
 }
 
+/// Per-tool-type default approval action (F-011.5): "ask" or "auto".
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct ApprovalPrefs {
+    pub shell: String,
+    pub file_edit: String,
+    pub mcp: String,
+    pub git: String,
+}
+
+impl Default for ApprovalPrefs {
+    fn default() -> Self {
+        let ask = || "ask".to_string();
+        Self { shell: ask(), file_edit: ask(), mcp: ask(), git: ask() }
+    }
+}
+
+/// GUI-side app settings (F-011), persisted via the backend app-settings
+/// store (`app_settings.json`) so changes apply without restart (F-011.13).
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct AppSettings {
+    /// F-011.1: manual kimi binary override (None = auto-detect).
+    pub kimi_bin_override: Option<String>,
+    /// F-011.4: "always" | "never" | "ask" (ask = per-send shortcut decides).
+    pub thinking_default: String,
+    /// F-011.5: per-tool-type approval defaults.
+    pub approvals: ApprovalPrefs,
+    /// F-011.6: YOLO — auto-approve everything.
+    pub yolo: bool,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            kimi_bin_override: None,
+            thinking_default: "ask".into(),
+            approvals: ApprovalPrefs::default(),
+            yolo: false,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Attachment {
     pub name: String,

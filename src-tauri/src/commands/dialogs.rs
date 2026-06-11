@@ -30,6 +30,16 @@ pub async fn pick_image(app: AppHandle) -> Result<Option<Value>, String> {
     Ok(Some(json!({"data": data, "mimeType": mime, "name": name})))
 }
 
+/// Generic native file picker (F-011.1 Browse for the kimi binary).
+#[tauri::command]
+pub async fn pick_file(app: AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog().file().pick_file(move |file| {
+        let _ = tx.send(file.map(|f| f.to_string()));
+    });
+    rx.await.map_err(|e| e.to_string())
+}
+
 /// Native folder picker.
 #[tauri::command]
 pub async fn pick_folder(app: AppHandle) -> Result<Option<String>, String> {

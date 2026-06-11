@@ -389,10 +389,138 @@ pub fn should_warn_resume(age_secs: Option<u64>, is_own_session: bool) -> bool {
     !is_own_session && age_secs.is_some_and(|a| a < RESUME_CONFLICT_THRESHOLD_SECS)
 }
 
+// ---------- Settings logic (F-011) ----------
+
+/// F-011.4: whether a send carries the thinking flag. `explicit` is the
+/// per-send shortcut (⌘⇧⏎); the default mode governs plain sends:
+/// "always" → thinking on, "never"/"ask" → off unless explicit.
+pub fn effective_thinking(default_mode: &str, explicit: bool) -> bool {
+    explicit || default_mode == "always"
+}
+
+/// F-011.5: bucket an ACP tool call into an approval category.
+/// `kind` is the ACP ToolKind; `title` disambiguates git commands.
+pub fn approval_category(kind: &str, title: &str) -> &'static str {
+    let t = title.trim().trim_start_matches('`');
+    if t.starts_with("git ") || t == "git" {
+        return "git";
+    }
+    match kind {
+        "execute" => "shell",
+        "edit" | "delete" | "move" | "read" | "search" => "file-edit",
+        _ => "mcp",
+    }
+}
+
+/// F-011.5/F-011.6: if the request should be auto-approved (YOLO on, or the
+/// tool's category preference is "auto"), return the optionId to select —
+/// preferring `allow_once` — otherwise None (ask via the modal). YOLO takes
+/// precedence over per-category "ask".
+pub fn auto_approve_option(
+    yolo: bool,
+    prefs: &crate::state::ApprovalPrefs,
+    kind: &str,
+    title: &str,
+    options: &[(String, String, String)],
+) -> Option<String> {
+    let pref = match approval_category(kind, title) {
+        "shell" => &prefs.shell,
+        "file-edit" => &prefs.file_edit,
+        "git" => &prefs.git,
+        _ => &prefs.mcp,
+    };
+    if !yolo && pref != "auto" {
+        return None;
+    }
+    options
+        .iter()
+        .find(|(_, _, k)| k == "allow_once")
+        .or_else(|| options.iter().find(|(_, _, k)| k.starts_with("allow")))
+        .map(|(id, _, _)| id.clone())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::ToolCall;
+    use crate::state::{ApprovalPrefs, ToolCall};
+
+    // ---------- F-011.4 thinking default ----------
+
+    #[test]
+    fn thinking_always_makes_plain_send_thinking() {
+        assert!(effective_thinking("always", false));
+        assert!(effective_thinking("always", true));
+    }
+
+    #[test]
+    fn thinking_never_and_ask_follow_explicit_flag() {
+        assert!(!effective_thinking("never", false));
+        assert!(effective_thinking("never", true)); // explicit shortcut wins
+        assert!(!effective_thinking("ask", false));
+        assert!(effective_thinking("ask", true));
+    }
+
+    // ---------- F-011.5/6 approval preferences ----------
+
+    fn opts() -> Vec<(String, String, String)> {
+        vec![
+            ("rej".into(), "Reject".into(), "reject_once".into()),
+            ("alw".into(), "Always".into(), "allow_always".into()),
+            ("once".into(), "Allow".into(), "allow_once".into()),
+        ]
+    }
+
+    #[test]
+    fn approval_categories_map_kind_and_git_title() {
+        assert_eq!(approval_category("execute", "ls -la"), "shell");
+        assert_eq!(approval_category("execute", "git push"), "git");
+        assert_eq!(approval_category("edit", "Edit main.rs"), "file-edit");
+        assert_eq!(approval_category("delete", "rm file"), "file-edit");
+        assert_eq!(approval_category("fetch", "Fetch docs"), "mcp");
+        assert_eq!(approval_category("other", "Some MCP tool"), "mcp");
+    }
+
+    #[test]
+    fn ask_prefs_show_modal() {
+        let prefs = ApprovalPrefs::default();
+        assert_eq!(auto_approve_option(false, &prefs, "execute", "ls", &opts()), None);
+    }
+
+    #[test]
+    fn auto_pref_short_circuits_with_allow_once() {
+        let prefs = ApprovalPrefs { shell: "auto".into(), ..Default::default() };
+        assert_eq!(
+            auto_approve_option(false, &prefs, "execute", "ls", &opts()),
+            Some("once".into())
+        );
+        // other categories still ask
+        assert_eq!(auto_approve_option(false, &prefs, "edit", "Edit f", &opts()), None);
+    }
+
+    #[test]
+    fn yolo_overrides_all_ask_prefs() {
+        let prefs = ApprovalPrefs::default();
+        for (kind, title) in [("execute", "ls"), ("edit", "e"), ("fetch", "f"), ("execute", "git push")] {
+            assert_eq!(
+                auto_approve_option(true, &prefs, kind, title, &opts()),
+                Some("once".into()),
+                "kind={kind}"
+            );
+        }
+    }
+
+    #[test]
+    fn auto_falls_back_to_any_allow_option_and_none_without_allow() {
+        let only_always = vec![("a".into(), "A".into(), "allow_always".into())];
+        let prefs = ApprovalPrefs { git: "auto".into(), ..Default::default() };
+        assert_eq!(
+            auto_approve_option(false, &prefs, "execute", "git status", &only_always),
+            Some("a".into())
+        );
+        let only_reject: Vec<(String, String, String)> =
+            vec![("r".into(), "R".into(), "reject_once".into())];
+        assert_eq!(auto_approve_option(true, &prefs, "execute", "ls", &only_reject), None);
+    }
 
     fn tool() -> Item {
         Item::Tool(ToolCall {

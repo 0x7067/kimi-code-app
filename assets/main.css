@@ -1333,6 +1333,181 @@ input[type="search"]::placeholder {
   font-size: 13px;
 }
 
+/* ---------- Status bar YOLO badge (F-011.6) ---------- */
+.status-yolo {
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 1px 8px;
+}
+
+/* ---------- Settings preferences (F-011) ---------- */
+.prefs {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  max-width: 720px;
+}
+
+.prefs-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prefs-section h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prefs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.prefs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prefs-input {
+  flex: 1;
+  min-width: 240px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.prefs-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.prefs-detected {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.prefs-detected code {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: var(--bg-code);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.prefs-version {
+  color: var(--text-tertiary);
+}
+
+.prefs-tag {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.prefs-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.prefs-warning {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--red);
+}
+
+.prefs-auth {
+  font-size: 12.5px;
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+}
+
+.prefs-auth.ok {
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.prefs-auth.missing {
+  color: var(--yellow);
+  background: var(--yellow-dim);
+}
+
+.prefs-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.prefs-radio input {
+  accent-color: var(--accent);
+}
+
+.prefs-approval-label {
+  width: 140px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.prefs-yolo {
+  margin-top: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all var(--transition-base);
+}
+
+.prefs-yolo.active {
+  border-color: var(--red);
+  background: var(--red-dim);
+  box-shadow: 0 0 0 1px var(--red) inset;
+}
+
+.prefs-yolo strong {
+  color: var(--text-primary);
+}
+
+.prefs-yolo.active strong {
+  color: var(--red);
+}
+
+.prefs-yolo input {
+  accent-color: var(--red);
+}
+
 /* ---------- Selection color ---------- */
 ::selection {
   background: var(--accent-dim);
