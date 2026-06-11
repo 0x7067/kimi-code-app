@@ -27,6 +27,7 @@ pub fn Composer() -> Element {
     let running = *RUNNING.read();
     let has_session = SESSION_ID.read().is_some();
     let editing = COMPOSER_EDIT_INDEX.read().is_some();
+    let observing = *OBSERVE_MODE.read();
     let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
     let filter = draft.read().trim_start_matches('/').to_string();
 
@@ -167,6 +168,8 @@ pub fn Composer() -> Element {
                 textarea {
                     placeholder: if !has_session {
                         "Start a session first"
+                    } else if observing {
+                        "Observing — this session is active in another process"
                     } else if editing {
                         "Editing message… (⌘⏎ to resend, Esc to cancel)"
                     } else if running {
@@ -175,7 +178,7 @@ pub fn Composer() -> Element {
                         "Message Kimi…  ( / for commands, @ for files, ⌘⏎ to send)"
                     },
                     value: "{draft}",
-                    disabled: !has_session,
+                    disabled: !has_session || observing,
                     oninput: move |e| {
                         draft.set(e.value());
                         slash_selected.set(0);
@@ -335,7 +338,20 @@ pub fn Composer() -> Element {
                         }
                     }
                     div { class: "spacer" }
-                    if running {
+                    if observing {
+                        button {
+                            class: "primary",
+                            title: "Take control of this session",
+                            onclick: move |_| {
+                                if let Some(id) = SESSION_ID.read().clone() {
+                                    if let Some(meta) = SESSIONS.read().iter().find(|s| s.id == id).cloned() {
+                                        *RESUME_CONFLICT.write() = Some(meta);
+                                    }
+                                }
+                            },
+                            "Take Control"
+                        }
+                    } else if running {
                         button {
                             class: "ghost queue-btn",
                             title: "Queue message — sends after the current turn (⌥⏎)",

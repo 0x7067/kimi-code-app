@@ -132,7 +132,8 @@ pub async fn create_session(cwd: String, name: Option<String>, initial_prompt: O
 
 /// Sidebar click path: soft cross-process conflict guard. If the session's
 /// wire log was touched in the last ~30s by something other than this app's
-/// current session (e.g. the kimi CLI), ask before resuming; otherwise load.
+/// current session (e.g. the kimi CLI), load it in read-only observe mode
+/// so the user can watch it in real time without interleaving history.
 pub async fn request_load_session(meta: SessionMeta) {
     let is_own = SESSION_ID.read().as_deref() == Some(meta.id.as_str());
     let age = invoke("kimi_session_activity", json!({"sessionId": meta.id}))
@@ -140,14 +141,22 @@ pub async fn request_load_session(meta: SessionMeta) {
         .ok()
         .and_then(|v| v.as_u64());
     if crate::conversation::should_warn_resume(age, is_own) {
-        *RESUME_CONFLICT.write() = Some(meta);
+        observe_session(meta).await;
     } else {
         load_session(meta).await;
     }
 }
 
+/// Load a session in observe (read-only) mode. The ACP connection streams
+/// updates normally, but the composer is disabled until the user takes control.
+pub async fn observe_session(meta: SessionMeta) {
+    load_session(meta).await;
+    *OBSERVE_MODE.write() = true;
+}
+
 pub async fn load_session(meta: SessionMeta) {
     cache_current_scrollback();
+    *OBSERVE_MODE.write() = false;
     // F-014: the pending queue is per-session — drop it unless we are
     // reloading the session it belongs to.
     if SESSION_ID.read().as_deref() != Some(meta.id.as_str()) {

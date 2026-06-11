@@ -46,6 +46,11 @@ pub static RUNNING_SESSIONS: GlobalSignal<HashMap<String, (u64, i64)>> = Signal:
 /// process when the user clicked it, awaiting "Resume anyway?" confirmation.
 pub static RESUME_CONFLICT: GlobalSignal<Option<SessionMeta>> = Signal::global(|| None);
 
+/// When true, the current session is being observed (read-only) because it is
+/// active in another process. The user can "Take Control" to switch to normal
+/// interactive mode.
+pub static OBSERVE_MODE: GlobalSignal<bool> = Signal::global(|| false);
+
 pub static ATTACHMENTS: GlobalSignal<Vec<Attachment>> = Signal::global(Vec::new);
 pub static SESSION_SEARCH: GlobalSignal<String> = Signal::global(String::new);
 /// In-conversation search (F-002.9): whether the search bar is open and its query.

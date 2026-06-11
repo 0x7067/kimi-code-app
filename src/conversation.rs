@@ -401,6 +401,8 @@ pub fn should_warn_resume(age_secs: Option<u64>, is_own_session: bool) -> bool {
     !is_own_session && age_secs.is_some_and(|a| a < RESUME_CONFLICT_THRESHOLD_SECS)
 }
 
+// ---------- Observe mode (F-003 extension) ----------
+
 // ---------- Settings logic (F-011) ----------
 
 /// F-011.4: whether a send carries the thinking flag. `explicit` is the
@@ -888,5 +890,20 @@ mod tests {
         let restored: crate::state::AppSettings = serde_json::from_value(json).unwrap();
         assert!(restored.task_templates.iter().any(|t| t.name == "Custom"));
         assert_eq!(restored.task_templates.iter().find(|t| t.name == "Custom").unwrap().prompt, "Do the thing");
+    }
+
+    // ---------- Observe mode ----------
+
+    #[test]
+    fn should_warn_resume_true_for_recent_foreign_session() {
+        assert!(should_warn_resume(Some(5), false));
+        assert!(should_warn_resume(Some(29), false));
+    }
+
+    #[test]
+    fn should_warn_resume_false_for_own_or_stale_session() {
+        assert!(!should_warn_resume(Some(5), true));
+        assert!(!should_warn_resume(Some(35), false));
+        assert!(!should_warn_resume(None, false));
     }
 }
