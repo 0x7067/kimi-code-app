@@ -175,15 +175,12 @@ fn edit_button(i: usize, text: &str) -> Element {
     }
 }
 
-/// Action bar below agent messages: thumbs up/down, share, copy.
+/// Action bar below agent messages.
 fn action_bar(i: usize, item: &Item, copied: Signal<Option<usize>>) -> Element {
     let text = item_plain_text(item);
     let is_copied = *copied.read() == Some(i);
     rsx! {
         div { class: "msg-actions",
-            button { class: "msg-action-btn", title: "Helpful", "👍" }
-            button { class: "msg-action-btn", title: "Not helpful", "👎" }
-            button { class: "msg-action-btn", title: "Share", "Share" }
             button {
                 class: "msg-action-btn",
                 title: "Copy message",

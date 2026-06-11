@@ -1,8 +1,6 @@
-use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, steer_prompt};
+use crate::actions::{cancel_turn, enqueue_prompt, save_app_settings, send_prompt, steer_prompt};
 use crate::components::base::{KimiDropdown, KimiDropdownItem};
-use crate::components::icons::{
-    IconChevronDown, IconCpu, IconFolder, IconGitBranch, IconListPlus, IconPlus, IconSquare,
-};
+use crate::components::icons::{IconFolder, IconListPlus, IconPlus, IconSquare};
 use crate::conversation::{filter_mentions, mention_candidates_from_diff, mention_token};
 use crate::ipc::invoke;
 use crate::state::*;
@@ -21,6 +19,14 @@ fn mention_candidates() -> Vec<String> {
     }
 }
 
+fn approval_menu_label(yolo: bool) -> &'static str {
+    if yolo {
+        "Approvals: auto"
+    } else {
+        "Approvals: ask"
+    }
+}
+
 #[component]
 pub fn Composer() -> Element {
     let mut draft = use_signal(String::new);
@@ -30,6 +36,7 @@ pub fn Composer() -> Element {
     let has_session = SESSION_ID.read().is_some();
     let editing = COMPOSER_EDIT_INDEX.read().is_some();
     let observing = *OBSERVE_MODE.read();
+    let yolo = APP_SETTINGS.read().yolo;
     let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
     let filter = draft.read().trim_start_matches('/').to_string();
 
@@ -341,15 +348,21 @@ pub fn Composer() -> Element {
                                         "stroke-linejoin": "round",
                                         path { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" }
                                     }
-                                    "Approve for me"
+                                    {approval_menu_label(yolo)}
                                 }
                             },
                             KimiDropdownItem {
-                                onclick: move |_| {},
+                                onclick: move |_| {
+                                    APP_SETTINGS.write().yolo = true;
+                                    spawn(async { save_app_settings().await });
+                                },
                                 "Always approve"
                             }
                             KimiDropdownItem {
-                                onclick: move |_| {},
+                                onclick: move |_| {
+                                    APP_SETTINGS.write().yolo = false;
+                                    spawn(async { save_app_settings().await });
+                                },
                                 "Ask every time"
                             }
                         }
@@ -413,31 +426,6 @@ pub fn Composer() -> Element {
                         }
                     }
                 }
-
-                // SS-03: Context selectors below the toolbar.
-                div { class: "composer-context",
-                    div { class: "composer-context-item",
-                        IconFolder { size: 13, color: "currentColor" }
-                        span { "{project_label}" }
-                        span { class: "chevron-down",
-                            IconChevronDown { size: 10, color: "currentColor" }
-                        }
-                    }
-                    div { class: "composer-context-item",
-                        IconCpu { size: 13, color: "currentColor" }
-                        span { "Work locally" }
-                        span { class: "chevron-down",
-                            IconChevronDown { size: 10, color: "currentColor" }
-                        }
-                    }
-                    div { class: "composer-context-item",
-                        IconGitBranch { size: 13, color: "currentColor" }
-                        span { "main" }
-                        span { class: "chevron-down",
-                            IconChevronDown { size: 10, color: "currentColor" }
-                        }
-                    }
-                }
             }
         }
     }
@@ -483,5 +471,16 @@ pub fn PendingQueue() -> Element {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn approval_menu_label_reflects_yolo_state() {
+        assert_eq!(approval_menu_label(true), "Approvals: auto");
+        assert_eq!(approval_menu_label(false), "Approvals: ask");
     }
 }
