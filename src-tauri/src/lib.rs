@@ -4,6 +4,7 @@ mod checkpoint;
 mod commands;
 mod headless;
 mod memory;
+mod multi_agent;
 mod paths;
 mod terminal;
 

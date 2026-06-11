@@ -9,6 +9,7 @@ mod git;
 mod kimi;
 mod memory;
 mod mcp;
+mod multi_agent;
 mod projects;
 mod sessions;
 mod settings_store;
@@ -72,5 +73,10 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         memory::build_memory_context,
         automation::list_automation_runs,
         automation::run_automation_now,
+        multi_agent::create_multi_agent_run,
+        multi_agent::list_multi_agent_runs,
+        multi_agent::get_multi_agent_run,
+        multi_agent::set_task_session,
+        multi_agent::set_task_status,
     ]
 }

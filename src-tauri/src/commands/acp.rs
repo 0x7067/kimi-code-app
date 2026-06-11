@@ -22,6 +22,7 @@ pub struct AppState {
     pub sessions: Arc<std::sync::Mutex<SessionRegistry>>,
     pub supervisor: std::sync::Mutex<Supervisor>,
     pub capabilities: std::sync::Mutex<AgentCapabilities>,
+    pub multi_agent: crate::multi_agent::MultiAgentState,
 }
 
 impl Default for AppState {
@@ -32,6 +33,7 @@ impl Default for AppState {
             sessions: Arc::new(std::sync::Mutex::new(SessionRegistry::new())),
             supervisor: std::sync::Mutex::new(Supervisor::new(MAX_RESTARTS, BASE_BACKOFF_MS)),
             capabilities: std::sync::Mutex::new(AgentCapabilities::default()),
+            multi_agent: crate::multi_agent::MultiAgentState::default(),
         }
     }
 }
