@@ -5,7 +5,6 @@
 //! for non-current sessions are routed here instead of the main UI thread.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -94,39 +93,6 @@ impl MultiAgentState {
         }
     }
 
-    pub fn apply_update(&self, run_id: &str, session_id: &str, update: &Value) {
-        let mut runs = self.runs.lock().unwrap();
-        let Some(run) = runs.get_mut(run_id) else { return };
-        let Some(task) = run.tasks.iter_mut().find(|t| t.session_id.as_deref() == Some(session_id)) else {
-            return;
-        };
-
-        let kind = update
-            .get("sessionUpdate")
-            .and_then(|s| s.as_str())
-            .unwrap_or("");
-        match kind {
-            "agent_message_chunk" => {
-                if let Some(text) = content_text(update.get("content")) {
-                    task.output.push_str(&text);
-                }
-            }
-            "tool_call" => {
-                if let Some(title) = update.get("title").and_then(|s| s.as_str()) {
-                    task.tool_calls.push(title.to_string());
-                }
-            }
-            _ => {}
-        }
-        if let Some(reason) = update.get("stopReason").and_then(|s| s.as_str()) {
-            task.status = if reason == "error" {
-                "error".into()
-            } else {
-                "done".into()
-            };
-        }
-    }
-
     pub fn set_task_status(&self, run_id: &str, task_id: &str, status: &str) {
         let mut runs = self.runs.lock().unwrap();
         if let Some(run) = runs.get_mut(run_id) {
@@ -137,25 +103,5 @@ impl MultiAgentState {
                 }
             }
         }
-    }
-}
-
-fn content_text(v: Option<&Value>) -> Option<String> {
-    let v = v?;
-    match v {
-        Value::String(s) => Some(s.clone()),
-        Value::Array(blocks) => Some(
-            blocks
-                .iter()
-                .filter_map(|b| content_text(Some(b)))
-                .collect::<Vec<_>>()
-                .join(""),
-        ),
-        Value::Object(_) => v
-            .get("text")
-            .and_then(|t| t.as_str())
-            .map(String::from)
-            .or_else(|| content_text(v.get("content"))),
-        _ => None,
     }
 }

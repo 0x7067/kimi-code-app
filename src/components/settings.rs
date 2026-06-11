@@ -3,7 +3,7 @@
 //! All preferences live in `APP_SETTINGS` and persist via the backend
 //! app-settings store, applying immediately without restart (F-011.13).
 
-use crate::actions::{save_app_settings, set_config};
+use crate::actions::save_app_settings;
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
@@ -530,12 +530,6 @@ fn ModelSection() -> Element {
                     *ERROR.write() = Some(err_msg(&e));
                     return;
                 }
-            }
-            // …and switch the live session too when the agent exposes a model
-            // config option, keeping the status bar's model display in sync.
-            let has_model_opt = CONFIG_OPTIONS.read().iter().any(|o| o.id == "model");
-            if has_model_opt {
-                set_config("model".into(), value).await;
             }
         });
     };

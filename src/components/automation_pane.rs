@@ -124,7 +124,6 @@ fn AutomationCard(
     on_edit: EventHandler<()>,
     on_done: EventHandler<()>,
 ) -> Element {
-    let id = auto.id.clone();
     let id_run = auto.id.clone();
     let id_del = auto.id.clone();
 

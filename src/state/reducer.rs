@@ -166,52 +166,8 @@ pub fn apply_update(params: &Value) {
                 .unwrap_or_default();
             *COMMANDS.write() = cmds;
         }
-        "current_mode_update" => {
-            let mode = s(update, "currentModeId");
-            for opt in CONFIG_OPTIONS.write().iter_mut() {
-                if opt.id == "mode" {
-                    opt.current = mode.clone();
-                }
-            }
-        }
-        "config_option_update" => {
-            if let Some(opts) = update.get("configOptions") {
-                set_config_options(opts);
-            }
-        }
         _ => {}
     }
-}
-
-pub fn set_config_options(v: &Value) {
-    let parsed = v
-        .as_array()
-        .map(|arr| {
-            arr.iter()
-                .map(|o| ConfigOption {
-                    id: s(o, "id"),
-                    name: s(o, "name"),
-                    current: o
-                        .get("currentValue")
-                        .map(|cv| match cv {
-                            Value::String(x) => x.clone(),
-                            other => other.to_string(),
-                        })
-                        .unwrap_or_default(),
-                    options: o
-                        .get("options")
-                        .and_then(|x| x.as_array())
-                        .map(|arr| {
-                            arr.iter()
-                                .map(|so| SelectOption { value: s(so, "value"), name: s(so, "name") })
-                                .collect()
-                        })
-                        .unwrap_or_default(),
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-    *CONFIG_OPTIONS.write() = parsed;
 }
 
 pub fn err_msg(e: &Value) -> String {

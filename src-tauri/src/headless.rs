@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use std::process::Stdio;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::process::{Child, Command};
+use tokio::process::Command;
 use tokio::time::timeout;
 
 const HEADLESS_TIMEOUT_SECS: u64 = 300;
@@ -63,8 +63,9 @@ pub async fn run_prompt(cwd: &str, prompt: &str) -> Result<HeadlessResult, Strin
     // 4. Collect streamed updates until turn completes.
     let result = collect_turn(&mut lines, prompt_id, &session_id).await;
 
-    // 5. Exit
-    let _ = send_notify(&mut stdin, "session/exit", json!({"sessionId": session_id})).await;
+    // 5. Tear down: close stdin and let the process exit (ACP has no
+    // session/exit method; dropping stdin signals end-of-input).
+    drop(stdin);
     let _ = timeout(Duration::from_secs(2), child.wait()).await;
 
     result
@@ -82,18 +83,6 @@ async fn send_request(stdin: &mut tokio::process::ChildStdin, method: &str, para
     stdin.write_all(b"\n").await.map_err(|e| e.to_string())?;
     stdin.flush().await.map_err(|e| e.to_string())?;
     Ok(id)
-}
-
-async fn send_notify(stdin: &mut tokio::process::ChildStdin, method: &str, params: Value) -> Result<(), String> {
-    let msg = json!({"jsonrpc": "2.0", "method": method, "params": params});
-    let line = serde_json::to_string(&msg).map_err(|e| e.to_string())?;
-    stdin
-        .write_all(line.as_bytes())
-        .await
-        .map_err(|e| e.to_string())?;
-    stdin.write_all(b"\n").await.map_err(|e| e.to_string())?;
-    stdin.flush().await.map_err(|e| e.to_string())?;
-    Ok(())
 }
 
 async fn wait_for_response(

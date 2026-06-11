@@ -1,7 +1,6 @@
 //! F-004: Multi-agent orchestration — task decomposition, parallel execution,
 //! and progress dashboard.
 
-use crate::actions::{create_session, send_prompt};
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;

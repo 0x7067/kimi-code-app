@@ -13,19 +13,8 @@ pub fn StatusBar() -> Element {
     let pct = (usage * 100.0).round() as u32;
     let fill = usage_color(usage);
 
-    // Model name from the session's config options, falling back to agent info.
-    let model = CONFIG_OPTIONS
-        .read()
-        .iter()
-        .find(|o| o.id == "model")
-        .map(|o| {
-            o.options
-                .iter()
-                .find(|so| so.value == o.current)
-                .map(|so| so.name.clone())
-                .unwrap_or_else(|| o.current.clone())
-        })
-        .unwrap_or_else(|| AGENT_INFO.read().clone());
+    // Model / agent name reported by the agent at initialize time.
+    let model = AGENT_INFO.read().clone();
 
     let op = if *RUNNING.read() {
         ITEMS

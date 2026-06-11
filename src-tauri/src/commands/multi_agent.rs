@@ -1,7 +1,7 @@
 //! F-004: Multi-agent orchestration commands.
 
 use serde_json::{json, Value};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager};
 
 #[tauri::command]
 pub async fn create_multi_agent_run(

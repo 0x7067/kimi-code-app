@@ -27,20 +27,6 @@ pub struct PlanEntry {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct SelectOption {
-    pub value: String,
-    pub name: String,
-}
-
-#[derive(Clone, PartialEq, Debug)]
-pub struct ConfigOption {
-    pub id: String,
-    pub name: String,
-    pub current: String,
-    pub options: Vec<SelectOption>,
-}
-
-#[derive(Clone, PartialEq, Debug)]
 pub struct SessionMeta {
     pub id: String,
     pub cwd: String,

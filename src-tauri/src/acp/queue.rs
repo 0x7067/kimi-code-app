@@ -35,13 +35,6 @@ impl MessageQueue {
         self.items.drain(..).collect()
     }
 
-    pub fn len(&self) -> usize {
-        self.items.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
 }
 
 /// Per-session turn serializer. Only one `session/prompt` may be in flight
@@ -119,9 +112,9 @@ mod tests {
         let mut q = MessageQueue::new(8);
         assert!(q.push("a".into()).is_none());
         assert!(q.push("b".into()).is_none());
-        assert_eq!(q.len(), 2);
         assert_eq!(q.drain(), vec!["a".to_string(), "b".to_string()]);
-        assert!(q.is_empty());
+        // Drain empties the queue: a second drain yields nothing.
+        assert!(q.drain().is_empty());
     }
 
     #[test]

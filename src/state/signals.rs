@@ -18,7 +18,6 @@ pub static SESSIONS: GlobalSignal<Vec<SessionMeta>> = Signal::global(Vec::new);
 pub static SESSION_ID: GlobalSignal<Option<String>> = Signal::global(|| None);
 pub static ITEMS: GlobalSignal<Vec<Item>> = Signal::global(Vec::new);
 pub static PLAN: GlobalSignal<Vec<PlanEntry>> = Signal::global(Vec::new);
-pub static CONFIG_OPTIONS: GlobalSignal<Vec<ConfigOption>> = Signal::global(Vec::new);
 pub static COMMANDS: GlobalSignal<Vec<SlashCommand>> = Signal::global(Vec::new);
 pub static RUNNING: GlobalSignal<bool> = Signal::global(|| false);
 /// Monotonic turn counter (F-013/F-015): each prompt/steer claims an epoch so
@@ -73,10 +72,6 @@ pub static ERROR: GlobalSignal<Option<String>> = Signal::global(|| None);
 
 /// F-010: whether the embedded terminal panel is open.
 pub static TERMINAL_OPEN: GlobalSignal<bool> = Signal::global(|| false);
-/// F-010: accumulated terminal output text.
-pub static TERMINAL_OUTPUT: GlobalSignal<String> = Signal::global(String::new);
-/// F-010: current terminal ID from the backend (None = no active terminal).
-pub static TERMINAL_ID: GlobalSignal<Option<u64>> = Signal::global(|| None);
 
 /// F-002.6: checkpoint panel open state and current session's checkpoints.
 pub static SHOW_CHECKPOINTS: GlobalSignal<bool> = Signal::global(|| false);
@@ -109,7 +104,6 @@ pub fn reset_thread() {
     ITEMS.write().clear();
     PLAN.write().clear();
     COMMANDS.write().clear();
-    CONFIG_OPTIONS.write().clear();
     *PERMISSION.write() = None;
     *RUNNING.write() = false;
     *CONTEXT_USAGE.write() = 0.0;

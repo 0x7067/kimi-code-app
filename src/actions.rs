@@ -76,9 +76,6 @@ fn handle_session_result(res: &Value) {
     if let Some(sid) = res.get("sessionId").and_then(|x| x.as_str()) {
         *SESSION_ID.write() = Some(sid.to_string());
     }
-    if let Some(opts) = res.get("configOptions") {
-        set_config_options(opts);
-    }
 }
 
 async fn project_mcp_servers(cwd: &str) -> Value {
@@ -298,30 +295,6 @@ pub async fn compact_session() {
 pub async fn cancel_turn() {
     if let Some(sid) = SESSION_ID.read().clone() {
         let _ = invoke("acp_cancel", json!({"sessionId": sid})).await;
-    }
-}
-
-pub async fn set_config(config_id: String, value: String) {
-    let Some(sid) = SESSION_ID.read().clone() else { return };
-    let res = if config_id == "mode" {
-        invoke("acp_request", json!({"method": "session/set_mode", "params": {"sessionId": sid, "modeId": value}}))
-            .await
-    } else {
-        invoke(
-            "acp_request",
-            json!({"method": "session/set_config_option", "params": {"sessionId": sid, "configId": config_id, "value": value}}),
-        )
-        .await
-    };
-    match res {
-        Ok(r) => {
-            if let Some(opts) = r.get("configOptions") {
-                set_config_options(opts);
-            } else if let Some(opt) = CONFIG_OPTIONS.write().iter_mut().find(|o| o.id == config_id) {
-                opt.current = value.clone();
-            }
-        }
-        Err(e) => *ERROR.write() = Some(err_msg(&e)),
     }
 }
 

@@ -5,8 +5,6 @@
 //! Retrieval uses simple keyword overlap scoring (no embeddings required).
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::Manager;
 

@@ -32,10 +32,6 @@ impl SessionRegistry {
         Some(id)
     }
 
-    pub fn messages(&self, id: &str) -> &[Value] {
-        self.sessions.get(id).map(Vec::as_slice).unwrap_or(&[])
-    }
-
     /// Session ids in creation order (used for context replay).
     pub fn session_ids(&self) -> Vec<String> {
         self.order.clone()
@@ -58,10 +54,8 @@ mod tests {
         assert_eq!(reg.record_update(&update("b", "for-b-1")), Some("b".into()));
         assert_eq!(reg.record_update(&update("a", "for-a-2")), Some("a".into()));
 
-        assert_eq!(reg.messages("a").len(), 2);
-        assert_eq!(reg.messages("b").len(), 1);
-        assert_eq!(reg.messages("a")[1]["update"]["content"]["text"], "for-a-2");
-        assert_eq!(reg.messages("b")[0]["update"]["content"]["text"], "for-b-1");
+        // Each update is routed to its own session; ids are tracked in
+        // creation order with no duplicates despite "a" appearing twice.
         assert_eq!(reg.session_ids(), vec!["a".to_string(), "b".to_string()]);
     }
 
@@ -78,7 +72,5 @@ mod tests {
         reg.ensure("s");
         reg.ensure("s");
         assert_eq!(reg.session_ids(), vec!["s".to_string()]);
-        assert!(reg.messages("s").is_empty());
-        assert!(reg.messages("missing").is_empty());
     }
 }

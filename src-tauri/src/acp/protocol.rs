@@ -166,12 +166,6 @@ pub fn is_turn_busy(error: &Value) -> bool {
     haystack.contains("TURN_AGENT_BUSY") || haystack.contains("another turn is active")
 }
 
-/// Stop reason from a `session/prompt` result. Cancellation resolves the
-/// in-flight prompt with `stopReason: "cancelled"` rather than a JSON-RPC
-/// error, so callers must inspect this.
-pub fn stop_reason(prompt_result: &Value) -> Option<&str> {
-    prompt_result.get("stopReason").and_then(|s| s.as_str())
-}
 
 /// Build `session/prompt` params for a plain-text message (used by steering,
 /// F-015, where the frontend hands us raw text rather than content blocks).
@@ -338,16 +332,6 @@ mod tests {
         assert!(is_turn_busy(&json!({"data": {"reason": "TURN_AGENT_BUSY"}})));
         assert!(!is_turn_busy(&json!({"code": -32601, "message": "method not found"})));
         assert!(!is_turn_busy(&json!({})));
-    }
-
-    #[test]
-    fn extracts_stop_reason() {
-        assert_eq!(
-            stop_reason(&json!({"stopReason": "cancelled"})),
-            Some("cancelled")
-        );
-        assert_eq!(stop_reason(&json!({"stopReason": "end_turn"})), Some("end_turn"));
-        assert_eq!(stop_reason(&json!({})), None);
     }
 
     #[test]

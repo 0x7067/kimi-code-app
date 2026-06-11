@@ -1,4 +1,4 @@
-use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, set_config, steer_prompt};
+use crate::actions::{cancel_turn, enqueue_prompt, send_prompt, steer_prompt};
 use crate::components::base::{KimiDropdown, KimiDropdownItem};
 use crate::components::icons::{
     IconChevronDown, IconCpu, IconFolder, IconGitBranch, IconListPlus, IconPlus, IconSquare,
@@ -363,23 +363,6 @@ pub fn Composer() -> Element {
                         }
                     }
                     div { class: "composer-toolbar-right",
-                        for opt in CONFIG_OPTIONS.read().iter() {
-                            {
-                                let id = opt.id.clone();
-                                rsx! {
-                                    select {
-                                        key: "{opt.id}",
-                                        class: "cfg-select",
-                                        title: "{opt.name}",
-                                        value: "{opt.current}",
-                                        onchange: move |e| { spawn(set_config(id.clone(), e.value())); },
-                                        for so in opt.options.iter() {
-                                            option { value: "{so.value}", selected: so.value == opt.current, "{so.name}" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         if observing {
                             button {
                                 class: "primary",

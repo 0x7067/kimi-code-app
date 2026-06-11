@@ -43,9 +43,6 @@ impl<T> Registry<T> {
         self.items.remove(&id)
     }
 
-    pub fn len(&self) -> usize {
-        self.items.len()
-    }
 }
 
 /// The user's shell ($SHELL), falling back to /bin/sh.
@@ -101,7 +98,10 @@ mod tests {
         assert_eq!(reg.remove(a), Some("a"));
         let c = reg.insert("c");
         assert!(c > b, "removed ids must not be reused");
-        assert_eq!(reg.len(), 2);
+        // `a` was removed; `b` and `c` remain live.
+        assert!(reg.get_mut(a).is_none());
+        assert!(reg.get_mut(b).is_some());
+        assert!(reg.get_mut(c).is_some());
     }
 
     #[test]

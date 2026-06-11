@@ -1,7 +1,6 @@
 //! F-006: Browser preview commands.
 
-use serde_json::Value;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub async fn start_browser_watcher(
