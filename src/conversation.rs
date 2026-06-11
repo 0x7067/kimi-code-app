@@ -151,6 +151,18 @@ pub fn mention_candidates_from_diff(diff: &str) -> Vec<String> {
         .collect()
 }
 
+// ---------- Message editing (F-002.7) ----------
+
+/// Truncate `items` to `index` (inclusive), replacing the user message at that
+/// position with `new_text`. Returns the modified vector.
+///
+/// Panics if `index` is not a `Item::User` — only user messages are editable.
+pub fn edit_and_resend(items: &[Item], index: usize, new_text: &str) -> Vec<Item> {
+    let mut out = items[..=index].to_vec();
+    out[index] = Item::User(new_text.trim().to_string());
+    out
+}
+
 // ---------- Pending message queue (F-014) ----------
 
 /// Append a message to the pending queue. Empty/whitespace text is rejected.
@@ -771,5 +783,45 @@ mod tests {
         assert!(!should_warn_resume(Some(3600), false));
         assert!(!should_warn_resume(None, false)); // unknown activity: no warning
         assert!(!should_warn_resume(Some(0), true)); // our own session never warns
+    }
+
+    // ---------- F-002.7 message editing ----------
+
+    #[test]
+    fn edit_truncates_items_at_index_and_replaces_text() {
+        let items = vec![
+            Item::User("hello".into()),
+            Item::Agent("hi".into()),
+            Item::User("old".into()),
+            Item::Agent("response".into()),
+        ];
+        let result = edit_and_resend(&items, 2, "new");
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0], Item::User("hello".into()));
+        assert_eq!(result[1], Item::Agent("hi".into()));
+        assert_eq!(result[2], Item::User("new".into()));
+    }
+
+    #[test]
+    fn edit_at_index_zero_replaces_first_message() {
+        let items = vec![
+            Item::User("first".into()),
+            Item::Agent("reply".into()),
+        ];
+        let result = edit_and_resend(&items, 0, "edited");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0], Item::User("edited".into()));
+    }
+
+    #[test]
+    fn edit_last_user_message_truncates_nothing_after_it() {
+        let items = vec![
+            Item::User("a".into()),
+            Item::Agent("b".into()),
+            Item::User("c".into()),
+        ];
+        let result = edit_and_resend(&items, 2, "c2");
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[2], Item::User("c2".into()));
     }
 }

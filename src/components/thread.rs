@@ -152,12 +152,29 @@ fn copy_button(i: usize, item: &Item, copied: Signal<Option<usize>>) -> Element 
     }
 }
 
+/// Edit button for user messages (F-002.7).
+fn edit_button(i: usize, text: &str) -> Element {
+    let text = text.to_string();
+    rsx! {
+        button {
+            class: "msg-copy",
+            title: "Edit and resend",
+            onclick: move |_| {
+                *COMPOSER_EDIT_INDEX.write() = Some(i);
+                *COMPOSER_PREFILL.write() = Some(text.clone());
+            },
+            "Edit"
+        }
+    }
+}
+
 fn render_item(i: usize, item: &Item, copied: Signal<Option<usize>>, query: &str) -> Element {
     let sc = search_class(item, query);
     match item {
         Item::User(text) => rsx! {
             div { key: "{i}", class: "msg user{sc}",
                 {copy_button(i, item, copied)}
+                {edit_button(i, text)}
                 div { class: "bubble", "{text}" }
             }
         },

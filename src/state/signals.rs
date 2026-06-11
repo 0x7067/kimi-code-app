@@ -27,6 +27,8 @@ pub static TURN_EPOCH: GlobalSignal<u64> = Signal::global(|| 0);
 pub static PENDING_QUEUE: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
 /// One-shot text handed to the composer (a queued chip clicked for editing).
 pub static COMPOSER_PREFILL: GlobalSignal<Option<String>> = Signal::global(|| None);
+/// Index of the user message being edited (F-002.7); `None` when not editing.
+pub static COMPOSER_EDIT_INDEX: GlobalSignal<Option<usize>> = Signal::global(|| None);
 pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
 
 /// F-003.11: whether the session-creation dialog is open.

@@ -22,6 +22,7 @@ pub fn Composer() -> Element {
     let mut mention_selected = use_signal(|| 0usize);
     let running = *RUNNING.read();
     let has_session = SESSION_ID.read().is_some();
+    let editing = COMPOSER_EDIT_INDEX.read().is_some();
     let show_slash = draft.read().starts_with('/') && !draft.read().contains(' ');
     let filter = draft.read().trim_start_matches('/').to_string();
 
@@ -63,6 +64,14 @@ pub fn Composer() -> Element {
             explicit_thinking,
         );
         draft.set(String::new());
+        // F-002.7: if editing a previous message, truncate the thread and
+        // replace it before sending.
+        if let Some(idx) = *COMPOSER_EDIT_INDEX.read() {
+            *COMPOSER_EDIT_INDEX.write() = None;
+            let items = ITEMS.read().clone();
+            let truncated = crate::conversation::edit_and_resend(&items, idx, &text);
+            *ITEMS.write() = truncated;
+        }
         if *RUNNING.read() {
             spawn(steer_prompt(text));
         } else {
@@ -148,6 +157,8 @@ pub fn Composer() -> Element {
                 textarea {
                     placeholder: if !has_session {
                         "Start a session first"
+                    } else if editing {
+                        "Editing message… (⌘⏎ to resend, Esc to cancel)"
                     } else if running {
                         "Send to steer…  (⏎ interrupts and sends, ⌥⏎ queues)"
                     } else {
@@ -239,6 +250,9 @@ pub fn Composer() -> Element {
                                     } else if *SEARCH_OPEN.read() {
                                         *SEARCH_OPEN.write() = false;
                                         CONVO_SEARCH.write().clear();
+                                    } else if COMPOSER_EDIT_INDEX.read().is_some() {
+                                        *COMPOSER_EDIT_INDEX.write() = None;
+                                        draft.set(String::new());
                                     } else {
                                         draft.set(String::new());
                                     }
