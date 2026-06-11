@@ -155,7 +155,7 @@
   gap: 8px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-dark, #141414);
+  background: var(--bg-surface);
   flex-shrink: 0;
 }
 .convo-search-input {

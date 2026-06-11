@@ -26,12 +26,19 @@ pub fn PermissionModal() -> Element {
                                     class: "{class}",
                                     onclick: move |_| {
                                         let oid = oid.clone();
-                                        *PERMISSION.write() = None;
+                                        // Close the modal only after the backend acknowledges the
+                                        // response; on failure, keep it open and surface the error
+                                        // so the user can retry instead of silently losing the prompt.
                                         spawn(async move {
-                                            let _ = invoke(
+                                            match invoke(
                                                 "acp_respond_permission",
                                                 json!({"requestId": rid, "outcome": {"outcome": "selected", "optionId": oid}}),
-                                            ).await;
+                                            ).await {
+                                                Ok(_) => *PERMISSION.write() = None,
+                                                Err(e) => {
+                                                    *ERROR.write() = Some(format!("Failed to send permission response: {e}"));
+                                                }
+                                            }
                                         });
                                     },
                                     "{name}"

@@ -535,7 +535,7 @@
 }
 
 .memory-snippet.pinned {
-  border-color: var(--accent-primary);
+  border-color: var(--accent);
   background: rgba(74, 158, 255, 0.06);
 }
 
@@ -562,7 +562,7 @@
 
 .memory-snippet-score {
   font-size: 11px;
-  color: var(--accent-primary);
+  color: var(--accent);
   font-family: var(--font-mono);
 }
 
@@ -576,7 +576,7 @@
 /* Status bar memory indicator */
 .status-memory {
   font-size: 12px;
-  color: var(--accent-primary);
+  color: var(--accent);
   background: rgba(74, 158, 255, 0.1);
   padding: 2px 8px;
   border-radius: 12px;
@@ -675,7 +675,7 @@
 }
 
 .automation-status.enabled {
-  color: var(--accent-success);
+  color: var(--green);
 }
 
 .automation-status.disabled {
@@ -722,7 +722,7 @@
 }
 
 .run-status.success {
-  color: var(--accent-success);
+  color: var(--green);
 }
 
 .run-status.error {

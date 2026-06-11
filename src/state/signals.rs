@@ -30,6 +30,34 @@ pub static COMPOSER_PREFILL: GlobalSignal<Option<String>> = Signal::global(|| No
 /// Index of the user message being edited (F-002.7); `None` when not editing.
 pub static COMPOSER_EDIT_INDEX: GlobalSignal<Option<usize>> = Signal::global(|| None);
 pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
+/// Pending confirmation for a destructive action (delete automation, memory
+/// snippet, worktree, etc.). Rendered by `ConfirmModal`; `None` when idle.
+pub static CONFIRM: GlobalSignal<Option<ConfirmRequest>> = Signal::global(|| None);
+static CONFIRM_SEQ: GlobalSignal<u64> = Signal::global(|| 0);
+
+/// Open a confirmation dialog for a destructive action. `on_confirm` runs only
+/// if the user accepts; dismissing the dialog discards it.
+pub fn request_confirm(
+    title: impl Into<String>,
+    body: impl Into<String>,
+    confirm_label: impl Into<String>,
+    danger: bool,
+    on_confirm: impl Fn() + 'static,
+) {
+    let id = {
+        let mut seq = CONFIRM_SEQ.write();
+        *seq += 1;
+        *seq
+    };
+    *CONFIRM.write() = Some(ConfirmRequest {
+        id,
+        title: title.into(),
+        body: body.into(),
+        confirm_label: confirm_label.into(),
+        danger,
+        on_confirm: std::rc::Rc::new(on_confirm),
+    });
+}
 
 /// F-003.11: whether the session-creation dialog is open.
 pub static SHOW_NEW_SESSION: GlobalSignal<bool> = Signal::global(|| false);

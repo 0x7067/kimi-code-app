@@ -126,6 +126,7 @@ fn AutomationCard(
 ) -> Element {
     let id_run = auto.id.clone();
     let id_del = auto.id.clone();
+    let name_del = auto.name.clone();
 
     if editing {
         rsx! {
@@ -170,9 +171,19 @@ fn AutomationCard(
                         class: "ghost danger",
                         onclick: move |_| {
                             let id = id_del.clone();
-                            update_settings(|s| {
-                                s.automations.retain(|a| a.id != id);
-                            });
+                            let name = name_del.clone();
+                            request_confirm(
+                                "Delete automation?",
+                                format!("\"{name}\" will be removed permanently. This cannot be undone."),
+                                "Delete",
+                                true,
+                                move || {
+                                    let id = id.clone();
+                                    update_settings(move |s| {
+                                        s.automations.retain(|a| a.id != id);
+                                    });
+                                },
+                            );
                         },
                         "Delete"
                     }

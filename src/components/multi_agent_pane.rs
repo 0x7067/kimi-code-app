@@ -175,14 +175,26 @@ pub fn MultiAgentPane() -> Element {
                                                     class: "ghost danger",
                                                     onclick: move |_| {
                                                         let path = path.clone();
-                                                        if let Some(cwd) = PROJECT.read().clone() {
-                                                            spawn(async move {
-                                                                match invoke("remove_worktree", serde_json::json!({"cwd": cwd, "path": path})).await {
-                                                                    Ok(_) => refresh_wt(),
-                                                                    Err(e) => *ERROR.write() = Some(format!("Remove worktree failed: {e}")),
+                                                        let branch = branch.clone();
+                                                        let refresh_wt = refresh_wt.clone();
+                                                        request_confirm(
+                                                            "Remove worktree?",
+                                                            format!("The worktree \"{branch}\" and its directory will be deleted. Uncommitted changes will be lost."),
+                                                            "Remove",
+                                                            true,
+                                                            move || {
+                                                                let path = path.clone();
+                                                                let mut refresh_wt = refresh_wt.clone();
+                                                                if let Some(cwd) = PROJECT.read().clone() {
+                                                                    spawn(async move {
+                                                                        match invoke("remove_worktree", serde_json::json!({"cwd": cwd, "path": path})).await {
+                                                                            Ok(_) => refresh_wt(),
+                                                                            Err(e) => *ERROR.write() = Some(format!("Remove worktree failed: {e}")),
+                                                                        }
+                                                                    });
                                                                 }
-                                                            });
-                                                        }
+                                                            },
+                                                        );
                                                     },
                                                     "Remove"
                                                 }

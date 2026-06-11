@@ -161,6 +161,9 @@ pub fn App() -> Element {
             if PERMISSION.read().is_some() {
                 PermissionModal {}
             }
+            if CONFIRM.read().is_some() {
+                ConfirmModal {}
+            }
             if *SHOW_NEW_SESSION.read() {
                 NewSessionModal {}
             }

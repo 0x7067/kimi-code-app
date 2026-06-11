@@ -29,7 +29,7 @@ pub fn KimiLoading(
                     cx: "12",
                     cy: "12",
                     r: "10",
-                    stroke: "#2E2E2E",
+                    stroke: Colors::BORDER_SUBTLE,
                     "stroke-width": "2",
                 }
                 path {
@@ -85,7 +85,7 @@ const BLUE: &str = Colors::KIMI_BLUE;
 #[allow(dead_code)] // used via rsx attribute interpolation
 const BG1: &str = Colors::BG_HOVER;
 #[allow(dead_code)] // used via rsx attribute interpolation
-const BG2: &str = "#333333";
+const BG2: &str = Colors::BG_ELEVATED;
 
 #[allow(dead_code)] // used via rsx attribute interpolation
 fn dot_size(size: u32) -> u32 {

@@ -1,5 +1,6 @@
 //! KimiInput — Text input with Kimi styling, focus ring, and optional icons.
 
+use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
 #[component]
@@ -16,6 +17,15 @@ pub fn KimiInput(
 ) -> Element {
     let mut local_value = use_signal(|| value.clone());
 
+    // Keep the local draft in sync when the parent updates `value` (e.g. a
+    // programmatic clear or reset). Without this, the signal captures the
+    // initial prop once and ignores later parent changes.
+    use_effect(use_reactive((&value,), move |(value,)| {
+        if local_value.peek().as_str() != value.as_str() {
+            local_value.set(value);
+        }
+    }));
+
     let error_cls = if error { "error" } else { "" };
     let leading_cls = if leading_icon.is_some() && !multiline { "has-leading" } else { "" };
     let trailing_cls = if trailing_icon.is_some() && !multiline { "has-trailing" } else { "" };
@@ -25,7 +35,7 @@ pub fn KimiInput(
             style: "position: relative; display: flex; align-items: center; width: 100%;",
             if let Some(icon) = leading_icon {
                 div {
-                    style: "position: absolute; left: 12px; color: #737373; pointer-events: none; display: flex;",
+                    style: "position: absolute; left: 12px; color: {Colors::TEXT_TERTIARY}; pointer-events: none; display: flex;",
                     {icon}
                 }
             }
@@ -62,7 +72,7 @@ pub fn KimiInput(
             }
             if let Some(icon) = trailing_icon {
                 div {
-                    style: "position: absolute; right: 12px; color: #737373; pointer-events: none; display: flex;",
+                    style: "position: absolute; right: 12px; color: {Colors::TEXT_TERTIARY}; pointer-events: none; display: flex;",
                     {icon}
                 }
             }

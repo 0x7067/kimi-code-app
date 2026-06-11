@@ -42,6 +42,35 @@ pub struct PermissionRequest {
     pub options: Vec<(String, String, String)>, // (optionId, name, kind)
 }
 
+/// A pending confirmation for a destructive action. The modal renders `title`
+/// and `body`, and runs `on_confirm` if the user accepts. Identity is tracked by
+/// a monotonic `id` so the type can derive `PartialEq` despite the boxed closure.
+#[derive(Clone)]
+pub struct ConfirmRequest {
+    pub id: u64,
+    pub title: String,
+    pub body: String,
+    pub confirm_label: String,
+    /// Whether the confirm button is styled as destructive (red).
+    pub danger: bool,
+    pub on_confirm: std::rc::Rc<dyn Fn()>,
+}
+
+impl PartialEq for ConfirmRequest {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl std::fmt::Debug for ConfirmRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ConfirmRequest")
+            .field("id", &self.id)
+            .field("title", &self.title)
+            .finish()
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct SlashCommand {
     pub name: String,

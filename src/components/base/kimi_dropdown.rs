@@ -81,7 +81,8 @@ pub fn KimiDropdownItem(
     onclick: Option<EventHandler<MouseEvent>>,
 ) -> Element {
     let bg = if active { Colors::BG_HOVER } else { "transparent" };
-    let left_border = if active { "2px solid #1E90FF" } else { "2px solid transparent" };
+    let left_border =
+        if active { "2px solid var(--accent)" } else { "2px solid transparent" };
 
     rsx! {
         div {

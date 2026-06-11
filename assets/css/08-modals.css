@@ -98,6 +98,28 @@
   margin: 0;
 }
 
+/* ---------- Confirm dialog ---------- */
+.confirm-modal {
+  max-width: 420px;
+}
+
+.confirm-body {
+  margin: 0 0 4px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.modal-actions button.danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.modal-actions button.danger:hover {
+  filter: brightness(1.08);
+}
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;

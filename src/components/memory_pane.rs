@@ -175,7 +175,16 @@ fn MemorySnippetRow(snippet: Value) -> Element {
                     class: "ghost danger",
                     onclick: move |_| {
                         let id = id_clone.clone();
-                        spawn(async move { delete_memory(id).await; });
+                        request_confirm(
+                            "Delete memory snippet?",
+                            "This snippet will be removed permanently. This cannot be undone.",
+                            "Delete",
+                            true,
+                            move || {
+                                let id = id.clone();
+                                spawn(async move { delete_memory(id).await; });
+                            },
+                        );
                     },
                     "Delete"
                 }

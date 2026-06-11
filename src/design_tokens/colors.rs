@@ -18,6 +18,7 @@ impl Colors {
     pub const BG_DARK: &str = "#141414";
     pub const BG_SURFACE: &str = "#1E1E1E";
     pub const BG_HOVER: &str = "#262626";
+    pub const BG_ELEVATED: &str = "#333333";
     pub const BG_CODE: &str = "#0F0F0F";
 
     // Borders

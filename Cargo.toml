@@ -32,6 +32,12 @@ todo = "warn"
 uninlined_format_args = "warn"
 unwrap_used = "warn"
 
+# Release builds strip debuginfo so wasm-opt doesn't choke on the malformed
+# DWARF sections emitted for the wasm32 target (binaryen SIGABRTs otherwise,
+# falling back to shipping un-optimized WASM).
+[profile.release]
+strip = "debuginfo"
+
 [profile.wasm-dev]
 inherits = "dev"
 opt-level = 1
