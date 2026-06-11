@@ -272,7 +272,7 @@ pub fn App() -> Element {
             if let Some(err) = ERROR.read().clone() {
                 div { class: "toast",
                     span { "{err}" }
-                    button { onclick: move |_| *ERROR.write() = None, "✕" }
+                    button { onclick: move |_| *ERROR.write() = None, "Dismiss" }
                 }
             }
         }
@@ -335,7 +335,10 @@ fn Sidebar() -> Element {
     rsx! {
         aside { class: "sidebar",
             div { class: "sidebar-head",
-                span { class: "brand", "Kimi Code" }
+                span { class: "brand",
+                    span { class: "brand-mark", "K" }
+                    "Kimi Code"
+                }
             }
             div { class: "project-picker",
                 select {
@@ -352,7 +355,7 @@ fn Sidebar() -> Element {
                     }
                 }
                 button {
-                    class: "ghost",
+                    class: "ghost icon-btn",
                     title: "Open folder…",
                     onclick: move |_| {
                         spawn(async {
@@ -364,21 +367,23 @@ fn Sidebar() -> Element {
                             }
                         });
                     },
-                    "📁"
+                    "Open…"
                 }
             }
             button {
                 class: "primary new-session",
                 disabled: PROJECT.read().is_none() || !*CONNECTED.read(),
                 onclick: move |_| { spawn(new_session()); },
-                "＋ New session"
+                "+ New session"
             }
-            input {
-                class: "session-search",
-                r#type: "search",
-                placeholder: "Search sessions…",
-                value: "{SESSION_SEARCH}",
-                oninput: move |e| *SESSION_SEARCH.write() = e.value(),
+            div { class: "session-search-wrap",
+                input {
+                    class: "session-search",
+                    r#type: "search",
+                    placeholder: "Search sessions…",
+                    value: "{SESSION_SEARCH}",
+                    oninput: move |e| *SESSION_SEARCH.write() = e.value(),
+                }
             }
             div { class: "session-list",
                 for sess in filtered {
@@ -393,7 +398,7 @@ fn Sidebar() -> Element {
                                 div { class: "session-title", "{sess.title}" }
                                 div { class: "session-meta",
                                     {sess.cwd.rsplit('/').next().unwrap_or("").to_string()}
-                                    " · "
+                                    " - "
                                     {sess.updated_at.get(..10).unwrap_or("").to_string()}
                                 }
                             }
@@ -426,14 +431,14 @@ fn ThreadView() -> Element {
                     div { class: "plan-head", "Plan" }
                     for (i, entry) in PLAN.read().iter().enumerate() {
                         div { key: "{i}", class: "plan-entry {entry.status}",
-                            span { class: "plan-status",
+                            span { class: "plan-status {entry.status}",
                                 {match entry.status.as_str() {
                                     "completed" => "✓",
                                     "in_progress" => "▶",
                                     _ => "○",
                                 }}
                             }
-                            span { "{entry.content}" }
+                            span { class: "plan-content", "{entry.content}" }
                         }
                     }
                 }
@@ -442,7 +447,7 @@ fn ThreadView() -> Element {
                 {render_item(i, item)}
             }
             if *RUNNING.read() {
-                div { class: "working", span { class: "spinner" } " Working…" }
+                div { class: "working", span { class: "spinner" } "Working…" }
             }
         }
     }
@@ -530,11 +535,11 @@ fn Composer() -> Element {
                     div { class: "attachments",
                         for (i, a) in ATTACHMENTS.read().iter().enumerate() {
                             span { key: "{i}", class: "attachment-chip",
-                                "🖼 {a.name}"
+                                "{a.name}"
                                 button {
                                     class: "chip-x",
                                     onclick: move |_| { ATTACHMENTS.write().remove(i); },
-                                    "✕"
+                                    "Remove"
                                 }
                             }
                         }
@@ -568,7 +573,7 @@ fn Composer() -> Element {
                                 }
                             });
                         },
-                        "🖼"
+                        "Attach"
                     }
                     for opt in CONFIG_OPTIONS.read().iter() {
                         {
@@ -682,7 +687,7 @@ fn DiffPane() -> Element {
         aside { class: "diff-pane",
             div { class: "diff-head",
                 span { "Working tree changes" }
-                button { class: "ghost", onclick: move |_| { spawn(refresh_diff()); }, "↻" }
+                button { class: "ghost icon-btn", onclick: move |_| { spawn(refresh_diff()); }, "Refresh" }
             }
             pre { class: "diff-body",
                 for (i, line) in diff.lines().enumerate() {
@@ -749,7 +754,7 @@ fn SettingsView() -> Element {
                         let body = content.read().clone();
                         spawn(async move {
                             match invoke("write_kimi_config", json!({"name": name, "content": body})).await {
-                                Ok(_) => status.set("Saved ✓".into()),
+                                Ok(_) => status.set("Saved".into()),
                                 Err(e) => status.set(err_msg(&e)),
                             }
                         });
