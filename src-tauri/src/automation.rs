@@ -4,7 +4,7 @@
 //! The backend scheduler wakes every 60s, checks cron expressions, and runs
 //! eligible automations headlessly via `headless::run_prompt`.
 
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 use cron::Schedule;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -84,11 +84,48 @@ pub fn list_runs(app: &tauri::AppHandle, limit: usize) -> Result<Vec<ExecutionRu
     Ok(rec.runs)
 }
 
-/// Compute the next UTC timestamp (seconds) an automation should fire,
-/// or None if the cron is invalid or there is no upcoming time.
-pub fn next_run_ts(cron_expr: &str) -> Option<i64> {
-    let schedule = Schedule::from_str(cron_expr).ok()?;
-    schedule.upcoming(Utc).next().map(|dt| dt.timestamp())
+/// Return true when `cron_expr` had at least one scheduled occurrence in the
+/// half-open tick window `(last_tick_ts, now_ts]`.
+pub fn cron_due_between(cron_expr: &str, last_tick_ts: i64, now_ts: i64) -> bool {
+    if now_ts <= last_tick_ts {
+        return false;
+    }
+    let Ok(schedule) = Schedule::from_str(cron_expr) else {
+        return false;
+    };
+    let Some(last_tick) = Utc.timestamp_opt(last_tick_ts, 0).single() else {
+        return false;
+    };
+    schedule
+        .after(&last_tick)
+        .take_while(|dt| dt.timestamp() <= now_ts)
+        .any(|dt| dt.timestamp() > last_tick_ts)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn due_between_fires_for_occurrence_inside_window() {
+        let before = Utc.with_ymd_and_hms(2026, 6, 11, 8, 59, 30).unwrap().timestamp();
+        let after = Utc.with_ymd_and_hms(2026, 6, 11, 9, 0, 15).unwrap().timestamp();
+
+        assert!(cron_due_between("0 0 9 * * *", before, after));
+    }
+
+    #[test]
+    fn due_between_does_not_fire_for_future_only_schedule() {
+        let before = Utc.with_ymd_and_hms(2026, 6, 11, 8, 58, 0).unwrap().timestamp();
+        let after = Utc.with_ymd_and_hms(2026, 6, 11, 8, 59, 0).unwrap().timestamp();
+
+        assert!(!cron_due_between("0 0 9 * * *", before, after));
+    }
+
+    #[test]
+    fn due_between_rejects_invalid_cron() {
+        assert!(!cron_due_between("not cron", 100, 200));
+    }
 }
 
 fn read_automations_from_disk(app: &tauri::AppHandle) -> Vec<AutomationDef> {
@@ -118,6 +155,7 @@ fn read_automations_from_disk(app: &tauri::AppHandle) -> Vec<AutomationDef> {
 pub fn start_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
         let mut tick = interval(Duration::from_secs(60));
+        let mut last_tick = Utc::now().timestamp();
         loop {
             tick.tick().await;
             let list = read_automations_from_disk(&app);
@@ -126,9 +164,7 @@ pub fn start_scheduler(app: tauri::AppHandle) {
                 if !auto.enabled {
                     continue;
                 }
-                let Some(next) = next_run_ts(&auto.cron) else { continue };
-                // Fire if we're within a 60-second window of the scheduled time.
-                if next <= now && next > now - 60 {
+                if cron_due_between(&auto.cron, last_tick, now) {
                     let app = app.clone();
                     let auto_id = auto.id.clone();
                     let prompt = auto.prompt.clone();
@@ -163,6 +199,7 @@ pub fn start_scheduler(app: tauri::AppHandle) {
                     });
                 }
             }
+            last_tick = now;
         }
     });
 }
