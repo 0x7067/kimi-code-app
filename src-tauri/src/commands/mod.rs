@@ -8,8 +8,8 @@ mod config;
 mod dialogs;
 mod git;
 mod kimi;
-mod memory;
 mod mcp;
+mod memory;
 mod multi_agent;
 mod projects;
 mod sessions;
@@ -85,6 +85,7 @@ pub fn handlers() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Clone + S
         multi_agent::create_multi_agent_run,
         multi_agent::list_multi_agent_runs,
         multi_agent::get_multi_agent_run,
+        multi_agent::run_multi_agent_task,
         multi_agent::set_task_session,
         multi_agent::set_task_status,
         browser::start_browser_watcher,

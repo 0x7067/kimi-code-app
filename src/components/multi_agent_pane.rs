@@ -66,17 +66,33 @@ pub fn MultiAgentPane() -> Element {
             );
             // We'll use the headless runner for decomposition to avoid cluttering the chat.
             let cwd = PROJECT.read().clone().unwrap_or_default();
-            match invoke("run_automation_now", serde_json::json!({"automationId": "decompose", "prompt": prompt, "cwd": cwd})).await {
+            match invoke(
+                "run_automation_now",
+                serde_json::json!({"automationId": "decompose", "prompt": prompt, "cwd": cwd}),
+            )
+            .await
+            {
                 Ok(Value::Object(mut res)) => {
-                    let output = res.remove("output").and_then(|v| v.as_str().map(String::from)).unwrap_or_default();
+                    let output = res
+                        .remove("output")
+                        .and_then(|v| v.as_str().map(String::from))
+                        .unwrap_or_default();
                     // Try to parse JSON array from the output.
-                    let names: Vec<String> = serde_json::from_str(&output)
-                        .unwrap_or_else(|_| {
-                            // Fallback: split by newlines and filter empty.
-                            output.lines().map(|l| l.trim().trim_start_matches("- ").to_string()).filter(|l| !l.is_empty()).collect()
-                        });
+                    let names: Vec<String> = serde_json::from_str(&output).unwrap_or_else(|_| {
+                        // Fallback: split by newlines and filter empty.
+                        output
+                            .lines()
+                            .map(|l| l.trim().trim_start_matches("- ").to_string())
+                            .filter(|l| !l.is_empty())
+                            .collect()
+                    });
                     if let Some(cwd) = PROJECT.read().clone() {
-                        match invoke("create_multi_agent_run", serde_json::json!({"parentCwd": cwd, "taskNames": names})).await {
+                        match invoke(
+                            "create_multi_agent_run",
+                            serde_json::json!({"parentCwd": cwd, "taskNames": names}),
+                        )
+                        .await
+                        {
                             Ok(v) => run.set(Some(v)),
                             Err(e) => *ERROR.write() = Some(format!("Create run failed: {e}")),
                         }
@@ -213,18 +229,56 @@ pub fn MultiAgentPane() -> Element {
 
 #[component]
 fn RunDashboard(run: Value) -> Element {
-    let run_id = run.get("runId").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let tasks = run.get("tasks").and_then(|v| v.as_array()).cloned().unwrap_or_default();
+    let mut current_run = use_signal(|| run.clone());
+    let visible_run = current_run.read().clone();
+    let run_id = visible_run
+        .get("runId")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let tasks = visible_run
+        .get("tasks")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
 
     rsx! {
         div { class: "memory-section",
             h4 { "Active run: {run_id}" }
+            if !tasks.is_empty() {
+                {
+                    let ids = tasks
+                        .iter()
+                        .filter_map(|task| task.get("id").and_then(|v| v.as_str()).map(String::from))
+                        .collect::<Vec<_>>();
+                    let run_id_all = run_id.clone();
+                    rsx! {
+                button {
+                    class: "ghost",
+                    onclick: move |_| {
+                        for task_id in ids.clone() {
+                            let run_id = run_id_all.clone();
+                            spawn(async move {
+                                match invoke("run_multi_agent_task", serde_json::json!({"runId": run_id, "taskId": task_id})).await {
+                                    Ok(v) => current_run.set(v),
+                                    Err(e) => *ERROR.write() = Some(format!("Run task failed: {e}")),
+                                }
+                            });
+                            }
+                    },
+                    "Run all"
+                }
+                    }
+                }
+            }
             div { class: "automation-list",
                 for task in tasks.iter() {
                     {
+                        let task_id = task.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
                         let name = task.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
                         let status = task.get("status").and_then(|v| v.as_str()).unwrap_or("pending").to_string();
                         let output = task.get("output").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                        let worktree = task.get("worktreePath").and_then(|v| v.as_str()).unwrap_or("").to_string();
                         let status_class = match status.as_str() {
                             "done" => "run-status success",
                             "error" => "run-status error",
@@ -236,6 +290,33 @@ fn RunDashboard(run: Value) -> Element {
                                 div { class: "automation-info",
                                     span { class: "automation-name", "{name}" }
                                     span { class: "{status_class}", "{status}" }
+                                    if !worktree.is_empty() {
+                                        span { class: "automation-cron", "{worktree}" }
+                                    }
+                                }
+                                if status != "running" {
+                                    div { class: "automation-actions",
+                                        {
+                                            let run_id = run_id.clone();
+                                            let task_id = task_id.clone();
+                                            rsx! {
+                                        button {
+                                            class: "ghost",
+                                            onclick: move |_| {
+                                                let run_id = run_id.clone();
+                                                let task_id = task_id.clone();
+                                                spawn(async move {
+                                                    match invoke("run_multi_agent_task", serde_json::json!({"runId": run_id, "taskId": task_id})).await {
+                                                        Ok(v) => current_run.set(v),
+                                                        Err(e) => *ERROR.write() = Some(format!("Run task failed: {e}")),
+                                                    }
+                                                });
+                                            },
+                                            "Run"
+                                        }
+                                            }
+                                        }
+                                    }
                                 }
                                 if !output.is_empty() {
                                     pre { class: "run-output", "{output}" }

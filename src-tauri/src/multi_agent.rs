@@ -45,15 +45,7 @@ impl Default for MultiAgentState {
 }
 
 impl MultiAgentState {
-    pub fn start_run(&self, parent_cwd: String, tasks: Vec<AgentTask>) -> String {
-        let run_id = format!(
-            "ma-{}-{}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_millis(),
-            std::process::id()
-        );
+    pub fn start_run_with_id(&self, run_id: String, parent_cwd: String, tasks: Vec<AgentTask>) -> String {
         let run = MultiAgentRun {
             run_id: run_id.clone(),
             parent_cwd,
@@ -103,5 +95,63 @@ impl MultiAgentState {
                 }
             }
         }
+    }
+
+    pub fn set_task_result(
+        &self,
+        run_id: &str,
+        task_id: &str,
+        status: &str,
+        output: String,
+        tool_calls: Vec<String>,
+    ) {
+        let mut runs = self.runs.lock().unwrap();
+        if let Some(run) = runs.get_mut(run_id) {
+            for t in &mut run.tasks {
+                if t.id == task_id {
+                    t.status = status.into();
+                    t.output = output;
+                    t.tool_calls = tool_calls;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn task_result_updates_status_output_and_tool_calls() {
+        let state = MultiAgentState::default();
+        let run_id = state.start_run_with_id(
+            "ma-test".into(),
+            "/tmp/project".into(),
+            vec![AgentTask {
+                id: "task-0".into(),
+                name: "Inspect tests".into(),
+                prompt: "Inspect tests".into(),
+                worktree_path: "/tmp/project/.worktrees/task-0".into(),
+                session_id: None,
+                status: "pending".into(),
+                output: String::new(),
+                tool_calls: Vec::new(),
+            }],
+        );
+
+        state.set_task_result(
+            &run_id,
+            "task-0",
+            "done",
+            "looks good".into(),
+            vec!["Read".into()],
+        );
+
+        let run = state.get_run(&run_id).unwrap();
+        assert_eq!(run.tasks[0].status, "done");
+        assert_eq!(run.tasks[0].output, "looks good");
+        assert_eq!(run.tasks[0].tool_calls, vec!["Read"]);
     }
 }
