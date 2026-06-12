@@ -1,82 +1,77 @@
 /* ---------- Composer ---------- */
 .composer {
-  padding: 12px clamp(30px, 6vw, 92px) 18px;
+  padding: 14px clamp(32px, 6vw, 96px) 20px;
   position: relative;
   flex-shrink: 0;
   background:
-    linear-gradient(180deg, rgba(16, 17, 20, 0), rgba(16, 17, 20, 0.94) 34%),
+    linear-gradient(180deg, rgba(5, 5, 5, 0), rgba(5, 5, 5, 0.94) 34%),
     transparent;
 }
 
 .composer-box {
   width: min(100%, 880px);
   margin: 0 auto;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.062), rgba(255, 255, 255, 0.02)),
-    rgba(27, 30, 36, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 22px;
-  padding: 15px 15px 13px;
   position: relative;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  padding: 18px 18px 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.34),
-    0 0 0 1px rgba(255, 255, 255, 0.026),
-    inset 0 1px 0 rgba(255, 255, 255, 0.075);
+    0 28px 80px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .composer-box::before {
   content: "";
   position: absolute;
-  inset: 1px;
-  border-radius: 21px;
+  inset: 2px;
+  border-radius: calc(var(--radius-xl) - 2px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+    rgba(14, 14, 16, 0.92);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.09);
   pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.028);
 }
 
 .composer-box::after {
   content: "";
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1px solid var(--accent);
-  opacity: 0;
-  transform: scaleX(0.985) scaleY(0.94);
+  inset: 2px;
+  border-radius: calc(var(--radius-xl) - 2px);
   pointer-events: none;
-  transition: opacity var(--transition-base), transform var(--transition-base);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 36%);
 }
 
 .composer-box:focus-within {
-  border-color: var(--accent);
+  border-color: rgba(110, 161, 255, 0.55);
   box-shadow:
     0 0 0 3px var(--accent-dim),
-    0 30px 84px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.composer-box:focus-within::after {
-  opacity: 0.72;
-  transform: scale(1);
+    0 32px 90px rgba(0, 0, 0, 0.52);
 }
 
 .composer-box textarea {
-  min-height: 62px;
-  max-height: 200px;
+  min-height: 64px;
+  max-height: 220px;
   font-size: 15px;
   line-height: 1.6;
+  position: relative;
+  z-index: 1;
 }
 
 .composer-box textarea::placeholder {
-  color: #9099A8;
+  color: #7d8594;
 }
 
 .composer-controls {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 9px;
-  padding-top: 9px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-subtle);
+  position: relative;
+  z-index: 1;
 }
 
 .cfg-select {
@@ -91,27 +86,27 @@
 /* Slash menu */
 .slash-menu {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: max(clamp(28px, 6vw, 88px), calc((100% - 880px) / 2));
-  right: max(clamp(28px, 6vw, 88px), calc((100% - 880px) / 2));
-  background: rgba(27, 30, 36, 0.98);
+  bottom: calc(100% + 10px);
+  left: max(clamp(30px, 6vw, 92px), calc((100% - 880px) / 2));
+  right: max(clamp(30px, 6vw, 92px), calc((100% - 880px) / 2));
+  background: rgba(14, 14, 16, 0.96);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   z-index: 10;
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   max-height: 320px;
   overflow-y: auto;
-  animation: scale-in 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: scale-in 180ms var(--ease-snap) both;
   transform-origin: bottom center;
 }
 
 .slash-item {
   display: flex;
   gap: 12px;
-  padding: 9px 14px;
+  padding: 10px 15px;
   cursor: pointer;
   align-items: center;
   transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
@@ -119,8 +114,8 @@
 
 .slash-item:hover,
 .slash-item.selected {
-  background: var(--bg-hover);
-  transform: translateX(1px);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(2px);
 }
 
 .slash-item.selected {
@@ -139,7 +134,7 @@
   font-family: var(--font-mono);
   color: var(--accent);
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 560;
   flex-shrink: 0;
 }
 
@@ -157,16 +152,18 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .attachment-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
-  padding: 3px 10px;
+  padding: 4px 11px;
   font-size: 12px;
   color: var(--text-secondary);
   transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
@@ -174,6 +171,7 @@
 
 .attachment-chip:hover {
   border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.09);
   transform: translateY(-1px);
 }
 
@@ -204,16 +202,16 @@
 }
 .convo-search-input {
   flex: 1;
-  height: 28px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 12px;
   font-size: 13px;
-  background: var(--bg-surface, #1E1E1E);
+  background: var(--bg-surface, #0a0a0c);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--text-primary);
   outline: none;
 }
-.convo-search-input:focus { border-color: var(--accent); }
+.convo-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 .convo-search-count {
   font-size: 12px;
   color: var(--text-tertiary);
@@ -238,7 +236,7 @@ details.search-hit {
   flex-wrap: wrap;
   width: min(100%, 880px);
   margin: 0 auto;
-  padding: 6px 0 0;
+  padding: 8px 0 0;
   flex-shrink: 0;
 }
 
@@ -247,6 +245,7 @@ details.search-hit {
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .pending-chip {
@@ -254,10 +253,10 @@ details.search-hit {
   align-items: center;
   gap: 6px;
   max-width: 280px;
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px dashed var(--border-default);
   border-radius: var(--radius-pill);
-  padding: 3px 10px;
+  padding: 4px 11px;
   font-size: 12px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -267,6 +266,7 @@ details.search-hit {
 .pending-chip:hover {
   border-color: var(--border-strong);
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
   transform: translateY(-1px);
 }
 
@@ -318,7 +318,7 @@ details.search-hit {
 
 .composer-context-item:hover {
   color: var(--text-secondary);
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .composer-context-item svg {
@@ -330,7 +330,7 @@ details.search-hit {
   opacity: 0.6;
 }
 
-/* ---------- Composer toolbar separator ---------- */
+/* ---------- Composer toolbar ---------- */
 .composer-toolbar {
   display: flex;
   gap: 6px;
@@ -355,27 +355,27 @@ details.search-hit {
 
 .composer-toolbar button.ghost,
 .composer-context-item {
-  min-height: 30px;
-  padding: 5px 10px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.028);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-secondary);
 }
 
 .composer-toolbar button.ghost:hover,
 .composer-context-item:hover {
-  background: rgba(255, 255, 255, 0.062);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--border-strong);
   color: var(--text-primary);
 }
 
 .composer-send {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #8fb8ff, #5f97ff);
-  color: #07101f;
+  background: linear-gradient(180deg, #9bbdff, #6ea1ff);
+  color: #03060d;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -384,22 +384,23 @@ details.search-hit {
   cursor: pointer;
   transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 6px 18px rgba(110, 161, 255, 0.28);
 }
 
 .composer-send:not(:disabled):hover {
-  background: linear-gradient(180deg, #a6c8ff, #6fa3ff);
-  box-shadow: 0 0 0 4px var(--accent-dim), 0 16px 34px rgba(110, 161, 255, 0.28);
-  transform: translateY(-1px) scale(1.02);
+  background: linear-gradient(180deg, #aecbff, #7cabff);
+  box-shadow: 0 0 0 4px var(--accent-dim), 0 12px 34px rgba(110, 161, 255, 0.32);
+  transform: translateY(-1px) scale(1.04);
 }
 
 .composer-send:not(:disabled):active {
-  transform: scale(0.9);
+  transform: scale(0.94);
 }
 
 .composer-send.sent {
   background: var(--green);
-  box-shadow: 0 0 14px rgba(34, 197, 94, 0.28);
-  animation: avatar-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.32);
+  animation: avatar-pop 240ms var(--ease-bounce);
 }
 
 .composer-send:disabled {

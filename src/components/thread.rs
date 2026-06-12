@@ -198,12 +198,12 @@ pub fn ThreadView() -> Element {
         }
         div { class: "thread", id: "thread", "data-testid": "thread",
             if thread_empty && !has_session {
-                div { class: "thread-hero", "data-testid": "thread-empty-hero",
+                div { class: "thread-hero reveal", "data-testid": "thread-empty-hero",
                     div { class: "thread-hero-icon",
                         KimiAvatar { state: AgentState::Idle, size: 46 }
                     }
                     h2 { "Welcome to Kimi Code" }
-                    p { "Pick a project and start a new session, or resume one from the sidebar." }
+                    p { "Pick a project and start a session, or resume one from the sidebar." }
                     div { class: "thread-hero-actions",
                         button {
                             "data-testid": "hero-new-chat",
@@ -223,7 +223,7 @@ pub fn ThreadView() -> Element {
                 }
             }
             if thread_empty && has_session {
-                div { class: "thread-hero compact", "data-testid": "thread-session-empty",
+                div { class: "thread-hero compact reveal", "data-testid": "thread-session-empty",
                     div { class: "thread-hero-icon",
                         KimiAvatar { state: AgentState::Listening, size: 46 }
                     }

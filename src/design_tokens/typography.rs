@@ -5,7 +5,7 @@ pub struct Typography;
 #[allow(dead_code)]
 impl Typography {
     // Font families
-    pub const FONT_UI: &str = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+    pub const FONT_UI: &str = "'Geist', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Text', ui-sans-serif, system-ui, sans-serif";
     pub const FONT_MONO: &str = "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace";
 
     // Type scale

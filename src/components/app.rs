@@ -136,6 +136,31 @@ pub fn App() -> Element {
             refresh_projects().await;
             refresh_sessions().await;
         });
+        // Reveal animations for scroll-driven entry choreography.
+        document::eval(
+            "if (!window.__kimiRevealObserver) { \
+                window.__kimiRevealObserver = true; \
+                const reveal = (el) => { \
+                    const io = new IntersectionObserver((entries, obs) => { \
+                        entries.forEach(e => { \
+                            if (e.isIntersecting) { \
+                                e.target.classList.add('is-visible'); \
+                                obs.unobserve(e.target); \
+                            } \
+                        }); \
+                    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }); \
+                    io.observe(el); \
+                }; \
+                document.querySelectorAll('.reveal').forEach(reveal); \
+                new MutationObserver(muts => { \
+                    muts.forEach(m => m.addedNodes.forEach(n => { \
+                        if (n.nodeType !== 1) return; \
+                        if (n.classList && n.classList.contains('reveal')) reveal(n); \
+                        n.querySelectorAll && n.querySelectorAll('.reveal').forEach(reveal); \
+                    })); \
+                }).observe(document.body, { childList: true, subtree: true }); \
+            }",
+        );
     });
     use_effect(|| {
         crate::verify::sync_debug_snapshot();

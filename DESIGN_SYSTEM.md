@@ -1,10 +1,12 @@
 # Kimi Code Desktop — Design System Implementation Document
 
-**Version:** 1.0  
-**Date:** 2026-06-11  
+**Version:** 2.0  
+**Date:** 2026-06-12  
 **Stack:** Tauri (Rust backend) + Dioxus (Rust frontend)  
 **Framework:** Dioxus 0.7+ with Tailwind CSS  
 **Priority:** P0 — Must be implemented before any feature work
+
+> **Redesign note:** The visual system was refreshed to an *Ethereal Glass* aesthetic — OLED-black void backgrounds, subtle purple/emerald ambient orbs, ultra-diffused shadows, double-bezel card architecture, fluid spring motion, and premium grotesk typography. The canonical tokens live in `assets/css/01-tokens.css`, `src/design_tokens/colors.rs`, `src/design_tokens/typography.rs`, and `src/design_tokens/animation.rs`.
 
 ---
 
@@ -50,32 +52,45 @@ pub struct Colors;
 
 impl Colors {
     // Kimi Brand
-    pub const KIMI_BLUE: &str = "#1E90FF";
-    pub const KIMI_BLUE_HOVER: &str = "#4AA8FF";
-    pub const KIMI_BLUE_MUTED: &str = "rgba(30, 144, 255, 0.2)"; // #1E90FF33
+    pub const KIMI_BLUE: &str = "#6EA1FF";
+    pub const KIMI_BLUE_HOVER: &str = "#9BBDFF";
+    pub const KIMI_BLUE_MUTED: &str = "rgba(110, 161, 255, 0.16)";
 
-    // Backgrounds (dark theme only)
-    pub const BG_DEEPEST: &str = "#0A0A0A";
-    pub const BG_DARK: &str = "#141414";
-    pub const BG_SURFACE: &str = "#1E1E1E";
-    pub const BG_HOVER: &str = "#262626";
-    pub const BG_CODE: &str = "#0F0F0F";
+    // Backgrounds (dark theme only — Ethereal Glass)
+    pub const BG_DEEPEST: &str = "#050505";
+    pub const BG_DARK: &str = "#0A0A0C";
+    pub const BG_SURFACE: &str = "#101014";
+    pub const BG_ELEVATED: &str = "#18181D";
+    pub const BG_HOVER: &str = "#18181D";
+    pub const BG_ACTIVE: &str = "#202026";
+    pub const BG_CODE: &str = "#060608";
 
     // Borders
-    pub const BORDER_SUBTLE: &str = "#2E2E2E";
-    pub const BORDER_ACTIVE: &str = "#1E90FF";
+    pub const BORDER_SUBTLE: &str = "rgba(255, 255, 255, 0.045)";
+    pub const BORDER_DEFAULT: &str = "rgba(255, 255, 255, 0.085)";
+    pub const BORDER_STRONG: &str = "rgba(255, 255, 255, 0.145)";
+    pub const BORDER_ACTIVE: &str = "#6EA1FF";
+    pub const BORDER_HIGHLIGHT: &str = "rgba(255, 255, 255, 0.22)";
 
     // Text
-    pub const TEXT_PRIMARY: &str = "#F5F5F5";
-    pub const TEXT_SECONDARY: &str = "#A3A3A3";
-    pub const TEXT_TERTIARY: &str = "#737373";
-    pub const TEXT_DISABLED: &str = "#525252";
+    pub const TEXT_PRIMARY: &str = "#F7F8FB";
+    pub const TEXT_SECONDARY: &str = "#C5C9D3";
+    pub const TEXT_TERTIARY: &str = "#8A8F9C";
+    pub const TEXT_DISABLED: &str = "#5C6270";
 
     // Semantic
-    pub const SUCCESS: &str = "#22C55E";
-    pub const WARNING: &str = "#EAB308";
-    pub const ERROR: &str = "#EF4444";
-    pub const INFO: &str = "#1E90FF";
+    pub const SUCCESS: &str = "#34D399";
+    pub const SUCCESS_MUTED: &str = "rgba(52, 211, 153, 0.12)";
+    pub const WARNING: &str = "#FBBF24";
+    pub const WARNING_MUTED: &str = "rgba(251, 191, 36, 0.12)";
+    pub const ERROR: &str = "#F87171";
+    pub const ERROR_MUTED: &str = "rgba(248, 113, 113, 0.12)";
+    pub const INFO: &str = "#6EA1FF";
+    pub const INFO_MUTED: &str = "rgba(110, 161, 255, 0.16)";
+
+    // Ethereal accent orbs
+    pub const GLOW_PURPLE: &str = "rgba(139, 92, 246, 0.34)";
+    pub const GLOW_EMERALD: &str = "rgba(16, 185, 129, 0.22)";
 }
 ```
 
@@ -83,28 +98,40 @@ impl Colors {
 
 ```css
 :root {
-  --kimi-blue: #1E90FF;
-  --kimi-blue-hover: #4AA8FF;
-  --kimi-blue-muted: rgba(30, 144, 255, 0.2);
+  --bg-void: #030303;
+  --bg-base: #050505;
+  --bg-surface: #0A0A0C;
+  --bg-elevated: #101014;
+  --bg-hover: #18181D;
+  --bg-active: #202026;
+  --bg-code: #060608;
+  --bg-overlay: rgba(3, 3, 4, 0.72);
 
-  --bg-deepest: #0A0A0A;
-  --bg-dark: #141414;
-  --bg-surface: #1E1E1E;
-  --bg-hover: #262626;
-  --bg-code: #0F0F0F;
+  --border-subtle: rgba(255, 255, 255, 0.045);
+  --border-default: rgba(255, 255, 255, 0.085);
+  --border-strong: rgba(255, 255, 255, 0.145);
+  --border-highlight: rgba(255, 255, 255, 0.22);
 
-  --border-subtle: #2E2E2E;
-  --border-active: #1E90FF;
+  --text-primary: #F7F8FB;
+  --text-secondary: #C5C9D3;
+  --text-tertiary: #8A8F9C;
+  --text-muted: #5C6270;
 
-  --text-primary: #F5F5F5;
-  --text-secondary: #A3A3A3;
-  --text-tertiary: #737373;
-  --text-disabled: #525252;
+  --accent: #6EA1FF;
+  --accent-hover: #9BBDFF;
+  --accent-dim: rgba(110, 161, 255, 0.16);
+  --accent-glow: rgba(110, 161, 255, 0.28);
 
-  --success: #22C55E;
-  --warning: #EAB308;
-  --error: #EF4444;
-  --info: #1E90FF;
+  --glow-purple: rgba(139, 92, 246, 0.34);
+  --glow-emerald: rgba(16, 185, 129, 0.22);
+  --glow-amber: rgba(245, 158, 11, 0.24);
+
+  --green: #34D399;
+  --green-dim: rgba(52, 211, 153, 0.12);
+  --red: #F87171;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --yellow: #FBBF24;
+  --yellow-dim: rgba(251, 191, 36, 0.12);
 }
 ```
 
@@ -127,9 +154,9 @@ rsx! {
 pub struct Typography;
 
 impl Typography {
-    // Font families
-    pub const FONT_UI: &str = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
-    pub const FONT_MONO: &str = "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace";
+    // Font families — premium grotesk first, banned fonts removed
+    pub const FONT_UI: &str = "'Geist', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Text', ui-sans-serif, system-ui, sans-serif";
+    pub const FONT_MONO: &str = "ui-monospace, 'SF Mono', 'SFMono-Regular', Menlo, Monaco, 'Cascadia Code', monospace";
 
     // Type scale
     pub const DISPLAY_SIZE: &str = "24px";
@@ -170,22 +197,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'kimi-blue': '#1E90FF',
-        'kimi-blue-hover': '#4AA8FF',
-        'bg-deepest': '#0A0A0A',
-        'bg-dark': '#141414',
-        'bg-surface': '#1E1E1E',
-        'bg-hover': '#262626',
-        'bg-code': '#0F0F0F',
-        'border-subtle': '#2E2E2E',
-        'text-primary': '#F5F5F5',
-        'text-secondary': '#A3A3A3',
-        'text-tertiary': '#737373',
-        'text-disabled': '#525252',
+        'kimi-blue': '#6EA1FF',
+        'kimi-blue-hover': '#9BBDFF',
+        'bg-void': '#030303',
+        'bg-base': '#050505',
+        'bg-surface': '#0A0A0C',
+        'bg-elevated': '#101014',
+        'bg-hover': '#18181D',
+        'bg-active': '#202026',
+        'bg-code': '#060608',
+        'border-subtle': 'rgba(255,255,255,0.045)',
+        'border-default': 'rgba(255,255,255,0.085)',
+        'border-strong': 'rgba(255,255,255,0.145)',
+        'text-primary': '#F7F8FB',
+        'text-secondary': '#C5C9D3',
+        'text-tertiary': '#8A8F9C',
+        'text-muted': '#5C6270',
       },
       fontFamily: {
-        'ui': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        'mono': ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
+        'ui': ['Geist', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'mono': ['SF Mono', 'SFMono-Regular', 'Menlo', 'Monaco', 'Cascadia Code', 'monospace'],
       },
       fontSize: {
         'display': ['24px', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
@@ -276,9 +307,9 @@ impl Animation {
     pub const NORMAL: &str = "300ms";
     pub const SLOW: &str = "500ms";
 
-    // Easing
-    pub const EASE_DEFAULT: &str = "cubic-bezier(0.4, 0, 0.2, 1)";
-    pub const EASE_ENTER: &str = "cubic-bezier(0, 0, 0.2, 1)";
+    // Easing — fluid spring physics
+    pub const EASE_DEFAULT: &str = "cubic-bezier(0.32, 0.72, 0, 1)";
+    pub const EASE_ENTER: &str = "cubic-bezier(0.16, 1, 0.3, 1)";
     pub const EASE_EXIT: &str = "cubic-bezier(0.4, 0, 1, 1)";
     pub const EASE_BOUNCE: &str = "cubic-bezier(0.34, 1.56, 0.64, 1)";
 
@@ -347,24 +378,24 @@ impl Animation {
 pub struct Elevation;
 
 impl Elevation {
-    // Card shadows
-    pub const CARD: &str = "0 0 0 1px #2E2E2E, 0 4px 12px rgba(0,0,0,0.2)";
-    pub const CARD_HOVER: &str = "0 0 0 1px #3E3E3E, 0 8px 24px rgba(0,0,0,0.3)";
-    pub const CARD_ACTIVE: &str = "0 0 0 1px #1E90FF, 0 4px 12px rgba(30,144,255,0.1)";
+    // Card shadows — ultra-diffused ambient
+    pub const CARD: &str = "0 14px 40px rgba(0,0,0,0.42)";
+    pub const CARD_HOVER: &str = "0 24px 64px rgba(0,0,0,0.5)";
+    pub const CARD_ACTIVE: &str = "0 0 0 1px rgba(110,161,255,0.5), 0 14px 40px rgba(110,161,255,0.12)";
 
     // Dropdown/Menu shadows
-    pub const DROPDOWN: &str = "0 8px 24px rgba(0,0,0,0.4)";
-    pub const DROPDOWN_UP: &str = "0 -8px 24px rgba(0,0,0,0.4)";
+    pub const DROPDOWN: &str = "0 24px 64px rgba(0,0,0,0.5)";
+    pub const DROPDOWN_UP: &str = "0 -24px 64px rgba(0,0,0,0.5)";
 
     // Modal shadows
-    pub const MODAL_BACKDROP: &str = "rgba(10,10,10,0.8)";
-    pub const MODAL: &str = "0 16px 48px rgba(0,0,0,0.5)";
+    pub const MODAL_BACKDROP: &str = "rgba(3,3,4,0.78)";
+    pub const MODAL: &str = "0 36px 100px rgba(0,0,0,0.58)";
 
     // Tooltip shadows
-    pub const TOOLTIP: &str = "0 4px 12px rgba(0,0,0,0.3)";
+    pub const TOOLTIP: &str = "0 14px 40px rgba(0,0,0,0.42)";
 
     // Input focus glow
-    pub const INPUT_FOCUS: &str = "0 0 0 2px rgba(30,144,255,0.3)";
+    pub const INPUT_FOCUS: &str = "0 0 0 3px rgba(110,161,255,0.16)";
 }
 ```
 

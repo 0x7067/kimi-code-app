@@ -23,8 +23,12 @@ pub fn KimiCard(
     rsx! {
         div {
             class: "kimi-card {hover_cls} {active_cls}",
-            style: "border-radius: {radius_px}; padding: {pad};",
-            {children}
+            style: "border-radius: {radius_px}; padding: 2px;",
+            div {
+                class: "kimi-card-inner",
+                style: "border-radius: calc({radius_px} - 2px); padding: {pad};",
+                {children}
+            }
         }
     }
 }
