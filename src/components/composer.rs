@@ -5,6 +5,7 @@ use crate::conversation::{filter_mentions, mention_candidates_from_diff, mention
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
+use gloo_timers::callback::Timeout;
 use serde_json::{json, Value};
 
 /// Candidate paths for @mentions (F-002.12).
@@ -32,6 +33,7 @@ pub fn Composer() -> Element {
     let mut draft = use_signal(String::new);
     let mut slash_selected = use_signal(|| 0usize);
     let mut mention_selected = use_signal(|| 0usize);
+    let mut send_feedback = use_signal(|| false);
     let running = *RUNNING.read();
     let has_session = SESSION_ID.read().is_some();
     let editing = COMPOSER_EDIT_INDEX.read().is_some();
@@ -48,7 +50,11 @@ pub fn Composer() -> Element {
         .collect();
 
     // F-002.12: @mention dropdown over known project file paths.
-    let mention = if show_slash { None } else { mention_token(&draft.read()) };
+    let mention = if show_slash {
+        None
+    } else {
+        mention_token(&draft.read())
+    };
     let mentions: Vec<String> = mention
         .as_ref()
         .map(|(_, q)| filter_mentions(&mention_candidates(), q))
@@ -64,10 +70,18 @@ pub fn Composer() -> Element {
         }
     });
 
+    // Lightweight presence signal for the chat header. Keep it derived from the
+    // draft instead of making prompt submission depend on global state.
+    use_effect(move || {
+        *COMPOSER_HAS_DRAFT.write() = has_session && !observing && !draft.read().trim().is_empty();
+    });
+
     // F-002.12: warm the project file cache for @mentions.
     use_effect(move || {
         let _ = PROJECT.read().clone(); // re-run when project changes
-        spawn(async { crate::actions::refresh_project_files().await; });
+        spawn(async {
+            crate::actions::refresh_project_files().await;
+        });
     });
 
     // Send (idle) or steer (running, F-015): steering cancels the active
@@ -79,11 +93,14 @@ pub fn Composer() -> Element {
         }
         // F-011.4: the thinking-mode default makes plain ⏎ send with the
         // thinking flag when set to "always"; ⌘⇧⏎ stays an explicit override.
-        let thinking = crate::conversation::effective_thinking(
-            &APP_SETTINGS.read().thinking_default,
-            explicit_thinking,
-        );
+        let thinking =
+            crate::conversation::effective_thinking(&APP_SETTINGS.read().thinking_default, explicit_thinking);
         draft.set(String::new());
+        send_feedback.set(true);
+        let handle = Timeout::new(220, move || {
+            send_feedback.set(false);
+        });
+        handle.forget();
         // F-002.7: if editing a previous message, truncate the thread and
         // replace it before sending.
         if let Some(idx) = *COMPOSER_EDIT_INDEX.read() {
@@ -405,22 +422,41 @@ pub fn Composer() -> Element {
                                 "Stop"
                             }
                         } else {
-                            button {
-                                class: "composer-send",
-                                title: "Send (⌘⏎) · Send with thinking (⌘⇧⏎)",
-                                disabled: !has_session,
-                                onclick: move |_| submit(false),
-                                svg {
-                                    width: "16",
-                                    height: "16",
-                                    view_box: "0 0 24 24",
-                                    fill: "none",
-                                    stroke: "currentColor",
-                                    "stroke-width": "2.5",
-                                    "stroke-linecap": "round",
-                                    "stroke-linejoin": "round",
-                                    path { d: "M12 19V5" }
-                                    path { d: "M5 12l7-7 7 7" }
+                            {
+                                let sent = *send_feedback.read();
+                                rsx! {
+                                    button {
+                                        class: if sent { "composer-send sent" } else { "composer-send" },
+                                        title: "Send (⌘⏎) · Send with thinking (⌘⇧⏎)",
+                                        disabled: !has_session,
+                                        onclick: move |_| submit(false),
+                                        if sent {
+                                            svg {
+                                                width: "16",
+                                                height: "16",
+                                                view_box: "0 0 24 24",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                "stroke-width": "2.5",
+                                                "stroke-linecap": "round",
+                                                "stroke-linejoin": "round",
+                                                path { d: "M20 6 9 17l-5-5" }
+                                            }
+                                        } else {
+                                            svg {
+                                                width: "16",
+                                                height: "16",
+                                                view_box: "0 0 24 24",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                "stroke-width": "2.5",
+                                                "stroke-linecap": "round",
+                                                "stroke-linejoin": "round",
+                                                path { d: "M12 19V5" }
+                                                path { d: "M5 12l7-7 7 7" }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -7,6 +7,7 @@
   background: var(--bg-surface);
   display: flex;
   flex-direction: column;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.02);
 }
 
 .diff-head {
@@ -36,6 +37,8 @@
   white-space: pre;
   padding: 0 4px;
   border-radius: 2px;
+  animation: diff-line-enter 120ms ease-out both;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .dl.add {

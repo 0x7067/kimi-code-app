@@ -13,13 +13,19 @@ pub fn DiffPane() -> Element {
             }
             pre { class: "diff-body",
                 for (i, line) in diff.lines().enumerate() {
-                    span {
-                        key: "{i}",
-                        class: if line.starts_with('+') && !line.starts_with("+++") { "dl add" }
-                               else if line.starts_with('-') && !line.starts_with("---") { "dl del" }
-                               else if line.starts_with("@@") { "dl hunk" }
-                               else { "dl" },
-                        "{line}\n"
+                    {
+                        let delay = (i.min(24)) * 18;
+                        rsx! {
+                            span {
+                                key: "{i}",
+                                class: if line.starts_with('+') && !line.starts_with("+++") { "dl add" }
+                                       else if line.starts_with('-') && !line.starts_with("---") { "dl del" }
+                                       else if line.starts_with("@@") { "dl hunk" }
+                                       else { "dl" },
+                                style: "animation-delay: {delay}ms;",
+                                "{line}\n"
+                            }
+                        }
                     }
                 }
             }

@@ -1,7 +1,9 @@
+use crate::components::delight::{derive_agent_state, AgentState, KimiAvatar};
 use crate::conversation::{item_matches, item_plain_text};
 use crate::markdown::md_to_html;
 use crate::state::*;
 use dioxus::prelude::*;
+use gloo_timers::callback::Timeout;
 use serde_json::Value;
 use std::collections::HashSet;
 
@@ -26,7 +28,45 @@ fn flash_copied(mut copied: Signal<Option<usize>>, i: usize) {
 #[component]
 pub fn ThreadView() -> Element {
     let copied = use_signal(|| None::<usize>);
-    let collapsed = use_signal(|| HashSet::<usize>::new());
+    let collapsed = use_signal(HashSet::<usize>::new);
+    let mut recently_completed = use_signal(|| false);
+    let mut was_running = use_signal(|| false);
+    let mut last_item_count = use_signal(|| 0usize);
+
+    use_effect(move || {
+        document::eval(
+            "requestAnimationFrame(() => { \
+                const t = document.getElementById('thread'); \
+                const col = t && t.closest('.thread-col'); \
+                if (!t || !col || t.__kimiScrollBound) return; \
+                const update = () => { \
+                    const max = Math.max(0, t.scrollHeight - t.clientHeight); \
+                    const progress = max > 0 ? Math.min(100, Math.max(0, (t.scrollTop / max) * 100)) : 100; \
+                    col.style.setProperty('--thread-progress', `${progress}%`); \
+                    const near = t.scrollHeight - t.scrollTop - t.clientHeight < 120; \
+                    if (near) col.classList.remove('has-new-message'); \
+                }; \
+                t.addEventListener('scroll', update, { passive: true }); \
+                t.__kimiScrollBound = true; \
+                update(); \
+            });",
+        );
+    });
+
+    use_effect(move || {
+        let running = *RUNNING.read();
+        let item_count = ITEMS.read().len();
+        if *was_running.peek() && !running && item_count >= *last_item_count.peek() && item_count > 0 {
+            recently_completed.set(true);
+            let handle = Timeout::new(5000, move || {
+                recently_completed.set(false);
+            });
+            handle.forget();
+        }
+        was_running.set(running);
+        last_item_count.set(item_count);
+    });
+
     use_effect(move || {
         let items = ITEMS.read();
         let running = *RUNNING.read();
@@ -47,18 +87,46 @@ pub fn ThreadView() -> Element {
         document::eval(
             "requestAnimationFrame(() => { \
                 const t = document.getElementById('thread'); \
-                if (t) { \
-                    const near = t.scrollHeight - t.scrollTop - t.clientHeight < 120; \
-                    if (near) t.scrollTop = t.scrollHeight; \
+                const col = t && t.closest('.thread-col'); \
+                if (!t || !col) return; \
+                const max = Math.max(0, t.scrollHeight - t.clientHeight); \
+                const progress = max > 0 ? Math.min(100, Math.max(0, (t.scrollTop / max) * 100)) : 100; \
+                col.style.setProperty('--thread-progress', `${progress}%`); \
+                const near = t.scrollHeight - t.scrollTop - t.clientHeight < 120; \
+                if (near) { \
+                    t.scrollTo({ top: t.scrollHeight, behavior: 'smooth' }); \
+                    col.classList.remove('has-new-message'); \
+                } else { \
+                    col.classList.add('has-new-message'); \
                 } \
             });",
         );
     });
+    let has_active_tool = ITEMS
+        .read()
+        .iter()
+        .any(|item| matches!(item, Item::Tool(tc) if tc.status == "in_progress"));
+    let agent_state = derive_agent_state(
+        ERROR.read().is_some(),
+        PERMISSION.read().is_some(),
+        *RUNNING.read(),
+        has_active_tool,
+        *COMPOSER_HAS_DRAFT.read(),
+        *recently_completed.read(),
+    );
+    let agent_state_class = agent_state.class_name();
+    let agent_status = agent_state.label();
+    let thread_empty = ITEMS.read().is_empty();
+    let has_session = SESSION_ID.read().is_some();
     let query = CONVO_SEARCH.read().trim().to_string();
     let hits = if query.is_empty() {
         0
     } else {
-        ITEMS.read().iter().filter(|item| item_matches(item, &query)).count()
+        ITEMS
+            .read()
+            .iter()
+            .filter(|item| item_matches(item, &query))
+            .count()
     };
     rsx! {
         if *SEARCH_OPEN.read() {
@@ -113,10 +181,40 @@ pub fn ThreadView() -> Element {
         if *SHOW_CHECKPOINTS.read() {
             {checkpoint_panel()}
         }
+        div { class: "agent-ambient state-{agent_state_class}" }
+        div { class: "thread-presence state-{agent_state_class}",
+            KimiAvatar { state: agent_state, size: 34 }
+            div { class: "thread-presence-copy",
+                span { class: "thread-presence-label", "Kimi" }
+                span { class: "thread-presence-state", "{agent_status}" }
+            }
+        }
+        div { class: "thread-scroll-progress",
+            div { class: "thread-scroll-progress-fill" }
+        }
+        button {
+            class: "new-message-btn",
+            onclick: move |_| {
+                document::eval(
+                    "requestAnimationFrame(() => { \
+                        const t = document.getElementById('thread'); \
+                        const col = t && t.closest('.thread-col'); \
+                        if (!t) return; \
+                        t.scrollTo({ top: t.scrollHeight, behavior: 'smooth' }); \
+                        if (col) col.classList.remove('has-new-message'); \
+                    });",
+                );
+            },
+            span { class: "new-message-dot" }
+            "New message"
+            span { class: "new-message-chevron", "⌄" }
+        }
         div { class: "thread", id: "thread",
-            if ITEMS.read().is_empty() && SESSION_ID.read().is_none() {
+            if thread_empty && !has_session {
                 div { class: "thread-hero",
-                    div { class: "thread-hero-icon", "✦" }
+                    div { class: "thread-hero-icon",
+                        KimiAvatar { state: AgentState::Idle, size: 46 }
+                    }
                     h2 { "Welcome to Kimi Code" }
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
                     div { class: "thread-hero-actions",
@@ -135,11 +233,23 @@ pub fn ThreadView() -> Element {
                     }
                 }
             }
+            if thread_empty && has_session {
+                div { class: "thread-hero compact",
+                    div { class: "thread-hero-icon",
+                        KimiAvatar { state: AgentState::Listening, size: 46 }
+                    }
+                    h2 { "Ready for the first prompt" }
+                    p { "Ask Kimi to explain, refactor, test, or build in this project." }
+                }
+            }
             for (i, item) in ITEMS.read().iter().enumerate() {
                 {render_item(i, item, copied, &query, collapsed)}
             }
             if *RUNNING.read() {
-                div { class: "working", span { class: "spinner" } "Working…" }
+                div { class: "working",
+                    KimiAvatar { state: agent_state, size: 22 }
+                    span { "Kimi is {agent_status.to_lowercase()}…" }
+                }
             }
         }
     }
@@ -234,8 +344,9 @@ fn render_item(
             rsx! {
                 div { key: "{i}", class: "msg agent{sc}",
                     div { class: "agent-header",
+                        KimiAvatar { state: AgentState::Idle, size: 22 }
                         span { class: "agent-header-title", "{title}" }
-                        span { class: "agent-header-duration", "Worked for 2m 34s" }
+                        span { class: "agent-header-duration", "Response" }
                         button {
                             class: "agent-header-expand",
                             onclick: move |_| {

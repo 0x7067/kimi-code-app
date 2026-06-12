@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "org.denguinho.kimi",
   "build": {
-    "beforeDevCommand": "dx build --platform web && dx serve --port 1420 --open false",
+    "beforeDevCommand": "./scripts/tauri-dev-server.sh",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "dx bundle --release",
     "frontendDist": "../dist/public"

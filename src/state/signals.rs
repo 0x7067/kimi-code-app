@@ -29,6 +29,9 @@ pub static PENDING_QUEUE: GlobalSignal<Vec<String>> = Signal::global(Vec::new);
 pub static COMPOSER_PREFILL: GlobalSignal<Option<String>> = Signal::global(|| None);
 /// Index of the user message being edited (F-002.7); `None` when not editing.
 pub static COMPOSER_EDIT_INDEX: GlobalSignal<Option<usize>> = Signal::global(|| None);
+/// Whether the composer has meaningful draft text. Used for lightweight agent
+/// presence only; prompt submission still reads the local composer draft.
+pub static COMPOSER_HAS_DRAFT: GlobalSignal<bool> = Signal::global(|| false);
 pub static PERMISSION: GlobalSignal<Option<PermissionRequest>> = Signal::global(|| None);
 /// Pending confirmation for a destructive action (delete automation, memory
 /// snippet, worktree, etc.). Rendered by `ConfirmModal`; `None` when idle.
@@ -124,7 +127,8 @@ pub static SHOW_MULTI_AGENT: GlobalSignal<bool> = Signal::global(|| false);
 pub static SHOW_AUTOMATIONS: GlobalSignal<bool> = Signal::global(|| false);
 
 /// Cached thread state per session so switching sessions does not lose scrollback.
-pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> = Signal::global(HashMap::new);
+pub static SCROLLBACK_CACHE: GlobalSignal<HashMap<String, (Vec<Item>, Vec<PlanEntry>)>> =
+    Signal::global(HashMap::new);
 /// Locally-overridden semantic titles for sessions (key = sessionId).
 pub static SESSION_TITLES: GlobalSignal<HashMap<String, String>> = Signal::global(HashMap::new);
 

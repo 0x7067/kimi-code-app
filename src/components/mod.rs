@@ -2,6 +2,7 @@
 #![allow(unused_qualifications)]
 
 pub mod base;
+pub(crate) mod delight;
 pub mod icons;
 
 mod app;
@@ -24,13 +25,13 @@ mod topbar;
 
 pub use app::App;
 pub(crate) use automation_pane::AutomationPane;
-pub(crate) use composer::{Composer, PendingQueue};
-pub(crate) use diff_pane::DiffPane;
 pub(crate) use browser_pane::BrowserPane;
+pub(crate) use composer::{Composer, PendingQueue};
+pub(crate) use confirm_modal::ConfirmModal;
+pub(crate) use diff_pane::DiffPane;
 pub(crate) use login_modal::LoginModal;
 pub(crate) use memory_pane::MemoryPane;
 pub(crate) use multi_agent_pane::MultiAgentPane;
-pub(crate) use confirm_modal::ConfirmModal;
 pub(crate) use permission_modal::PermissionModal;
 pub(crate) use session_modals::{CompactConfirmModal, NewSessionModal, ResumeConflictModal};
 pub(crate) use settings::SettingsView;

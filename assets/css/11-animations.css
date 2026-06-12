@@ -34,6 +34,46 @@
   to { background-position: -200% 0; }
 }
 
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.22); opacity: 0.72; }
+}
+
+@keyframes avatar-orbit {
+  0% { transform: rotate(0deg) translateX(18px) rotate(0deg); opacity: 0.35; }
+  45% { opacity: 1; }
+  100% { transform: rotate(360deg) translateX(18px) rotate(-360deg); opacity: 0.35; }
+}
+
+@keyframes avatar-pop {
+  0% { transform: scale(0.92); }
+  65% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes avatar-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+@keyframes response-glow {
+  0% { box-shadow: 0 0 0 1px rgba(30, 144, 255, 0.2), 0 0 28px rgba(30, 144, 255, 0.16); }
+  100% { box-shadow: none; }
+}
+
+@keyframes diff-line-enter {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .kimi-pulse {
   animation: pulse-dot 2s ease-in-out infinite;
   transform-origin: center;
@@ -61,4 +101,3 @@
   animation: scale-out 100ms ease-in forwards;
   transform-origin: top right;
 }
-
