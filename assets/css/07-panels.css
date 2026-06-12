@@ -470,6 +470,16 @@
   font-family: var(--font-mono);
 }
 
+.browser-status {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .browser-frame {
   flex: 1;
   border: none;

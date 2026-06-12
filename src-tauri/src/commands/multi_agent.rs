@@ -39,6 +39,14 @@ fn build_agent_tasks(
         .collect()
 }
 
+fn runnable_task_ids(run: &crate::multi_agent::MultiAgentRun) -> Vec<String> {
+    run.tasks
+        .iter()
+        .filter(|task| task.status != "running")
+        .map(|task| task.id.clone())
+        .collect()
+}
+
 #[tauri::command]
 pub async fn create_multi_agent_run(
     app: AppHandle,
@@ -160,6 +168,24 @@ pub async fn run_multi_agent_task(app: AppHandle, run_id: String, task_id: Strin
 }
 
 #[tauri::command]
+pub async fn run_multi_agent_tasks(app: AppHandle, run_id: String) -> Result<Value, String> {
+    let state = app.state::<crate::commands::AppState>();
+    let run = state
+        .multi_agent
+        .get_run(&run_id)
+        .ok_or_else(|| "run not found".to_string())?;
+    let task_ids = runnable_task_ids(&run);
+    for task_id in task_ids {
+        let _ = run_multi_agent_task(app.clone(), run_id.clone(), task_id).await?;
+    }
+    let run = state
+        .multi_agent
+        .get_run(&run_id)
+        .ok_or_else(|| "run not found after task execution".to_string())?;
+    Ok(serde_json::to_value(&run).map_err(|e| e.to_string())?)
+}
+
+#[tauri::command]
 pub async fn set_task_session(
     app: AppHandle,
     run_id: String,
@@ -209,5 +235,48 @@ mod tests {
 
         assert_eq!(tasks.len(), 1);
         assert_eq!(tasks[0].name, "Ship");
+    }
+
+    #[test]
+    fn runnable_task_ids_skip_running_tasks() {
+        let run = crate::multi_agent::MultiAgentRun {
+            run_id: "ma-test".into(),
+            parent_cwd: "/repo".into(),
+            created_at: 0,
+            tasks: vec![
+                crate::multi_agent::AgentTask {
+                    id: "task-0".into(),
+                    name: "Done before".into(),
+                    prompt: "Done before".into(),
+                    worktree_path: "/repo/.worktrees/done".into(),
+                    session_id: None,
+                    status: "done".into(),
+                    output: String::new(),
+                    tool_calls: Vec::new(),
+                },
+                crate::multi_agent::AgentTask {
+                    id: "task-1".into(),
+                    name: "Running now".into(),
+                    prompt: "Running now".into(),
+                    worktree_path: "/repo/.worktrees/running".into(),
+                    session_id: None,
+                    status: "running".into(),
+                    output: String::new(),
+                    tool_calls: Vec::new(),
+                },
+                crate::multi_agent::AgentTask {
+                    id: "task-2".into(),
+                    name: "Pending".into(),
+                    prompt: "Pending".into(),
+                    worktree_path: "/repo/.worktrees/pending".into(),
+                    session_id: None,
+                    status: "pending".into(),
+                    output: String::new(),
+                    tool_calls: Vec::new(),
+                },
+            ],
+        };
+
+        assert_eq!(runnable_task_ids(&run), vec!["task-0", "task-2"]);
     }
 }

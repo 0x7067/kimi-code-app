@@ -247,6 +247,49 @@ pub fn parse_timestamp(raw: &str) -> Option<i64> {
     Some(epoch)
 }
 
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
+    let z = days + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = mp + if mp < 10 { 3 } else { -9 };
+    let y = y + if m <= 2 { 1 } else { 0 };
+    (y, m, d)
+}
+
+/// Format an epoch second as a compact UTC timestamp for history rows.
+pub fn format_epoch_display(epoch: i64) -> String {
+    let days = epoch.div_euclid(86_400);
+    let seconds = epoch.rem_euclid(86_400);
+    let (year, month, day) = civil_from_days(days);
+    let hour = seconds / 3600;
+    let minute = (seconds % 3600) / 60;
+    format!("{year:04}-{month:02}-{day:02} {hour:02}:{minute:02} UTC")
+}
+
+/// Lightweight GUI-side automation validation. The backend cron parser remains
+/// authoritative; this catches common no-op rows before they enter settings.
+pub fn validate_automation(name: &str, cron: &str, prompt: &str, cwd: &str) -> Result<(), String> {
+    if name.trim().is_empty() {
+        return Err("Name is required".to_string());
+    }
+    if prompt.trim().is_empty() {
+        return Err("Prompt is required".to_string());
+    }
+    if cwd.trim().is_empty() {
+        return Err("Working directory is required".to_string());
+    }
+    let fields = cron.split_whitespace().count();
+    if fields != 5 && fields != 6 {
+        return Err("Cron schedule must have 5 or 6 fields".to_string());
+    }
+    Ok(())
+}
+
 /// Human relative label for a past timestamp: "just now", "5m ago", "3h ago",
 /// "2d ago", "4w ago".
 pub fn relative_label(then_epoch: i64, now_epoch: i64) -> String {
@@ -890,6 +933,54 @@ mod tests {
         let restored: crate::state::AppSettings = serde_json::from_value(json).unwrap();
         assert!(restored.task_templates.iter().any(|t| t.name == "Custom"));
         assert_eq!(restored.task_templates.iter().find(|t| t.name == "Custom").unwrap().prompt, "Do the thing");
+    }
+
+    // ---------- F-009 automation validation / display ----------
+
+    #[test]
+    fn validate_automation_rejects_empty_required_fields() {
+        assert_eq!(
+            validate_automation("", "0 9 * * 1", "Do it", "/tmp/project"),
+            Err("Name is required".to_string())
+        );
+        assert_eq!(
+            validate_automation("Nightly", "0 9 * * 1", "", "/tmp/project"),
+            Err("Prompt is required".to_string())
+        );
+        assert_eq!(
+            validate_automation("Nightly", "0 9 * * 1", "Do it", ""),
+            Err("Working directory is required".to_string())
+        );
+    }
+
+    #[test]
+    fn validate_automation_rejects_invalid_cron_shape() {
+        assert_eq!(
+            validate_automation("Nightly", "not cron", "Do it", "/tmp/project"),
+            Err("Cron schedule must have 5 or 6 fields".to_string())
+        );
+        assert_eq!(
+            validate_automation("Nightly", "* * * *", "Do it", "/tmp/project"),
+            Err("Cron schedule must have 5 or 6 fields".to_string())
+        );
+    }
+
+    #[test]
+    fn validate_automation_accepts_five_or_six_field_cron() {
+        assert_eq!(
+            validate_automation("Weekly", "0 9 * * 1", "Do it", "/tmp/project"),
+            Ok(())
+        );
+        assert_eq!(
+            validate_automation("Weekly", "0 0 9 * * 1", "Do it", "/tmp/project"),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn format_epoch_display_shows_readable_date_time() {
+        assert_eq!(format_epoch_display(0), "1970-01-01 00:00 UTC");
+        assert_eq!(format_epoch_display(1_781_209_200), "2026-06-11 20:20 UTC");
     }
 
     // ---------- Observe mode ----------

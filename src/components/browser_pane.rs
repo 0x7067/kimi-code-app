@@ -33,12 +33,18 @@ fn cache_busted_url(url: &str, reload_count: usize) -> String {
     format!("{url}{separator}__kimi_reload={reload_count}")
 }
 
+fn is_supported_browser_url(url: &str) -> bool {
+    let trimmed = url.trim();
+    (trimmed.starts_with("http://") || trimmed.starts_with("https://")) && !trimmed.contains(char::is_whitespace)
+}
+
 #[component]
 pub fn BrowserPane() -> Element {
     let mut url = use_signal(|| "http://localhost:3000".to_string());
     let mut active = use_signal(|| "http://localhost:3000".to_string());
     let mut reload_count = use_signal(|| 0_usize);
     let mut device = use_signal(|| Device::Desktop);
+    let mut status = use_signal(|| "Ready".to_string());
 
     use_effect(move || {
         // F-006.5: start live-reload watcher when pane opens.
@@ -78,7 +84,15 @@ pub fn BrowserPane() -> Element {
                 }
                 button {
                     class: "ghost",
-                    onclick: move |_| active.set(url.read().clone()),
+                    onclick: move |_| {
+                        let next = url.read().trim().to_string();
+                        if is_supported_browser_url(&next) {
+                            active.set(next.clone());
+                            status.set(format!("Loading {next}"));
+                        } else {
+                            status.set("Enter an http:// or https:// URL".into());
+                        }
+                    },
                     "Load"
                 }
                 button {
@@ -86,6 +100,7 @@ pub fn BrowserPane() -> Element {
                     onclick: move |_| {
                         let next = *reload_count.read() + 1;
                         reload_count.set(next);
+                        status.set("Refreshing preview".into());
                     },
                     "Refresh"
                 }
@@ -115,11 +130,13 @@ pub fn BrowserPane() -> Element {
                     "Close"
                 }
             }
+            div { class: "browser-status", "{status}" }
             div { class: "browser-frame-wrap",
                 iframe {
                     class: "browser-frame",
                     style: "width: {dev.width()};",
                     src: "{cache_busted_url(&active.read(), *reload_count.read())}",
+                    onload: move |_| status.set(format!("Loaded {}", active.read())),
                 }
             }
         }
@@ -144,5 +161,13 @@ mod tests {
             cache_busted_url("http://localhost:3000/?a=1", 8),
             "http://localhost:3000/?a=1&__kimi_reload=8"
         );
+    }
+
+    #[test]
+    fn browser_url_validation_allows_http_https_and_loopback() {
+        assert!(is_supported_browser_url("http://localhost:3000"));
+        assert!(is_supported_browser_url("https://example.com"));
+        assert!(!is_supported_browser_url("ftp://example.com"));
+        assert!(!is_supported_browser_url("not a url"));
     }
 }

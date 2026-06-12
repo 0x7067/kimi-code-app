@@ -13,9 +13,6 @@ pub fn StatusBar() -> Element {
     let pct = (usage * 100.0).round() as u32;
     let fill = usage_color(usage);
 
-    // Model / agent name reported by the agent at initialize time.
-    let model = AGENT_INFO.read().clone();
-
     let op = if *RUNNING.read() {
         ITEMS
             .read()
@@ -36,7 +33,7 @@ pub fn StatusBar() -> Element {
     rsx! {
         footer { class: "statusbar",
             span { class: if connected { "status-dot connected" } else { "status-dot" } }
-            span { class: "status-model", "{model}" }
+            span { class: "status-model", "{op}" }
             // F-011.6: prominent reminder while every tool call is auto-approved.
             if APP_SETTINGS.read().yolo {
                 span { class: "status-yolo", title: "YOLO mode — all tool calls auto-approved", "YOLO" }
@@ -47,7 +44,6 @@ pub fn StatusBar() -> Element {
                     "🧠 {mem_count}"
                 }
             }
-            span { class: "status-op", "{op}" }
             div { class: "status-spacer" }
             // F-003.13: manual compact trigger, gated off while a turn runs.
             button {

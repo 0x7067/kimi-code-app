@@ -247,24 +247,18 @@ fn RunDashboard(run: Value) -> Element {
             h4 { "Active run: {run_id}" }
             if !tasks.is_empty() {
                 {
-                    let ids = tasks
-                        .iter()
-                        .filter_map(|task| task.get("id").and_then(|v| v.as_str()).map(String::from))
-                        .collect::<Vec<_>>();
                     let run_id_all = run_id.clone();
                     rsx! {
                 button {
                     class: "ghost",
                     onclick: move |_| {
-                        for task_id in ids.clone() {
-                            let run_id = run_id_all.clone();
-                            spawn(async move {
-                                match invoke("run_multi_agent_task", serde_json::json!({"runId": run_id, "taskId": task_id})).await {
-                                    Ok(v) => current_run.set(v),
-                                    Err(e) => *ERROR.write() = Some(format!("Run task failed: {e}")),
-                                }
-                            });
+                        let run_id = run_id_all.clone();
+                        spawn(async move {
+                            match invoke("run_multi_agent_tasks", serde_json::json!({"runId": run_id})).await {
+                                Ok(v) => current_run.set(v),
+                                Err(e) => *ERROR.write() = Some(format!("Run all failed: {e}")),
                             }
+                        });
                     },
                     "Run all"
                 }

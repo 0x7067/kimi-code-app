@@ -102,16 +102,6 @@ pub fn App() -> Element {
                 refresh_sessions().await;
             });
         });
-        // F-003.4: auto-compact — watch the flag set by the reducer and
-        // dispatch /compact when the agent is idle.
-        use_effect(move || {
-            if *AUTO_COMPACT_FIRED.read() && !*RUNNING.read() && SESSION_ID.read().is_some() && *CONNECTED.read() {
-                *AUTO_COMPACT_FIRED.write() = false;
-                spawn(async {
-                    crate::actions::compact_session().await;
-                });
-            }
-        });
         spawn(async {
             // F-011.13: load persisted app settings before anything else so
             // the kimi binary override applies to the ACP connection.
@@ -120,6 +110,16 @@ pub fn App() -> Element {
             refresh_projects().await;
             refresh_sessions().await;
         });
+    });
+    // F-003.4: auto-compact — watch the flag set by the reducer and dispatch
+    // /compact when the agent is idle. This must be a top-level hook.
+    use_effect(move || {
+        if *AUTO_COMPACT_FIRED.read() && !*RUNNING.read() && SESSION_ID.read().is_some() && *CONNECTED.read() {
+            *AUTO_COMPACT_FIRED.write() = false;
+            spawn(async {
+                crate::actions::compact_session().await;
+            });
+        }
     });
 
     rsx! {

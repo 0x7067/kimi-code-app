@@ -119,6 +119,20 @@ pub fn ThreadView() -> Element {
                     div { class: "thread-hero-icon", "✦" }
                     h2 { "Welcome to Kimi Code" }
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
+                    div { class: "thread-hero-actions",
+                        button {
+                            class: "primary",
+                            onclick: move |_| *SHOW_NEW_SESSION.write() = true,
+                            "New chat"
+                        }
+                        button {
+                            class: "ghost",
+                            onclick: move |_| {
+                                document::eval("const el = document.querySelector('.project-picker select'); if (el) el.focus();");
+                            },
+                            "Choose project"
+                        }
+                    }
                 }
             }
             for (i, item) in ITEMS.read().iter().enumerate() {

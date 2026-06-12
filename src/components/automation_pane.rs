@@ -1,6 +1,7 @@
 //! F-009: Automations panel — create, edit, delete, and run automations.
 
 use crate::actions::save_app_settings;
+use crate::conversation::{format_epoch_display, validate_automation};
 use crate::ipc::invoke;
 use crate::state::*;
 use dioxus::prelude::*;
@@ -16,6 +17,7 @@ pub fn AutomationPane() -> Element {
     let mut runs = use_signal(Vec::<Value>::new);
     let mut loading_runs = use_signal(|| false);
     let mut editing = use_signal(|| None::<usize>);
+    let mut run_status = use_signal(String::new);
 
     let mut refresh_runs = move || {
         loading_runs.set(true);
@@ -74,6 +76,10 @@ pub fn AutomationPane() -> Element {
                                     editing: is_editing == Some(idx),
                                     on_edit: move |_| editing.set(Some(idx)),
                                     on_done: move |_| editing.set(None),
+                                    on_ran: move |_| {
+                                        run_status.set("Automation run finished.".into());
+                                        refresh_runs();
+                                    },
                                 }
                             }
                         }
@@ -99,6 +105,9 @@ pub fn AutomationPane() -> Element {
                 // -- Execution history --
                 div { class: "automation-section",
                     h4 { "Execution history" }
+                    if !run_status.read().is_empty() {
+                        p { class: "settings-status", "{run_status}" }
+                    }
                     if *loading_runs.read() {
                         p { class: "memory-hint", "Loading…" }
                     } else if runs.read().is_empty() {
@@ -123,6 +132,7 @@ fn AutomationCard(
     editing: bool,
     on_edit: EventHandler<()>,
     on_done: EventHandler<()>,
+    on_ran: EventHandler<()>,
 ) -> Element {
     let id_run = auto.id.clone();
     let id_del = auto.id.clone();
@@ -158,9 +168,12 @@ fn AutomationCard(
                             let id = id_run.clone();
                             let prompt = auto.prompt.clone();
                             let cwd = auto.cwd.clone();
+                            let on_ran = on_ran.clone();
                             spawn(async move {
                                 match invoke("run_automation_now", serde_json::json!({"automationId": id, "prompt": prompt, "cwd": cwd})).await {
-                                    Ok(_) => {}
+                                    Ok(_) => {
+                                        on_ran.call(());
+                                    }
                                     Err(e) => *ERROR.write() = Some(format!("Run failed: {e}")),
                                 }
                             });
@@ -204,6 +217,7 @@ fn AutomationEditor(
     let mut prompt = use_signal(|| auto.prompt.clone());
     let mut cwd = use_signal(|| auto.cwd.clone());
     let mut enabled = use_signal(|| auto.enabled);
+    let mut error = use_signal(String::new);
     let is_new = idx >= APP_SETTINGS.read().automations.len();
 
     rsx! {
@@ -255,6 +269,11 @@ fn AutomationEditor(
                 button {
                     class: "primary",
                     onclick: move |_| {
+                        if let Err(err) = validate_automation(&name.read(), &cron.read(), &prompt.read(), &cwd.read()) {
+                            error.set(err);
+                            return;
+                        }
+                        error.set(String::new());
                         let updated = crate::state::Automation {
                             id: auto.id.clone(),
                             name: name.read().clone(),
@@ -280,6 +299,9 @@ fn AutomationEditor(
                     "Cancel"
                 }
             }
+            if !error.read().is_empty() {
+                p { class: "settings-status error", "{error}" }
+            }
         }
     }
 }
@@ -289,6 +311,7 @@ fn RunRow(run: Value) -> Element {
     let status = run.get("status").and_then(|v| v.as_str()).unwrap_or("");
     let output = run.get("output").and_then(|v| v.as_str()).unwrap_or("");
     let started = run.get("startedAt").and_then(|v| v.as_i64()).unwrap_or(0);
+    let time = format_epoch_display(started);
     let status_class = match status {
         "success" => "run-status success",
         "error" => "run-status error",
@@ -299,7 +322,7 @@ fn RunRow(run: Value) -> Element {
         div { class: "automation-run",
             div { class: "run-header",
                 span { class: "{status_class}", "{status}" }
-                span { class: "run-time", "{started}" }
+                span { class: "run-time", "{time}" }
             }
             if !output.is_empty() {
                 pre { class: "run-output", "{output}" }
