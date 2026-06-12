@@ -134,6 +134,23 @@
   cursor: not-allowed;
 }
 
+.kimi-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.kimi-input-icon {
+  position: absolute;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  display: flex;
+}
+
+.kimi-input-icon.leading { left: 12px; }
+.kimi-input-icon.trailing { right: 12px; }
+
 .kimi-input.single { height: 44px; padding: 8px 12px; }
 .kimi-input.single.has-leading { padding-left: 40px; }
 .kimi-input.single.has-trailing { padding-right: 40px; }

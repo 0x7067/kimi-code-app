@@ -321,6 +321,10 @@ details.search-hit {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.composer-context-item.is-static {
+  cursor: default;
+}
+
 .composer-context-item svg {
   flex-shrink: 0;
 }

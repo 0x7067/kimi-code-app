@@ -518,7 +518,7 @@
   color: var(--text-primary);
 }
 
-.agent-header-duration {
+.agent-header-badge {
   font-size: 10.5px;
   color: var(--text-tertiary);
   background: rgba(255, 255, 255, 0.05);

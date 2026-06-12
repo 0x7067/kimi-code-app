@@ -28,8 +28,8 @@ fn SessionRow(sess: SessionMeta) -> Element {
             "data-session-id": "{sess.id}",
             class: if active { "session-item active" } else { "session-item" },
             onclick: move |_| { spawn(request_load_session(meta.clone())); },
-            div { style: "display:flex;align-items:center;gap:6px;",
-                div { class: "session-title", style: "flex:1;min-width:0;",
+            div { class: "session-item-row",
+                div { class: "session-title",
                     if running {
                         span { class: "session-running-dot", title: "Turn in progress" }
                     }
@@ -223,8 +223,8 @@ pub fn Sidebar() -> Element {
                                             spawn(request_load_session(m));
                                         }
                                     },
-                                    div { style: "display:flex;align-items:center;gap:6px;",
-                                        div { class: "session-title", style: "flex:1;min-width:0;",
+                                    div { class: "session-item-row",
+                                        div { class: "session-title",
                                             span { class: "session-running-dot", title: "Turn in progress" }
                                             "{title}"
                                         }
@@ -345,7 +345,7 @@ pub fn Sidebar() -> Element {
                 }
                 div { class: "sidebar-footer-item",
                     IconUser { size: 16 }
-                    "user@kimi.com"
+                    "Guest"
                 }
             }
         }

@@ -387,8 +387,7 @@ pub fn Composer() -> Element {
                         }
                         if !project_label.is_empty() && project_label != "No project" {
                             span {
-                                class: "composer-context-item",
-                                style: "cursor: default;",
+                                class: "composer-context-item is-static",
                                 IconFolder { size: 13, color: "currentColor" }
                                 "{project_label}"
                             }

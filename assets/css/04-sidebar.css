@@ -144,7 +144,15 @@ input.session-search {
   box-shadow: 0 0 8px var(--accent-glow);
 }
 
+.session-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .session-title {
+  flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -266,6 +274,9 @@ input.session-search {
   border-radius: 999px;
   padding: 1px 7px;
   background: rgba(255, 255, 255, 0.04);
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  text-align: center;
 }
 .project-group-sessions {
   margin-left: 16px;
@@ -378,6 +389,7 @@ input.session-search {
   color: var(--text-muted);
   margin-left: auto;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Settings category sidebar (SS-04) ---------- */

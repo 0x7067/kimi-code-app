@@ -335,7 +335,7 @@ fn render_item(
                     div { class: "agent-header",
                         KimiAvatar { state: AgentState::Idle, size: 22 }
                         span { class: "agent-header-title", "{title}" }
-                        span { class: "agent-header-duration", "Response" }
+                        span { class: "agent-header-badge", "Agent" }
                         button {
                             class: "agent-header-expand",
                             onclick: move |_| {

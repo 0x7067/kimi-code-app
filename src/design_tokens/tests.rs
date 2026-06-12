@@ -6,20 +6,27 @@ use spacing::Spacing;
 #[test]
 fn brand_and_semantic_colors_match_spec() {
     assert_eq!(Colors::KIMI_BLUE, "#6EA1FF");
-    assert_eq!(Colors::BG_DEEPEST, "#0B0D10");
-    assert_eq!(Colors::BG_DARK, "#15171B");
-    assert_eq!(Colors::BG_SURFACE, "#1B1E24");
-    assert_eq!(Colors::BG_HOVER, "#232832");
-    assert_eq!(Colors::BG_CODE, "#0B0D10");
-    assert_eq!(Colors::BORDER_SUBTLE, "#252A33");
+    assert_eq!(Colors::KIMI_BLUE_HOVER, "#9BBDFF");
+    assert_eq!(Colors::KIMI_BLUE_MUTED, "rgba(110, 161, 255, 0.16)");
+    assert_eq!(Colors::BG_DEEPEST, "#050505");
+    assert_eq!(Colors::BG_DARK, "#0A0A0C");
+    assert_eq!(Colors::BG_SURFACE, "#101014");
+    assert_eq!(Colors::BG_ELEVATED, "#18181D");
+    assert_eq!(Colors::BG_HOVER, "#18181D");
+    assert_eq!(Colors::BG_ACTIVE, "#202026");
+    assert_eq!(Colors::BG_CODE, "#060608");
+    assert_eq!(Colors::BORDER_SUBTLE, "rgba(255, 255, 255, 0.045)");
+    assert_eq!(Colors::BORDER_DEFAULT, "rgba(255, 255, 255, 0.085)");
+    assert_eq!(Colors::BORDER_STRONG, "rgba(255, 255, 255, 0.145)");
     assert_eq!(Colors::BORDER_ACTIVE, "#6EA1FF");
-    assert_eq!(Colors::TEXT_PRIMARY, "#F4F6FA");
-    assert_eq!(Colors::TEXT_SECONDARY, "#BAC2CE");
-    assert_eq!(Colors::TEXT_TERTIARY, "#87909E");
-    assert_eq!(Colors::TEXT_DISABLED, "#5F6876");
-    assert_eq!(Colors::SUCCESS, "#22C55E");
-    assert_eq!(Colors::WARNING, "#EAB308");
-    assert_eq!(Colors::ERROR, "#EF4444");
+    assert_eq!(Colors::BORDER_HIGHLIGHT, "rgba(255, 255, 255, 0.22)");
+    assert_eq!(Colors::TEXT_PRIMARY, "#F7F8FB");
+    assert_eq!(Colors::TEXT_SECONDARY, "#C5C9D3");
+    assert_eq!(Colors::TEXT_TERTIARY, "#8A8F9C");
+    assert_eq!(Colors::TEXT_DISABLED, "#5C6270");
+    assert_eq!(Colors::SUCCESS, "#34D399");
+    assert_eq!(Colors::WARNING, "#FBBF24");
+    assert_eq!(Colors::ERROR, "#F87171");
     assert_eq!(Colors::INFO, "#6EA1FF");
 }
 

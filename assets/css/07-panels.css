@@ -298,6 +298,7 @@
   font-size: 11px;
   color: var(--text-tertiary);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .checkpoint-actions {
@@ -479,6 +480,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
 .browser-frame {
@@ -628,6 +630,7 @@
   font-size: 11px;
   color: var(--accent);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .memory-snippet-date {
@@ -635,6 +638,7 @@
   color: var(--text-muted);
   font-family: var(--font-mono);
   margin-right: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Status bar memory indicator */
@@ -724,6 +728,7 @@
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .automation-status {
@@ -792,6 +797,7 @@
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .run-output {

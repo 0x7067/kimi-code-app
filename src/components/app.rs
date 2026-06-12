@@ -178,6 +178,11 @@ pub fn App() -> Element {
     });
 
     rsx! {
+        a {
+            class: "skip-link",
+            href: "#thread",
+            "Skip to content"
+        }
         div { class: "shell", "data-testid": "app-shell",
             Sidebar {}
             main { class: "main",

@@ -77,7 +77,7 @@
 .statusbar {
   height: 28px;
   flex-shrink: 0;
-  background: #0E1013;
+  background: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
   padding: 0 12px;
   display: flex;
@@ -111,7 +111,7 @@
   text-overflow: ellipsis;
 }
 .status-spacer { flex: 1; }
-.status-ctx-label { white-space: nowrap; }
+.status-ctx-label { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .status-ctx-bar {
   width: 96px;
   height: 4px;

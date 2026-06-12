@@ -4,9 +4,10 @@ pub struct Typography;
 
 #[allow(dead_code)]
 impl Typography {
-    // Font families
+    // Font families — premium grotesk first, system fallbacks; kept in sync
+    // with `assets/css/01-tokens.css`.
     pub const FONT_UI: &str = "'Geist', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Text', ui-sans-serif, system-ui, sans-serif";
-    pub const FONT_MONO: &str = "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace";
+    pub const FONT_MONO: &str = "ui-monospace, 'SF Mono', 'SFMono-Regular', Menlo, Monaco, 'Cascadia Code', monospace";
 
     // Type scale
     pub const DISPLAY_SIZE: &str = "24px";

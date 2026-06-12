@@ -1,6 +1,5 @@
 //! KimiInput — Text input with Kimi styling, focus ring, and optional icons.
 
-use crate::design_tokens::Colors;
 use dioxus::prelude::*;
 
 #[component]
@@ -32,10 +31,10 @@ pub fn KimiInput(
 
     rsx! {
         div {
-            style: "position: relative; display: flex; align-items: center; width: 100%;",
+            class: "kimi-input-wrap",
             if let Some(icon) = leading_icon {
                 div {
-                    style: "position: absolute; left: 12px; color: {Colors::TEXT_TERTIARY}; pointer-events: none; display: flex;",
+                    class: "kimi-input-icon leading",
                     {icon}
                 }
             }
@@ -72,7 +71,7 @@ pub fn KimiInput(
             }
             if let Some(icon) = trailing_icon {
                 div {
-                    style: "position: absolute; right: 12px; color: {Colors::TEXT_TERTIARY}; pointer-events: none; display: flex;",
+                    class: "kimi-input-icon trailing",
                     {icon}
                 }
             }
