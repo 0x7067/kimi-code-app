@@ -24,6 +24,8 @@ fn SessionRow(sess: SessionMeta) -> Element {
     let title = SESSION_TITLES.read().get(&sess.id).cloned().unwrap_or(sess.title.clone());
     rsx! {
         div {
+            "data-testid": "session-row",
+            "data-session-id": "{sess.id}",
             class: if active { "session-item active" } else { "session-item" },
             onclick: move |_| { spawn(request_load_session(meta.clone())); },
             div { style: "display:flex;align-items:center;gap:6px;",
@@ -119,7 +121,7 @@ pub fn Sidebar() -> Element {
     let mut show_all_projects = use_signal(|| false);
 
     rsx! {
-        aside { class: "sidebar",
+        aside { class: "sidebar", "data-testid": "sidebar",
             // ---------- Brand ----------
             div { class: "sidebar-head",
                 span { class: "brand",
@@ -131,6 +133,7 @@ pub fn Sidebar() -> Element {
             // ---------- Project picker ----------
             div { class: "project-picker",
                 select {
+                    "data-testid": "project-select",
                     value: project.clone().unwrap_or_default(),
                     onchange: move |e| {
                         let v = e.value();
@@ -144,6 +147,7 @@ pub fn Sidebar() -> Element {
                     }
                 }
                 button {
+                    "data-testid": "open-folder-button",
                     class: "ghost icon-btn",
                     title: "Open folder…",
                     onclick: move |_| {
@@ -163,12 +167,14 @@ pub fn Sidebar() -> Element {
             // ---------- Navigation (SS-01) ----------
             nav { class: "sidebar-nav",
                 div {
+                    "data-testid": "nav-new-chat",
                     class: "sidebar-nav-item",
                     onclick: move |_| { *SHOW_NEW_SESSION.write() = true; },
                     IconEdit { size: 16 }
                     "New chat"
                 }
                 div {
+                    "data-testid": "nav-search",
                     class: "sidebar-nav-item",
                     onclick: move |_| {
                         document::eval("const el = document.getElementById('sidebar-search-input'); if (el) el.focus();");
@@ -177,12 +183,14 @@ pub fn Sidebar() -> Element {
                     "Search"
                 }
                 div {
+                    "data-testid": "nav-plugins",
                     class: "sidebar-nav-item",
                     onclick: move |_| { *VIEW.write() = View::Settings; },
                     IconPlug { size: 16 }
                     "Plugins"
                 }
                 div {
+                    "data-testid": "nav-automations",
                     class: "sidebar-nav-item",
                     onclick: move |_| {
                         let current = *SHOW_AUTOMATIONS.read();
@@ -236,6 +244,7 @@ pub fn Sidebar() -> Element {
             div { class: "session-search-wrap",
                 IconSearch { size: 14 }
                 input {
+                    "data-testid": "sidebar-search-input",
                     id: "sidebar-search-input",
                     class: "session-search",
                     r#type: "search",
@@ -325,6 +334,7 @@ pub fn Sidebar() -> Element {
             // ---------- Footer ----------
             div { class: "sidebar-footer",
                 div {
+                    "data-testid": "sidebar-settings",
                     class: "sidebar-footer-item",
                     onclick: move |_| {
                         let next = if *VIEW.read() == View::Settings { View::Chat } else { View::Settings };

@@ -1,13 +1,13 @@
 /* ---------- Sidebar ---------- */
 .sidebar {
-  width: 260px;
-  min-width: 260px;
-  background: var(--bg-surface);
+  width: 236px;
+  min-width: 236px;
+  background: rgba(18, 20, 24, 0.94);
   border-right: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
-  padding: 14px 12px;
-  gap: 10px;
+  padding: 12px 10px;
+  gap: 9px;
   position: relative;
 }
 
@@ -27,13 +27,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 2px 4px 6px;
+  padding: 2px 5px 7px;
 }
 
 .brand {
-  font-weight: 700;
+  font-weight: 680;
   font-size: 15px;
-  letter-spacing: -0.2px;
+  letter-spacing: 0;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -41,16 +41,16 @@
 }
 
 .brand-mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), #8aabff);
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #eef4ff, #91b7ff);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
   font-weight: 800;
-  color: #fff;
+  color: #0c1424;
   flex-shrink: 0;
 }
 
@@ -70,7 +70,7 @@
   width: 100%;
   font-size: 13px;
   font-weight: 500;
-  padding: 7px 12px;
+  padding: 7px 11px;
   border-radius: var(--radius-md);
 }
 
@@ -98,14 +98,14 @@ input.session-search {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   margin: 0 -4px;
   padding: 0 4px;
 }
 
 .session-item {
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
+  padding: 8px 9px;
+  border-radius: 8px;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
@@ -113,23 +113,23 @@ input.session-search {
 }
 
 .session-item:hover {
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .session-item.active {
-  background: var(--bg-hover);
-  border-color: var(--accent-dim);
+  background: rgba(110, 161, 255, 0.11);
+  border-color: rgba(110, 161, 255, 0.2);
 }
 
 /* Active indicator line */
 .session-item.active::before {
   content: "";
   position: absolute;
-  left: -4px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
+  left: -3px;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 0 3px 3px 0;
   background: var(--accent);
 }
 
@@ -138,14 +138,14 @@ input.session-search {
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 520;
   color: var(--text-primary);
   line-height: 1.4;
 }
 
 .session-meta {
   font-size: 11px;
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   line-height: 1.4;
   margin-top: 1px;
   display: flex;
@@ -235,7 +235,7 @@ input.session-search {
   font-size: 12px;
 }
 .project-group-head:hover {
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.04);
 }
 .project-group-head.selected .project-group-name {
   color: var(--text-primary);
@@ -578,4 +578,3 @@ input.session-search {
 .ios-toggle input:checked + .ios-toggle-track .ios-toggle-thumb {
   transform: translateX(20px);
 }
-

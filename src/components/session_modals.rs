@@ -45,11 +45,12 @@ pub fn NewSessionModal() -> Element {
     let can_create = !work_dir().trim().is_empty() && *CONNECTED.read();
 
     rsx! {
-        div { class: "overlay",
-            div { class: "modal session-modal",
+        div { class: "overlay", "data-testid": "new-session-overlay",
+            div { class: "modal session-modal", "data-testid": "new-session-modal",
                 h3 { "New session" }
                 label { class: "modal-label", "Session name (optional)" }
                 input {
+                    "data-testid": "new-session-name",
                     class: "kimi-input single",
                     r#type: "text",
                     placeholder: "e.g. Fix sidebar layout",
@@ -59,6 +60,7 @@ pub fn NewSessionModal() -> Element {
                 label { class: "modal-label", "Working directory" }
                 div { class: "modal-row",
                     input {
+                        "data-testid": "new-session-workdir",
                         class: "kimi-input single",
                         r#type: "text",
                         placeholder: "/path/to/project",
@@ -66,6 +68,7 @@ pub fn NewSessionModal() -> Element {
                         oninput: move |e| work_dir.set(e.value()),
                     }
                     button {
+                        "data-testid": "new-session-browse",
                         class: "ghost",
                         onclick: move |_| {
                             spawn(async move {
@@ -79,6 +82,7 @@ pub fn NewSessionModal() -> Element {
                 }
                 label { class: "modal-label", "Initial prompt (optional)" }
                 textarea {
+                    "data-testid": "new-session-prompt",
                     class: "kimi-input multi",
                     placeholder: "Sent as the first message after the session starts",
                     value: "{prompt}",
@@ -106,11 +110,13 @@ pub fn NewSessionModal() -> Element {
                 }
                 div { class: "modal-actions",
                     button {
+                        "data-testid": "new-session-cancel",
                         class: "ghost",
                         onclick: move |_| *SHOW_NEW_SESSION.write() = false,
                         "Cancel"
                     }
                     button {
+                        "data-testid": "new-session-create",
                         class: "primary",
                         disabled: !can_create,
                         onclick: move |_| {
@@ -132,8 +138,8 @@ pub fn NewSessionModal() -> Element {
 #[component]
 pub fn CompactConfirmModal() -> Element {
     rsx! {
-        div { class: "overlay",
-            div { class: "modal",
+        div { class: "overlay", "data-testid": "compact-confirm-overlay",
+            div { class: "modal", "data-testid": "compact-confirm-modal",
                 h3 { "Compact context" }
                 p {
                     "This sends /compact to the agent, which summarizes this \
@@ -167,8 +173,8 @@ pub fn CompactConfirmModal() -> Element {
 pub fn ResumeConflictModal() -> Element {
     let Some(meta) = RESUME_CONFLICT.read().clone() else { return rsx! {} };
     rsx! {
-        div { class: "overlay",
-            div { class: "modal",
+        div { class: "overlay", "data-testid": "resume-conflict-overlay",
+            div { class: "modal", "data-testid": "resume-conflict-modal",
                 h3 { "Session active elsewhere" }
                 p {
                     "This session looks active in another process (e.g. the CLI). \

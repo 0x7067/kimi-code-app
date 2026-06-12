@@ -10,8 +10,8 @@ pub fn PermissionModal() -> Element {
     };
     let mut responding = use_signal(|| None::<String>);
     rsx! {
-        div { class: "overlay",
-            div { class: "modal permission-modal",
+        div { class: "overlay", "data-testid": "permission-overlay",
+            div { class: "modal permission-modal", "data-testid": "permission-modal",
                 div { class: "permission-head",
                     span { class: "permission-badge", "Approval" }
                     h3 { "Permission required" }
@@ -30,6 +30,8 @@ pub fn PermissionModal() -> Element {
                             let disabled = responding.read().is_some();
                             rsx! {
                                 button {
+                                    "data-testid": "permission-option",
+                                    "data-option-id": "{option_id}",
                                     key: "{option_id}",
                                     class: "{class}",
                                     disabled,

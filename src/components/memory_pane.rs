@@ -50,7 +50,7 @@ pub fn MemoryPane() -> Element {
     };
 
     rsx! {
-        div { class: "memory-pane",
+        div { class: "memory-pane", "data-testid": "memory-pane",
             div { class: "memory-head",
                 span { "Memory" }
                 div { class: "memory-actions",
@@ -58,11 +58,13 @@ pub fn MemoryPane() -> Element {
                         span { class: "memory-spinner", "Indexing…" }
                     }
                     button {
+                        "data-testid": "memory-refresh",
                         class: "ghost",
                         onclick: move |_| { refresh_index(); spawn(async move { refresh_memories().await; }); },
                         "Refresh"
                     }
                     button {
+                        "data-testid": "memory-close",
                         class: "ghost",
                         onclick: move |_| *SHOW_MEMORY.write() = false,
                         "Close"
@@ -75,6 +77,7 @@ pub fn MemoryPane() -> Element {
                     h4 { "Add memory" }
                     div { class: "memory-row",
                         input {
+                            "data-testid": "memory-new-input",
                             class: "prefs-input",
                             placeholder: "Something to remember about this project…",
                             value: "{new_content}",
@@ -92,6 +95,7 @@ pub fn MemoryPane() -> Element {
                             },
                         }
                         button {
+                            "data-testid": "memory-save",
                             class: "primary",
                             onclick: move |_| {
                                 let text = new_content.read().clone();
@@ -112,6 +116,7 @@ pub fn MemoryPane() -> Element {
                     div { class: "memory-section",
                         h4 { "Memories ({filtered.len()})" }
                         input {
+                            "data-testid": "memory-search-input",
                             class: "prefs-input",
                             placeholder: "Search memories…",
                             value: "{search}",
@@ -155,6 +160,7 @@ fn MemorySnippetRow(snippet: Value) -> Element {
 
     rsx! {
         div {
+            "data-testid": "memory-snippet",
             class: if pinned { "memory-snippet pinned" } else { "memory-snippet" },
             div { class: "memory-snippet-content", "{content}" }
             div { class: "memory-snippet-meta",

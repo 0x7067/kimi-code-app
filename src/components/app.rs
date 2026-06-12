@@ -9,13 +9,27 @@ use serde_json::Value;
 
 #[component]
 pub fn App() -> Element {
+    let has_plan = !PLAN.read().is_empty();
+    let inspector_open = has_plan
+        || *TERMINAL_OPEN.read()
+        || *SHOW_DIFF.read()
+        || *SHOW_MEMORY.read()
+        || *SHOW_BROWSER.read()
+        || *SHOW_MULTI_AGENT.read()
+        || *SHOW_AUTOMATIONS.read();
+
     use_effect(|| {
+        let _verify = crate::verify::install_verify_mode_from_location();
         listen_forever("acp:update", |payload| apply_update(&payload));
         listen_forever("acp:permission_request", |payload| {
             let request_id = payload.get("requestId").and_then(|x| x.as_u64()).unwrap_or(0);
             let params = payload.get("params").cloned().unwrap_or(Value::Null);
             let tool = params.get("toolCall").cloned().unwrap_or(Value::Null);
-            let title = tool.get("title").and_then(|x| x.as_str()).unwrap_or("Tool call").to_string();
+            let title = tool
+                .get("title")
+                .and_then(|x| x.as_str())
+                .unwrap_or("Tool call")
+                .to_string();
             let detail = tool
                 .get("rawInput")
                 .map(|v| serde_json::to_string_pretty(v).unwrap_or_default())
@@ -27,7 +41,10 @@ pub fn App() -> Element {
                     arr.iter()
                         .map(|o| {
                             (
-                                o.get("optionId").and_then(|x| x.as_str()).unwrap_or("").to_string(),
+                                o.get("optionId")
+                                    .and_then(|x| x.as_str())
+                                    .unwrap_or("")
+                                    .to_string(),
                                 o.get("name").and_then(|x| x.as_str()).unwrap_or("").to_string(),
                                 o.get("kind").and_then(|x| x.as_str()).unwrap_or("").to_string(),
                             )
@@ -37,7 +54,11 @@ pub fn App() -> Element {
                 .unwrap_or_default();
             // F-011.5/.6: approval preferences — auto-approve short-circuits
             // the modal via the normal acp_respond_permission path.
-            let kind = tool.get("kind").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let kind = tool
+                .get("kind")
+                .and_then(|x| x.as_str())
+                .unwrap_or("")
+                .to_string();
             let settings = APP_SETTINGS.read().clone();
             if let Some(option_id) = crate::conversation::auto_approve_option(
                 settings.yolo,
@@ -54,7 +75,12 @@ pub fn App() -> Element {
                 });
                 return;
             }
-            *PERMISSION.write() = Some(PermissionRequest { request_id, title, detail, options });
+            *PERMISSION.write() = Some(PermissionRequest {
+                request_id,
+                title,
+                detail,
+                options,
+            });
         });
         listen_forever("acp:disconnected", |_| {
             *CONNECTED.write() = false;
@@ -111,10 +137,14 @@ pub fn App() -> Element {
             refresh_sessions().await;
         });
     });
+    use_effect(|| {
+        crate::verify::sync_debug_snapshot();
+    });
     // F-003.4: auto-compact — watch the flag set by the reducer and dispatch
     // /compact when the agent is idle. This must be a top-level hook.
     use_effect(move || {
-        if *AUTO_COMPACT_FIRED.read() && !*RUNNING.read() && SESSION_ID.read().is_some() && *CONNECTED.read() {
+        if *AUTO_COMPACT_FIRED.read() && !*RUNNING.read() && SESSION_ID.read().is_some() && *CONNECTED.read()
+        {
             *AUTO_COMPACT_FIRED.write() = false;
             spawn(async {
                 crate::actions::compact_session().await;
@@ -123,7 +153,7 @@ pub fn App() -> Element {
     });
 
     rsx! {
-        div { class: "shell",
+        div { class: "shell", "data-testid": "app-shell",
             Sidebar {}
             main { class: "main",
                 Topbar {}
@@ -135,24 +165,45 @@ pub fn App() -> Element {
                             ThreadView {}
                             PendingQueue {}
                             Composer {}
-                            if *TERMINAL_OPEN.read() {
-                                TerminalPane {}
+                        }
+                        if inspector_open {
+                            aside { class: "inspector-rail", "data-testid": "inspector-rail",
+                                if has_plan {
+                                    section { class: "plan-inspector", "data-testid": "plan-sticky",
+                                        div { class: "plan-head", "Plan" }
+                                        for (i, entry) in PLAN.read().iter().enumerate() {
+                                            div { key: "{i}", class: "plan-entry {entry.status}",
+                                                span { class: "plan-status {entry.status}",
+                                                    {match entry.status.as_str() {
+                                                        "completed" => "✓",
+                                                        "in_progress" => "▶",
+                                                        _ => "○",
+                                                    }}
+                                                }
+                                                span { class: "plan-content", "{entry.content}" }
+                                            }
+                                        }
+                                    }
+                                }
+                                if *TERMINAL_OPEN.read() {
+                                    TerminalPane {}
+                                }
+                                if *SHOW_DIFF.read() {
+                                    DiffPane {}
+                                }
+                                if *SHOW_MEMORY.read() {
+                                    MemoryPane {}
+                                }
+                                if *SHOW_BROWSER.read() {
+                                    BrowserPane {}
+                                }
+                                if *SHOW_MULTI_AGENT.read() {
+                                    MultiAgentPane {}
+                                }
+                                if *SHOW_AUTOMATIONS.read() {
+                                    AutomationPane {}
+                                }
                             }
-                        }
-                        if *SHOW_DIFF.read() {
-                            DiffPane {}
-                        }
-                        if *SHOW_MEMORY.read() {
-                            MemoryPane {}
-                        }
-                        if *SHOW_BROWSER.read() {
-                            BrowserPane {}
-                        }
-                        if *SHOW_MULTI_AGENT.read() {
-                            MultiAgentPane {}
-                        }
-                        if *SHOW_AUTOMATIONS.read() {
-                            AutomationPane {}
                         }
                     }
                 }

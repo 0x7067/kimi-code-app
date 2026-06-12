@@ -65,7 +65,7 @@
 }
 
 @keyframes response-glow {
-  0% { box-shadow: 0 0 0 1px rgba(30, 144, 255, 0.2), 0 0 28px rgba(30, 144, 255, 0.16); }
+  0% { box-shadow: 0 0 0 1px rgba(110, 161, 255, 0.18), 0 0 28px rgba(110, 161, 255, 0.14); }
   100% { box-shadow: none; }
 }
 

@@ -4,6 +4,7 @@ mod conversation;
 mod design_tokens;
 mod ipc;
 mod markdown;
+mod verify;
 mod state;
 
 use dioxus::prelude::*;

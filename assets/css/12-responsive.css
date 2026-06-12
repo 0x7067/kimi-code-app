@@ -7,7 +7,7 @@
 /* < 1440px: right panel leaves the layout flow and overlays instead
    (toggled by the "Diff" button in the header). */
 @media (max-width: 1439px) {
-  .diff-pane {
+  .workspace > .diff-pane {
     position: fixed;
     top: 44px;
     right: 0;
@@ -17,6 +17,14 @@
     z-index: 30;
     box-shadow: var(--shadow-lg);
     animation: panel-slide-in 200ms ease-out;
+  }
+
+  .inspector-rail .diff-pane {
+    position: static;
+    width: auto;
+    max-width: none;
+    box-shadow: none;
+    animation: none;
   }
 }
 
@@ -69,29 +77,29 @@
 .statusbar {
   height: 28px;
   flex-shrink: 0;
-  background: #0A0A0A;
+  background: #0E1013;
   border-top: 1px solid var(--border-subtle);
   padding: 0 12px;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #737373;
+  color: var(--text-tertiary);
   user-select: none;
 }
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #737373;
+  background: var(--text-muted);
   flex-shrink: 0;
 }
 .status-dot.connected {
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(30, 144, 255, 0.5);
+  box-shadow: 0 0 6px rgba(110, 161, 255, 0.46);
 }
 .status-model {
-  color: #737373;
+  color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -107,7 +115,7 @@
 .status-ctx-bar {
   width: 96px;
   height: 4px;
-  background: #262626;
+  background: var(--bg-hover);
   border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;
@@ -130,7 +138,7 @@
   font-size: 11px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  background: rgba(20, 20, 20, 0.85);
+  background: rgba(21, 23, 27, 0.9);
   color: var(--text-secondary);
   cursor: pointer;
   opacity: 0;

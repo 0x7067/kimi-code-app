@@ -195,7 +195,7 @@ pub fn TerminalPane() -> Element {
     let can_send_output = terminal_output_prompt(&output.read()).is_some();
 
     rsx! {
-        div { class: "terminal-pane",
+        div { class: "terminal-pane", "data-testid": "terminal-pane",
             div { class: "terminal-head",
                 span { class: "terminal-title", "Terminal" }
                 if id_opt.is_some() {
@@ -205,6 +205,7 @@ pub fn TerminalPane() -> Element {
                 }
                 div { class: "terminal-actions",
                     button {
+                        "data-testid": "terminal-send-to-chat",
                         class: "ghost icon-btn",
                         title: "Send terminal output to chat",
                         disabled: !can_send_output,
@@ -216,12 +217,14 @@ pub fn TerminalPane() -> Element {
                         "Send to chat"
                     }
                     button {
+                        "data-testid": "terminal-clear",
                         class: "ghost icon-btn",
                         title: "Clear output",
                         onclick: move |_| output.set(String::new()),
                         "Clear"
                     }
                     button {
+                        "data-testid": "terminal-close",
                         class: "ghost icon-btn",
                         title: "Close terminal",
                         onclick: move |_| close_terminal(),
@@ -264,6 +267,7 @@ pub fn TerminalPane() -> Element {
             div { class: "terminal-input-line",
                 span { class: "terminal-prompt", "$" }
                 input {
+                    "data-testid": "terminal-input",
                     class: "terminal-input",
                     r#type: "text",
                     placeholder: if id_opt.is_some() { "Type a command…" } else { "Terminal closed" },

@@ -70,9 +70,10 @@ pub fn BrowserPane() -> Element {
     let dev = *device.read();
 
     rsx! {
-        div { class: "browser-pane",
+        div { class: "browser-pane", "data-testid": "browser-pane",
             div { class: "browser-head",
                 input {
+                    "data-testid": "browser-url-input",
                     class: "browser-url",
                     value: "{url}",
                     oninput: move |e| url.set(e.value()),
@@ -83,6 +84,7 @@ pub fn BrowserPane() -> Element {
                     },
                 }
                 button {
+                    "data-testid": "browser-load",
                     class: "ghost",
                     onclick: move |_| {
                         let next = url.read().trim().to_string();
@@ -96,6 +98,7 @@ pub fn BrowserPane() -> Element {
                     "Load"
                 }
                 button {
+                    "data-testid": "browser-refresh",
                     class: "ghost",
                     onclick: move |_| {
                         let next = *reload_count.read() + 1;
@@ -107,6 +110,7 @@ pub fn BrowserPane() -> Element {
                 div { class: "browser-devices",
                     for d in [Device::Mobile, Device::Tablet, Device::Desktop] {
                         button {
+                            "data-testid": "browser-device-toggle",
                             key: "{d.label()}",
                             class: if dev == d { "ghost active" } else { "ghost" },
                             onclick: move |_| device.set(d),
@@ -115,11 +119,13 @@ pub fn BrowserPane() -> Element {
                     }
                 }
                 button {
+                    "data-testid": "browser-share",
                     class: "ghost",
                     onclick: move |_| send_url_to_chat(),
                     "Share"
                 }
                 button {
+                    "data-testid": "browser-close",
                     class: "ghost",
                     onclick: move |_| {
                         spawn(async {
@@ -130,9 +136,10 @@ pub fn BrowserPane() -> Element {
                     "Close"
                 }
             }
-            div { class: "browser-status", "{status}" }
+            div { class: "browser-status", "data-testid": "browser-status", "{status}" }
             div { class: "browser-frame-wrap",
                 iframe {
+                    "data-testid": "browser-frame",
                     class: "browser-frame",
                     style: "width: {dev.width()};",
                     src: "{cache_busted_url(&active.read(), *reload_count.read())}",

@@ -5,22 +5,22 @@ use spacing::Spacing;
 
 #[test]
 fn brand_and_semantic_colors_match_spec() {
-    assert_eq!(Colors::KIMI_BLUE, "#1E90FF");
-    assert_eq!(Colors::BG_DEEPEST, "#0A0A0A");
-    assert_eq!(Colors::BG_DARK, "#141414");
-    assert_eq!(Colors::BG_SURFACE, "#1E1E1E");
-    assert_eq!(Colors::BG_HOVER, "#262626");
-    assert_eq!(Colors::BG_CODE, "#0F0F0F");
-    assert_eq!(Colors::BORDER_SUBTLE, "#2E2E2E");
-    assert_eq!(Colors::BORDER_ACTIVE, "#1E90FF");
-    assert_eq!(Colors::TEXT_PRIMARY, "#F5F5F5");
-    assert_eq!(Colors::TEXT_SECONDARY, "#A3A3A3");
-    assert_eq!(Colors::TEXT_TERTIARY, "#737373");
-    assert_eq!(Colors::TEXT_DISABLED, "#525252");
+    assert_eq!(Colors::KIMI_BLUE, "#6EA1FF");
+    assert_eq!(Colors::BG_DEEPEST, "#0B0D10");
+    assert_eq!(Colors::BG_DARK, "#15171B");
+    assert_eq!(Colors::BG_SURFACE, "#1B1E24");
+    assert_eq!(Colors::BG_HOVER, "#232832");
+    assert_eq!(Colors::BG_CODE, "#0B0D10");
+    assert_eq!(Colors::BORDER_SUBTLE, "#252A33");
+    assert_eq!(Colors::BORDER_ACTIVE, "#6EA1FF");
+    assert_eq!(Colors::TEXT_PRIMARY, "#F4F6FA");
+    assert_eq!(Colors::TEXT_SECONDARY, "#BAC2CE");
+    assert_eq!(Colors::TEXT_TERTIARY, "#87909E");
+    assert_eq!(Colors::TEXT_DISABLED, "#5F6876");
     assert_eq!(Colors::SUCCESS, "#22C55E");
     assert_eq!(Colors::WARNING, "#EAB308");
     assert_eq!(Colors::ERROR, "#EF4444");
-    assert_eq!(Colors::INFO, "#1E90FF");
+    assert_eq!(Colors::INFO, "#6EA1FF");
 }
 
 #[test]

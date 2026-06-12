@@ -58,16 +58,22 @@ pub fn Topbar() -> Element {
     let connected = *CONNECTED.read();
     let has_items = !ITEMS.read().is_empty();
     rsx! {
-        header { class: "topbar",
+        header { class: "topbar", "data-testid": "topbar",
             div { class: "topbar-left",
                 span { class: if connected { "dot ok" } else { "dot bad" } }
-                span { class: "agent-name", "{AGENT_INFO}" }
+                span { class: "agent-name", "data-testid": "agent-status", "{AGENT_INFO}" }
                 if !connected {
-                    button { class: "ghost", onclick: move |_| { spawn(connect()); }, "Reconnect" }
+                    button {
+                        "data-testid": "reconnect-button",
+                        class: "ghost",
+                        onclick: move |_| { spawn(connect()); },
+                        "Reconnect"
+                    }
                 }
             }
             div { class: "topbar-right",
                 button {
+                    "data-testid": "toggle-search",
                     class: if *SEARCH_OPEN.read() { "ghost active" } else { "ghost" },
                     title: "Search in conversation (⌘F)",
                     onclick: move |_| {
@@ -93,6 +99,7 @@ pub fn Topbar() -> Element {
                     }
                 }
                 button {
+                    "data-testid": "toggle-checkpoints",
                     class: if *SHOW_CHECKPOINTS.read() { "ghost active" } else { "ghost" },
                     title: "Session checkpoints",
                     onclick: move |_| {
@@ -103,6 +110,7 @@ pub fn Topbar() -> Element {
                     "Checkpoints"
                 }
                 button {
+                    "data-testid": "toggle-diff",
                     class: if *SHOW_DIFF.read() { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let now = !*SHOW_DIFF.read();
@@ -112,6 +120,7 @@ pub fn Topbar() -> Element {
                     "Diff"
                 }
                 button {
+                    "data-testid": "toggle-terminal",
                     class: if *TERMINAL_OPEN.read() { "ghost active" } else { "ghost" },
                     title: "Toggle terminal",
                     onclick: move |_| {
@@ -121,6 +130,7 @@ pub fn Topbar() -> Element {
                     "Terminal"
                 }
                 button {
+                    "data-testid": "toggle-memory",
                     class: if *SHOW_MEMORY.read() { "ghost active" } else { "ghost" },
                     title: "Project memory",
                     onclick: move |_| {
@@ -130,6 +140,7 @@ pub fn Topbar() -> Element {
                     "Memory"
                 }
                 button {
+                    "data-testid": "toggle-browser",
                     class: if *SHOW_BROWSER.read() { "ghost active" } else { "ghost" },
                     title: "Browser preview",
                     onclick: move |_| {
@@ -139,6 +150,7 @@ pub fn Topbar() -> Element {
                     "Browser"
                 }
                 button {
+                    "data-testid": "toggle-multi-agent",
                     class: if *SHOW_MULTI_AGENT.read() { "ghost active" } else { "ghost" },
                     title: "Multi-agent worktrees",
                     onclick: move |_| {
@@ -148,6 +160,7 @@ pub fn Topbar() -> Element {
                     "Multi-agent"
                 }
                 button {
+                    "data-testid": "toggle-automations",
                     class: if *SHOW_AUTOMATIONS.read() { "ghost active" } else { "ghost" },
                     title: "Automations",
                     onclick: move |_| {
@@ -157,6 +170,7 @@ pub fn Topbar() -> Element {
                     "Automations"
                 }
                 button {
+                    "data-testid": "toggle-settings",
                     class: if *VIEW.read() == View::Settings { "ghost active" } else { "ghost" },
                     onclick: move |_| {
                         let v = *VIEW.read();

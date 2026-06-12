@@ -4,7 +4,9 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: var(--bg-base);
+  background:
+    radial-gradient(circle at 38% -18%, rgba(110, 161, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, #121419 0%, var(--bg-base) 42%, #0e1013 100%);
 }
 
 /* ---------- Buttons ---------- */
@@ -16,7 +18,12 @@ button {
   cursor: pointer;
   background: var(--bg-hover);
   color: var(--text-primary);
-  transition: all var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -43,8 +50,8 @@ button:not(:disabled):active {
 
 button.primary {
   background: var(--accent);
-  color: #fff;
-  font-weight: 500;
+  color: #08101f;
+  font-weight: 650;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, var(--shadow-sm);
 }
 
@@ -146,18 +153,20 @@ input[type="search"]::placeholder {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--bg-base);
+  background: rgba(16, 17, 20, 0.78);
 }
 
 /* ---------- Topbar ---------- */
 .topbar {
-  height: 44px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 0 14px 0 16px;
   border-bottom: 1px solid var(--border-default);
-  background: var(--bg-surface);
+  background: rgba(21, 23, 27, 0.78);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
   flex-shrink: 0;
   position: relative;
 }
@@ -176,14 +185,54 @@ input[type="search"]::placeholder {
 .topbar-left, .topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.topbar-left {
+  min-width: 0;
+}
+
+.topbar-right {
+  gap: 6px;
+  min-width: 0;
+}
+
+.topbar-right button,
+.topbar-right .kimi-dropdown-item {
+  font-size: 12.5px;
+}
+
+.topbar-right > button,
+.topbar-right [style*="display: inline-block"] > div > button {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.018);
+  border-color: rgba(255, 255, 255, 0.065);
+}
+
+.topbar-right > button:hover,
+.topbar-right [style*="display: inline-block"] > div > button:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.topbar-right > button.active {
+  color: var(--text-primary);
+  background: rgba(110, 161, 255, 0.14);
+  border-color: rgba(110, 161, 255, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(110, 161, 255, 0.08);
 }
 
 .agent-name {
   color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dot {
@@ -223,6 +272,7 @@ input[type="search"]::placeholder {
   flex: 1;
   display: flex;
   min-height: 0;
+  background: var(--bg-base);
 }
 
 .thread-col {
@@ -232,6 +282,63 @@ input[type="search"]::placeholder {
   min-width: 0;
   position: relative;
   --thread-progress: 100%;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(110, 161, 255, 0.035), transparent 34%),
+    var(--bg-base);
+}
+
+.thread-col::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.018) 50%, transparent),
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.018), transparent 42%);
+  opacity: 0.7;
+}
+
+.inspector-rail {
+  width: clamp(340px, 30vw, 456px);
+  min-width: 320px;
+  max-width: 456px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--border-default);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 18%),
+    #12151A;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.032);
+}
+
+.inspector-rail > * {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  flex: 1 1 0;
+  border-left: 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.inspector-rail > *:last-child {
+  border-bottom: 0;
+}
+
+.inspector-rail > .plan-inspector {
+  flex: 0 0 auto;
+}
+
+.inspector-rail > .terminal-pane {
+  flex: 0 0 224px;
+}
+
+.inspector-rail > .memory-pane,
+.inspector-rail > .diff-pane,
+.inspector-rail > .browser-pane,
+.inspector-rail > .multi-agent-pane,
+.inspector-rail > .automation-pane {
+  flex: 1 1 0;
 }
 
 /* ---------- Stop / queue buttons (F-013/F-014) ---------- */

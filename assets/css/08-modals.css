@@ -2,9 +2,9 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: var(--bg-overlay);
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  background: linear-gradient(180deg, rgba(9, 10, 12, 0.54), rgba(9, 10, 12, 0.68));
+  backdrop-filter: blur(8px) saturate(118%);
+  -webkit-backdrop-filter: blur(8px) saturate(118%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,8 +18,10 @@
 }
 
 .modal {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+    rgba(27, 30, 36, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-xl);
   padding: 24px;
   width: min(520px, 92vw);
@@ -50,7 +52,7 @@
   margin: 0 0 6px;
   font-size: 17px;
   font-weight: 600;
-  letter-spacing: -0.2px;
+  letter-spacing: 0;
 }
 
 .modal > p {
@@ -92,8 +94,8 @@
   align-items: center;
   height: 22px;
   padding: 0 8px;
-  border-radius: var(--radius-pill);
-  background: var(--yellow-dim);
+  border-radius: 7px;
+  background: rgba(234, 179, 8, 0.14);
   color: var(--yellow);
   font-size: 11px;
   font-weight: 700;
@@ -104,7 +106,7 @@
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-primary);
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.045);
   padding: 10px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
@@ -112,7 +114,7 @@
 }
 
 .perm-detail, .login-output {
-  background: var(--bg-base);
+  background: var(--bg-code);
   border-radius: var(--radius-md);
   padding: 12px;
   font-family: var(--font-mono);
@@ -153,7 +155,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: var(--bg-elevated);
+  background: rgba(27, 30, 36, 0.98);
   color: var(--red);
   padding: 12px 16px;
   border-radius: var(--radius-lg);

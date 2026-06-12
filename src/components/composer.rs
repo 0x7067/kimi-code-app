@@ -22,9 +22,9 @@ fn mention_candidates() -> Vec<String> {
 
 fn approval_menu_label(yolo: bool) -> &'static str {
     if yolo {
-        "Approvals: auto"
+        "Auto approve"
     } else {
-        "Approvals: ask"
+        "Ask approval"
     }
 }
 
@@ -140,9 +140,9 @@ pub fn Composer() -> Element {
     let project_label = PROJECT.read().clone().unwrap_or_else(|| "No project".to_string());
 
     rsx! {
-        div { class: "composer",
+        div { class: "composer", "data-testid": "composer",
             if show_slash && !filtered.is_empty() {
-                div { class: "slash-menu",
+                div { class: "slash-menu", "data-testid": "slash-menu",
                     for (i, cmd) in filtered.iter().enumerate() {
                         {
                             let name = cmd.name.clone();
@@ -161,7 +161,7 @@ pub fn Composer() -> Element {
                 }
             }
             if show_mentions {
-                div { class: "slash-menu mention-menu",
+                div { class: "slash-menu mention-menu", "data-testid": "mention-menu",
                     for (i, path) in mentions.iter().enumerate() {
                         {
                             let path = path.clone();
@@ -178,7 +178,7 @@ pub fn Composer() -> Element {
                     }
                 }
             }
-            div { class: "composer-box",
+            div { class: "composer-box", "data-testid": "composer-box",
                 if !ATTACHMENTS.read().is_empty() {
                     div { class: "attachments",
                         for (i, a) in ATTACHMENTS.read().iter().enumerate() {
@@ -194,6 +194,7 @@ pub fn Composer() -> Element {
                     }
                 }
                 textarea {
+                    "data-testid": "composer-input",
                     placeholder: if !has_session {
                         "Start a session first"
                     } else if observing {
@@ -317,6 +318,7 @@ pub fn Composer() -> Element {
                 div { class: "composer-toolbar",
                     div { class: "composer-toolbar-left",
                         button {
+                            "data-testid": "attach-image-button",
                             class: "ghost",
                             title: "Attach image",
                             disabled: !has_session,
@@ -395,6 +397,7 @@ pub fn Composer() -> Element {
                     div { class: "composer-toolbar-right",
                         if observing {
                             button {
+                                "data-testid": "take-control-button",
                                 class: "primary",
                                 title: "Take control of this session",
                                 onclick: move |_| {
@@ -408,6 +411,7 @@ pub fn Composer() -> Element {
                             }
                         } else if running {
                             button {
+                                "data-testid": "queue-button",
                                 class: "ghost queue-btn",
                                 title: "Queue message — sends after the current turn (⌥⏎)",
                                 onclick: move |_| enqueue(),
@@ -415,6 +419,7 @@ pub fn Composer() -> Element {
                                 "Queue"
                             }
                             button {
+                                "data-testid": "stop-button",
                                 class: "danger stop-btn",
                                 title: "Stop the current turn (Esc) — typing ⏎ steers instead",
                                 onclick: move |_| { spawn(cancel_turn()); },
@@ -426,6 +431,7 @@ pub fn Composer() -> Element {
                                 let sent = *send_feedback.read();
                                 rsx! {
                                     button {
+                                        "data-testid": "send-button",
                                         class: if sent { "composer-send sent" } else { "composer-send" },
                                         title: "Send (⌘⏎) · Send with thinking (⌘⇧⏎)",
                                         disabled: !has_session,
@@ -476,7 +482,7 @@ pub fn PendingQueue() -> Element {
         return rsx! {};
     }
     rsx! {
-        div { class: "pending-queue",
+        div { class: "pending-queue", "data-testid": "pending-queue",
             span { class: "pending-label", "Queued ({queue.len()})" }
             for (i, text) in queue.iter().enumerate() {
                 {
@@ -516,7 +522,7 @@ mod tests {
 
     #[test]
     fn approval_menu_label_reflects_yolo_state() {
-        assert_eq!(approval_menu_label(true), "Approvals: auto");
-        assert_eq!(approval_menu_label(false), "Approvals: ask");
+        assert_eq!(approval_menu_label(true), "Auto approve");
+        assert_eq!(approval_menu_label(false), "Ask approval");
     }
 }

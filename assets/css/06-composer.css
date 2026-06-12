@@ -1,18 +1,37 @@
 /* ---------- Composer ---------- */
 .composer {
-  padding: 12px 6% 18px;
+  padding: 12px clamp(30px, 6vw, 92px) 18px;
   position: relative;
   flex-shrink: 0;
+  background:
+    linear-gradient(180deg, rgba(16, 17, 20, 0), rgba(16, 17, 20, 0.94) 34%),
+    transparent;
 }
 
 .composer-box {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 12px 14px;
+  width: min(100%, 880px);
+  margin: 0 auto;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.062), rgba(255, 255, 255, 0.02)),
+    rgba(27, 30, 36, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 22px;
+  padding: 15px 15px 13px;
   position: relative;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.026),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075);
+}
+
+.composer-box::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 21px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.028);
 }
 
 .composer-box::after {
@@ -29,7 +48,10 @@
 
 .composer-box:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-md);
+  box-shadow:
+    0 0 0 3px var(--accent-dim),
+    0 30px 84px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .composer-box:focus-within::after {
@@ -38,22 +60,22 @@
 }
 
 .composer-box textarea {
-  min-height: 52px;
+  min-height: 62px;
   max-height: 200px;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .composer-box textarea::placeholder {
-  color: var(--text-tertiary);
+  color: #9099A8;
 }
 
 .composer-controls {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 9px;
+  padding-top: 9px;
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -70,9 +92,9 @@
 .slash-menu {
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 6%;
-  right: 6%;
-  background: var(--bg-elevated);
+  left: max(clamp(28px, 6vw, 88px), calc((100% - 880px) / 2));
+  right: max(clamp(28px, 6vw, 88px), calc((100% - 880px) / 2));
+  background: rgba(27, 30, 36, 0.98);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -214,7 +236,9 @@ details.search-hit {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 6px 6% 0;
+  width: min(100%, 880px);
+  margin: 0 auto;
+  padding: 6px 0 0;
   flex-shrink: 0;
 }
 
@@ -316,8 +340,10 @@ details.search-hit {
 
 .composer-toolbar-left {
   display: flex;
-  gap: 6px;
+  gap: 7px;
   align-items: center;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .composer-toolbar-right {
@@ -327,12 +353,29 @@ details.search-hit {
   margin-left: auto;
 }
 
+.composer-toolbar button.ghost,
+.composer-context-item {
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.028);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary);
+}
+
+.composer-toolbar button.ghost:hover,
+.composer-context-item:hover {
+  background: rgba(255, 255, 255, 0.062);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
 .composer-send {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
+  background: linear-gradient(180deg, #8fb8ff, #5f97ff);
+  color: #07101f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -344,9 +387,9 @@ details.search-hit {
 }
 
 .composer-send:not(:disabled):hover {
-  background: var(--accent-hover);
-  box-shadow: 0 0 12px var(--accent-glow);
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #a6c8ff, #6fa3ff);
+  box-shadow: 0 0 0 4px var(--accent-dim), 0 16px 34px rgba(110, 161, 255, 0.28);
+  transform: translateY(-1px) scale(1.02);
 }
 
 .composer-send:not(:disabled):active {

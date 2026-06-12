@@ -6,12 +6,17 @@ use dioxus::prelude::*;
 pub fn DiffPane() -> Element {
     let diff = DIFF.read().clone();
     rsx! {
-        aside { class: "diff-pane",
+        aside { class: "diff-pane", "data-testid": "diff-pane",
             div { class: "diff-head",
                 span { "Working tree changes" }
-                button { class: "ghost icon-btn", onclick: move |_| { spawn(refresh_diff()); }, "Refresh" }
+                button {
+                    "data-testid": "diff-refresh",
+                    class: "ghost icon-btn",
+                    onclick: move |_| { spawn(refresh_diff()); },
+                    "Refresh"
+                }
             }
-            pre { class: "diff-body",
+            pre { class: "diff-body", "data-testid": "diff-body",
                 for (i, line) in diff.lines().enumerate() {
                     {
                         let delay = (i.min(24)) * 18;

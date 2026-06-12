@@ -132,6 +132,7 @@ pub fn ThreadView() -> Element {
         if *SEARCH_OPEN.read() {
             div { class: "convo-search",
                 input {
+                    "data-testid": "conversation-search-input",
                     class: "convo-search-input",
                     r#type: "text",
                     placeholder: "Search in conversation…",
@@ -152,6 +153,7 @@ pub fn ThreadView() -> Element {
                     }
                 }
                 button {
+                    "data-testid": "conversation-search-close",
                     class: "ghost",
                     onclick: move |_| {
                         *SEARCH_OPEN.write() = false;
@@ -161,28 +163,12 @@ pub fn ThreadView() -> Element {
                 }
             }
         }
-        if !PLAN.read().is_empty() {
-            div { class: "plan-sticky",
-                div { class: "plan-head", "Plan" }
-                for (i, entry) in PLAN.read().iter().enumerate() {
-                    div { key: "{i}", class: "plan-entry {entry.status}",
-                        span { class: "plan-status {entry.status}",
-                            {match entry.status.as_str() {
-                                "completed" => "✓",
-                                "in_progress" => "▶",
-                                _ => "○",
-                            }}
-                        }
-                        span { class: "plan-content", "{entry.content}" }
-                    }
-                }
-            }
-        }
         if *SHOW_CHECKPOINTS.read() {
             {checkpoint_panel()}
         }
         div { class: "agent-ambient state-{agent_state_class}" }
         div { class: "thread-presence state-{agent_state_class}",
+            "data-testid": "thread-presence",
             KimiAvatar { state: agent_state, size: 34 }
             div { class: "thread-presence-copy",
                 span { class: "thread-presence-label", "Kimi" }
@@ -193,6 +179,7 @@ pub fn ThreadView() -> Element {
             div { class: "thread-scroll-progress-fill" }
         }
         button {
+            "data-testid": "scroll-new-message",
             class: "new-message-btn",
             onclick: move |_| {
                 document::eval(
@@ -209,9 +196,9 @@ pub fn ThreadView() -> Element {
             "New message"
             span { class: "new-message-chevron", "⌄" }
         }
-        div { class: "thread", id: "thread",
+        div { class: "thread", id: "thread", "data-testid": "thread",
             if thread_empty && !has_session {
-                div { class: "thread-hero",
+                div { class: "thread-hero", "data-testid": "thread-empty-hero",
                     div { class: "thread-hero-icon",
                         KimiAvatar { state: AgentState::Idle, size: 46 }
                     }
@@ -219,11 +206,13 @@ pub fn ThreadView() -> Element {
                     p { "Pick a project and start a new session, or resume one from the sidebar." }
                     div { class: "thread-hero-actions",
                         button {
+                            "data-testid": "hero-new-chat",
                             class: "primary",
                             onclick: move |_| *SHOW_NEW_SESSION.write() = true,
                             "New chat"
                         }
                         button {
+                            "data-testid": "hero-choose-project",
                             class: "ghost",
                             onclick: move |_| {
                                 document::eval("const el = document.querySelector('.project-picker select'); if (el) el.focus();");
@@ -234,7 +223,7 @@ pub fn ThreadView() -> Element {
                 }
             }
             if thread_empty && has_session {
-                div { class: "thread-hero compact",
+                div { class: "thread-hero compact", "data-testid": "thread-session-empty",
                     div { class: "thread-hero-icon",
                         KimiAvatar { state: AgentState::Listening, size: 46 }
                     }
@@ -246,7 +235,7 @@ pub fn ThreadView() -> Element {
                 {render_item(i, item, copied, &query, collapsed)}
             }
             if *RUNNING.read() {
-                div { class: "working",
+                div { class: "working", "data-testid": "thread-working",
                     KimiAvatar { state: agent_state, size: 22 }
                     span { "Kimi is {agent_status.to_lowercase()}…" }
                 }
@@ -328,7 +317,7 @@ fn render_item(
     let sc = search_class(item, query);
     match item {
         Item::User(text) => rsx! {
-            div { key: "{i}", class: "msg user{sc}",
+            div { key: "{i}", class: "msg user{sc}", "data-testid": "message-user",
                 {copy_button(i, item, copied)}
                 {edit_button(i, text)}
                 div { class: "bubble", "{text}" }
@@ -342,7 +331,7 @@ fn render_item(
                 .and_then(|sid| SESSION_TITLES.read().get(sid).cloned())
                 .unwrap_or_else(|| "Agent response".to_string());
             rsx! {
-                div { key: "{i}", class: "msg agent{sc}",
+                div { key: "{i}", class: "msg agent{sc}", "data-testid": "message-agent",
                     div { class: "agent-header",
                         KimiAvatar { state: AgentState::Idle, size: 22 }
                         span { class: "agent-header-title", "{title}" }
@@ -369,17 +358,18 @@ fn render_item(
             }
         }
         Item::Thought(text) => rsx! {
-            details { key: "{i}", class: "thought{sc}",
+            details { key: "{i}", class: "thought{sc}", "data-testid": "message-thought",
                 summary { "Thinking" }
                 div { class: "thought-body", "{text}" }
             }
         },
         Item::Cancelled => rsx! {
-            div { key: "{i}", class: "turn-cancelled", span { "cancelled" } }
+            div { key: "{i}", class: "turn-cancelled", "data-testid": "message-cancelled", span { "cancelled" } }
         },
         Item::Tool(tc) => rsx! {
             details {
                 key: "{i}",
+                "data-testid": "message-tool",
                 class: "tool {tc.status}{sc}",
                 open: tc.status == "in_progress",
                 summary {
@@ -428,7 +418,7 @@ fn checkpoint_panel() -> Element {
     let mut name_input = use_signal(String::new);
     let has_session = SESSION_ID.read().is_some();
     rsx! {
-        div { class: "checkpoint-panel",
+        div { class: "checkpoint-panel", "data-testid": "checkpoint-panel",
             div { class: "checkpoint-head",
                 span { "Checkpoints" }
                 button {

@@ -54,11 +54,17 @@ async fn call_async(ns: &str, name: &str, args: &[JsValue]) -> Result<Value, Val
 
 /// Invoke a Tauri command with JSON args; both ok and err arrive as JSON.
 pub async fn invoke(cmd: &str, args: Value) -> Result<Value, Value> {
+    if let Some(result) = crate::verify::mock_invoke_from_location(cmd, &args) {
+        return result;
+    }
     call_async("core", "invoke", &[JsValue::from_str(cmd), to_js(&args)]).await
 }
 
 /// Subscribe to a Tauri event for the lifetime of the app.
 pub fn listen_forever(event: &'static str, mut handler: impl FnMut(Value) + 'static) {
+    if crate::verify::is_verify_mode_from_location() {
+        return;
+    }
     wasm_bindgen_futures::spawn_local(async move {
         let closure = Closure::wrap(Box::new(move |ev: JsValue| {
             let v = from_js(ev);
